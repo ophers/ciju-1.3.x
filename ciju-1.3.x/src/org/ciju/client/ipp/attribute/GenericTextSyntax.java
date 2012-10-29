@@ -18,7 +18,7 @@
 package org.ciju.client.ipp.attribute;
 
 import java.util.Locale;
-import static org.ciju.client.ipp.IppEcoding.*;
+import static org.ciju.client.ipp.IppEncoding.*;
 import javax.print.attribute.TextSyntax;
 
 /**

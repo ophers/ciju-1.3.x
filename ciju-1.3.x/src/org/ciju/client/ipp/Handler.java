@@ -84,7 +84,7 @@ public class Handler extends URLStreamHandler {
 
     @Override
     protected int getDefaultPort() {
-        return IPPDefs.PORT;
+        return IppEncoding.PORT;
     }
 
 }
