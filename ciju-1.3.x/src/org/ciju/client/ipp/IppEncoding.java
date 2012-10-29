@@ -21,7 +21,9 @@ package org.ciju.client.ipp;
  *
  * @author Opher Shachar
  */
-public class IppEcoding {
+public class IppEncoding {
+
+    public static final int PORT = 631;
     
     public enum ValueTag {
         // The following specifies the "out-of-band" values
