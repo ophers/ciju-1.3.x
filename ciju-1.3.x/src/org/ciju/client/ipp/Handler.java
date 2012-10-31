@@ -17,7 +17,6 @@
 
 package org.ciju.client.ipp;
 
-import com.easysw.cups.IPPDefs;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -49,17 +48,22 @@ public class Handler extends URLStreamHandler {
      *      doesn't have permission to connect to the proxy.
      * @throws IllegalArgumentException will be thrown if proxy has the wrong type,
      *      or the URI <code>u</code> does not specify one of the schemes:
-     *      <strong>ipp ipps</strong>.
+     *      <b>ipp</b> or <b>ipps</b>.
      */
-    public IppURLConnection openConnection(URI u, Proxy p) throws IOException {
+    public static IppURLConnection openConnection(URI u, Proxy p) throws IOException {
+        Handler handler;
         String scheme = u.getScheme();
-        if (scheme.equalsIgnoreCase("ipp"))
+        if (scheme.equalsIgnoreCase("ipp")) {
             scheme = "http";
-        else if (scheme.equalsIgnoreCase("ipps"))
+            handler = new Handler();
+        }
+        else if (scheme.equalsIgnoreCase("ipps")) {
             scheme = "https";
+            handler = new org.ciju.client.ipps.Handler();
+        }
         else
             throw new IllegalArgumentException("The scheme may only be ipp or ipps.");
-        int port = u.getPort() == -1 ? this.getDefaultPort() : u.getPort();
+        int port = u.getPort() == -1 ? IppEncoding.PORT : u.getPort();
 
         URL url;
         try {
@@ -69,7 +73,7 @@ public class Handler extends URLStreamHandler {
             throw new IllegalArgumentException(ex);
         }
         
-        return new IppURLConnectionImpl(url, p, this);
+        return new IppURLConnectionImpl(url, p, handler);
     }
 
     @Override

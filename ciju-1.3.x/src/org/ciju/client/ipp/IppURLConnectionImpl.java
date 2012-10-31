@@ -17,9 +17,6 @@
 
 package org.ciju.client.ipp;
 
-import com.easysw.cups.IPP;
-import com.easysw.cups.IPPAttribute;
-import com.easysw.cups.IPPDefs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -27,6 +24,8 @@ import java.net.*;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
+import javax.print.attribute.Attribute;
+import org.ciju.client.ipp.IppEncoding.ValueTag;
 
 
 /**
@@ -144,15 +143,15 @@ import java.util.Map;
         if (ipp == null)
             throw new IllegalStateException("IPP request was not set.");
         String al = getRequestProperty("Accept-Language");
-        IPPAttribute attr = ipp.ippFindAttribute("attributes-natural-language", IPPDefs.TAG_LANGUAGE);
-        setRequestProperty("Accept-Language", attr.valuesToString(','));
+        Attribute attr = ipp.findAttribute("attributes-natural-language", ValueTag.NATURAL_LANGUAGE);
+        setRequestProperty("Accept-Language", attr.toString());
         addRequestProperty("Accept-Language", al);
         OutputStream os = getOutputStream();
         IppTransport.writeRequest(os, ipp);
     }
 
     @Override
-    public IppURLConnection setIppRequest(IPP request) {
+    public IppURLConnection setIppRequest(IppObject request) {
         if (gos_called)
             throw new IllegalStateException("Output stream was previously requested.");
         return super.setIppRequest(request);
