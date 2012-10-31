@@ -17,7 +17,6 @@
 
 package org.ciju.client.ipp;
 
-import com.easysw.cups.IPP;
 import java.net.*;
 
 
@@ -39,9 +38,9 @@ import java.net.*;
  * A possible use pattern could be: <blockquote><pre>
  * Authenticator.setDefault(...);
  * URL url = new URL("ipp://...");
- * IPP request = ...;
+ * IppObject request = ...;
  * IppURLConnection urlc = (IppURLConnection) url.openConnection();
- * IPP response = (IPP) urlc.setIppRequest(request).getContent();
+ * IppObject response = (IppObject) urlc.setIppRequest(request).getContent();
  * </pre></blockquote>
  * For a server application (ie. running on JavaEE) there is no public API to URLConnection
  * that allows specifying credentials on a per connection basis.
@@ -51,9 +50,9 @@ import java.net.*;
 public abstract class IppURLConnection extends HttpURLConnection {
     
     /**
-     * The {@link IPP} object that represents the request.
+     * The {@link IppObject} object that represents the request.
      */
-    protected IPP ipp;
+    protected IppObject ipp;
 
     /**
      * Constructor for the IppURLConnection class.
@@ -122,14 +121,14 @@ public abstract class IppURLConnection extends HttpURLConnection {
     }
 
     /**
-     * Set the {@link IPP} request object to send to the server. This method
+     * Set the {@link IppObject} request object to send to the server. This method
      * doesn't cause the request to be sent or this object to be connected.
      * <br>Once set the <i>ipp request</i> cannot be cleared.
-     * @param request The <code>IPP</code> request object.
+     * @param request The <code>IppObject</code> request object.
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
      */
-    public IppURLConnection setIppRequest(IPP request) {
+    public IppURLConnection setIppRequest(IppObject request) {
         if (connected)
             throw new IllegalStateException("Already connected");
         if (request == null) 
@@ -139,10 +138,10 @@ public abstract class IppURLConnection extends HttpURLConnection {
     }
 
     /**
-     * Get the {@link IPP} request object set earlier with {@link #setIppRequest}.
-     * @return the <code>IPP</code> object set with <code>setIppRequest</code>
+     * Get the {@link IppObject} request object set earlier with {@link #setIppRequest}.
+     * @return the <code>IppObject</code> object set with <code>setIppRequest</code>
      */
-    public IPP getIppRequest() {
+    public IppObject getIppRequest() {
         return ipp;
     }
     
