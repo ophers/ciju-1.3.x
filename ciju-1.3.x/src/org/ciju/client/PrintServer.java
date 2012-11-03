@@ -35,13 +35,15 @@ import org.ciju.client.ipp.IppURLConnection;
  */
 public class PrintServer extends PrintServiceLookup {
 
-    private URI uri;
+    private final URI uri;
 
     public PrintServer() {
+        uri = null;
     }
 
     public PrintServer(URI uri) {
-        if (!uri.getScheme().equalsIgnoreCase("ipp") && !uri.getScheme().equalsIgnoreCase("ipps"))
+        if (!uri.getScheme().equalsIgnoreCase("ipp") && 
+            !uri.getScheme().equalsIgnoreCase("ipps"))
             throw new IllegalArgumentException("Only 'ipp' and 'ipps' URIs are supported.");
         this.uri = uri;
     }
