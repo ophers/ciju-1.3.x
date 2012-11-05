@@ -65,9 +65,8 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
         return AttributeSetUtilities.unmodifiableView(psas);
     }
 
-    @SuppressWarnings("unchecked")
     public <T extends PrintServiceAttribute> T getAttribute(Class<T> category) {
-        return (T) psas.get(category);
+        return category.cast(getAttributes().get(category));
     }
 
     public DocFlavor[] getSupportedDocFlavors() {
