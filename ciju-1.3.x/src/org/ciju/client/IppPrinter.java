@@ -25,7 +25,9 @@ import javax.print.PrintService;
 import javax.print.ServiceUIFactory;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
+import javax.print.attribute.AttributeSetUtilities;
 import javax.print.attribute.HashAttributeSet;
+import javax.print.attribute.HashPrintServiceAttributeSet;
 import javax.print.attribute.PrintServiceAttribute;
 import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.event.PrintServiceAttributeListener;
@@ -35,6 +37,7 @@ import javax.print.event.PrintServiceAttributeListener;
  * @author Opher Shachar
  */
 public class IppPrinter implements PrintService, MultiDocPrintService {
+    private HashPrintServiceAttributeSet psas;
 
     public String getName() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -57,11 +60,14 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
     }
 
     public PrintServiceAttributeSet getAttributes() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // FIXME: Get the 'printer-description' attribute from a Get-Printer-Attributes
+        // psas = ...
+        return AttributeSetUtilities.unmodifiableView(psas);
     }
 
+    @SuppressWarnings("unchecked")
     public <T extends PrintServiceAttribute> T getAttribute(Class<T> category) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return (T) psas.get(category);
     }
 
     public DocFlavor[] getSupportedDocFlavors() {
