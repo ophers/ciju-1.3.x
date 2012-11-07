@@ -18,7 +18,6 @@
 package org.ciju.client;
 
 import java.util.ArrayList;
-import java.util.List;
 import javax.print.CancelablePrintJob;
 import javax.print.Doc;
 import javax.print.DocPrintJob;
@@ -39,8 +38,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
 
     private IppPrinter printer;
     private ArrayList<PrintJobListener> pjll;
-    private ArrayList<PrintJobAttributeListener> pjall;
-    private ArrayList<PrintJobAttributeSet> pjasl;
+    private ArrayList<Entry> pjall;
 
     public PrintService getPrintService() {
         return printer;
@@ -62,16 +60,13 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
 
     public void addPrintJobAttributeListener(PrintJobAttributeListener listener, PrintJobAttributeSet attributes) {
         if (listener != null) {
-            pjall.add(listener);
-            pjasl.add(attributes);
+            pjall.add(new Entry(listener, attributes));
         }
     }
 
     public void removePrintJobAttributeListener(PrintJobAttributeListener listener) {
         if (listener != null) {
-            int pos = pjall.indexOf(listener);
-            pjall.remove(pos);
-            pjasl.remove(pos);
+            pjall.remove(new Entry(listener, null));
         }
     }
 
@@ -87,4 +82,46 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    private static class Entry {
+        
+        private final PrintJobAttributeListener listner;
+        private final PrintJobAttributeSet attributes;
+
+        public PrintJobAttributeListener getListner() {
+            return listner;
+        }
+
+        public PrintJobAttributeSet getAttributes() {
+            return attributes;
+        }
+
+        public Entry(PrintJobAttributeListener listner, PrintJobAttributeSet attributes) {
+            this.listner = listner;
+            this.attributes = attributes;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 59 * hash + (this.listner != null ? this.listner.hashCode() : 0);
+            hash = 59 * hash + (this.attributes != null ? this.attributes.hashCode() : 0);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final Entry other = (Entry) obj;
+            if (this.listner != other.listner && (this.listner == null || !this.listner.equals(other.listner))) {
+                return false;
+            }
+            return true;
+        }
+
+    }
 }
