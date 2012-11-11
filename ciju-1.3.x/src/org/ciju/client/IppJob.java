@@ -25,9 +25,12 @@ import javax.print.MultiDoc;
 import javax.print.MultiDocPrintJob;
 import javax.print.PrintException;
 import javax.print.PrintService;
+import javax.print.attribute.Attribute;
 import javax.print.attribute.PrintJobAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
+import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
 
 /**
@@ -38,7 +41,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
 
     private IppPrinter printer;
     private ArrayList<PrintJobListener> pjll;
-    private ArrayList<Entry> pjall;
+    private ArrayList<PrintJobAttributeListenerEntry> pjall;
 
     public PrintService getPrintService() {
         return printer;
@@ -58,15 +61,56 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
             pjll.remove(listener);
     }
 
+    private enum PrintJobEventType { DATA, ATTENTION, CANCELLED, FAILED, COMPLETED, NO_MORE }
+    
+    private void raisePrintJobEvent(PrintJobEventType pjet, PrintJobEvent pje) {
+        for (PrintJobListener pjl : pjll)
+            switch (pjet) {
+            case DATA:
+                pjl.printDataTransferCompleted(pje);
+                break;
+            case ATTENTION:
+                pjl.printJobRequiresAttention(pje);
+                break;
+            case CANCELLED:
+                pjl.printJobCanceled(pje);
+                break;
+            case FAILED:
+                pjl.printJobFailed(pje);
+                break;
+            case COMPLETED:
+                pjl.printJobCompleted(pje);
+                break;
+            case NO_MORE:
+                pjl.printJobNoMoreEvents(pje);
+                break;
+            }
+    }
+
     public void addPrintJobAttributeListener(PrintJobAttributeListener listener, PrintJobAttributeSet attributes) {
         if (listener != null) {
-            pjall.add(new Entry(listener, attributes));
+            pjall.add(new PrintJobAttributeListenerEntry(listener, attributes));
         }
     }
 
     public void removePrintJobAttributeListener(PrintJobAttributeListener listener) {
         if (listener != null) {
-            pjall.remove(new Entry(listener, null));
+            pjall.remove(new PrintJobAttributeListenerEntry(listener, null));
+        }
+    }
+
+    private void raisePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
+        for (PrintJobAttributeListenerEntry pjale : pjall) {
+            if (pjale.attributes == null)
+                pjale.listner.attributeUpdate(pjae);
+            else {
+                PrintJobAttributeSet attrs = pjae.getAttributes();
+                for (Attribute pja : pjale.attributes.toArray())
+                    if (attrs.containsKey(pja.getCategory())) {
+                        pjale.listner.attributeUpdate(pjae);
+                        break;
+                    }
+            }
         }
     }
 
@@ -82,7 +126,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    private static class Entry {
+    private static class PrintJobAttributeListenerEntry {
         
         private final PrintJobAttributeListener listner;
         private final PrintJobAttributeSet attributes;
@@ -95,7 +139,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
             return attributes;
         }
 
-        public Entry(PrintJobAttributeListener listner, PrintJobAttributeSet attributes) {
+        public PrintJobAttributeListenerEntry(PrintJobAttributeListener listner, PrintJobAttributeSet attributes) {
             this.listner = listner;
             this.attributes = attributes;
         }
@@ -116,7 +160,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
             if (getClass() != obj.getClass()) {
                 return false;
             }
-            final Entry other = (Entry) obj;
+            final PrintJobAttributeListenerEntry other = (PrintJobAttributeListenerEntry) obj;
             if (this.listner != other.listner && (this.listner == null || !this.listner.equals(other.listner))) {
                 return false;
             }
