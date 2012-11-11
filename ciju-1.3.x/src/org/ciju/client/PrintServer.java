@@ -20,6 +20,7 @@ package org.ciju.client;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.Proxy;
+import java.net.ProxySelector;
 import java.net.URI;
 import javax.print.DocFlavor;
 import javax.print.MultiDocPrintService;
@@ -35,17 +36,23 @@ import org.ciju.client.ipp.IppURLConnection;
  */
 public class PrintServer extends PrintServiceLookup {
 
+    private final SecurityManager sm;
     private final URI uri;
+    private final Proxy proxy;
 
     public PrintServer() {
+        sm = System.getSecurityManager();
         uri = null;
+        proxy = null;
     }
 
-    public PrintServer(URI uri) {
+    public PrintServer(URI uri, Proxy proxy) {
         if (!uri.getScheme().equalsIgnoreCase("ipp") && 
             !uri.getScheme().equalsIgnoreCase("ipps"))
             throw new IllegalArgumentException("Only 'ipp' and 'ipps' URIs are supported.");
+        sm = System.getSecurityManager();
         this.uri = uri;
+        this.proxy = proxy;
     }
 
     /**
@@ -57,35 +64,52 @@ public class PrintServer extends PrintServiceLookup {
         return uri;
     }
 
-    protected IppURLConnection getConnection(Proxy proxy) throws IOException {
+    protected IppURLConnection getConnection() throws IOException {
         if (uri == null)
             throw new IllegalStateException("This default instance has no URI to a Print-Server.");
         
         try {
-            return (IppURLConnection) uri.toURL().openConnection(proxy);
+            final IppURLConnection uc;
+            if (proxy == null)
+                uc = (IppURLConnection) uri.toURL().openConnection();
+            else
+                uc = (IppURLConnection) uri.toURL().openConnection(proxy);
+            return uc;
         }
-        catch (MalformedURLException e) {
+        catch (MalformedURLException ignore) {
             return Handler.openConnection(uri, proxy);
         }
     }
     
     @Override
     public PrintService[] getPrintServices(DocFlavor flavor, AttributeSet attributes) {
+        if (sm != null)
+            sm.checkPrintJobAccess();
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public PrintService[] getPrintServices() {
+        if (sm != null)
+            sm.checkPrintJobAccess();
+        if (uri == null)
+            throw new IllegalStateException("This default instance has no URI to a Print-Server.");
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public MultiDocPrintService[] getMultiDocPrintServices(DocFlavor[] flavors, AttributeSet attributes) {
+        if (sm != null)
+            sm.checkPrintJobAccess();
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public PrintService getDefaultPrintService() {
+        if (sm != null)
+            sm.checkPrintJobAccess();
+        if (uri == null)
+            throw new IllegalStateException("This default instance has no URI to a Print-Server.");
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

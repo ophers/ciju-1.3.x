@@ -17,6 +17,7 @@
 
 package org.ciju.client;
 
+import java.util.ArrayList;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
 import javax.print.MultiDocPrintJob;
@@ -30,6 +31,8 @@ import javax.print.attribute.HashAttributeSet;
 import javax.print.attribute.HashPrintServiceAttributeSet;
 import javax.print.attribute.PrintServiceAttribute;
 import javax.print.attribute.PrintServiceAttributeSet;
+import javax.print.attribute.standard.PrinterName;
+import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 
 /**
@@ -38,9 +41,10 @@ import javax.print.event.PrintServiceAttributeListener;
  */
 public class IppPrinter implements PrintService, MultiDocPrintService {
     private HashPrintServiceAttributeSet psas;
+    private ArrayList<PrintServiceAttributeListener> psall;
 
     public String getName() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return getAttribute(PrinterName.class).toString();
     }
 
     public DocPrintJob createPrintJob() {
@@ -52,11 +56,18 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
     }
 
     public void addPrintServiceAttributeListener(PrintServiceAttributeListener listener) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (listener != null)
+            psall.add(listener);
     }
 
     public void removePrintServiceAttributeListener(PrintServiceAttributeListener listener) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (listener != null)
+            psall.remove(listener);
+    }
+
+    private void raisePrintServiceAttributeEvent(PrintServiceAttributeEvent psae) {
+        for (PrintServiceAttributeListener psal : psall)
+            psal.attributeUpdate(psae);
     }
 
     public PrintServiceAttributeSet getAttributes() {
