@@ -18,10 +18,12 @@
 package org.ciju.client;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.ProxySelector;
 import java.net.URI;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.DocFlavor;
 import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
@@ -39,13 +41,61 @@ public class PrintServer extends PrintServiceLookup {
     private final SecurityManager sm;
     private final URI uri;
     private final Proxy proxy;
+    private static final String packageName;
+    private static final String REGISTER_HANDLERS = "org.ciju.client.RegisterHandlers";
+    private static final boolean hndlrs;
+
+    // Logging facilities
+    /* package */ static final Logger logger;
+    static {
+        String name = PrintServer.class.getName();
+        packageName = name.substring(0, name.lastIndexOf('.'));
+        logger = Logger.getLogger(packageName);
+    }
+
+    // Register the IPP ContentHandler and URLStreamHandler
+    static {
+        hndlrs = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
+            public Boolean run() {
+                return registerHandlers();
+            }
+        });
+    }
+    
+    private static boolean registerHandlers() {
+        try {
+            boolean doit = Boolean.parseBoolean(System.getProperty(REGISTER_HANDLERS, "true"));
+            if (doit) {
+                // Register content handler
+                StringBuilder prop = new StringBuilder(packageName)
+                        .append('|')
+                        .append(System.getProperty("java.content.handler.pkgs", ""));
+                if (prop.length() == packageName.length() + 1)
+                    prop.setLength(packageName.length());
+                System.setProperty("java.content.handler.pkgs", prop.toString());
+                
+                // Register protocol handler
+                prop.setLength(0);
+                prop.append(packageName)
+                    .append('|')
+                    .append(System.getProperty("java.protocol.handler.pkgs", ""));
+                if (prop.length() == packageName.length() + 1)
+                    prop.setLength(packageName.length());
+                System.setProperty("java.protocol.handler.pkgs", prop.toString());
+                return true;
+            }
+        } catch (SecurityException ex) {
+            logger.log(Level.SEVERE, "Failed to register IPP ContentHandler and/or URLStreamHandler!", ex);
+        }
+        return false;
+    }
 
     public PrintServer() {
         sm = System.getSecurityManager();
         uri = null;
         proxy = null;
     }
-
+    
     public PrintServer(URI uri, Proxy proxy) {
         if (!uri.getScheme().equalsIgnoreCase("ipp") && 
             !uri.getScheme().equalsIgnoreCase("ipps"))
@@ -68,19 +118,21 @@ public class PrintServer extends PrintServiceLookup {
         if (uri == null)
             throw new IllegalStateException("This default instance has no URI to a Print-Server.");
         
-        try {
-            final IppURLConnection uc;
+        return getConnection(uri);
+    }
+
+    /* package */ IppURLConnection getConnection(URI uri) throws IOException {
+        if (hndlrs) {
             if (proxy == null)
-                uc = (IppURLConnection) uri.toURL().openConnection();
+                return (IppURLConnection) uri.toURL().openConnection();
             else
-                uc = (IppURLConnection) uri.toURL().openConnection(proxy);
-            return uc;
+                return (IppURLConnection) uri.toURL().openConnection(proxy);
         }
-        catch (MalformedURLException ignore) {
+        else {
             return Handler.openConnection(uri, proxy);
         }
     }
-    
+
     @Override
     public PrintService[] getPrintServices(DocFlavor flavor, AttributeSet attributes) {
         if (sm != null)
@@ -108,8 +160,12 @@ public class PrintServer extends PrintServiceLookup {
     public PrintService getDefaultPrintService() {
         if (sm != null)
             sm.checkPrintJobAccess();
-        if (uri == null)
-            throw new IllegalStateException("This default instance has no URI to a Print-Server.");
+        try {
+            IppURLConnection urlc = getConnection();
+//            urlc.
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
