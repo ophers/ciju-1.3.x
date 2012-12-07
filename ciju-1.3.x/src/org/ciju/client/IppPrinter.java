@@ -17,7 +17,12 @@
 
 package org.ciju.client;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.net.Proxy;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
 import javax.print.MultiDocPrintJob;
@@ -34,6 +39,7 @@ import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
+import org.ciju.client.ipp.IppURLConnection;
 
 /**
  *
@@ -41,7 +47,32 @@ import javax.print.event.PrintServiceAttributeListener;
  */
 public class IppPrinter implements PrintService, MultiDocPrintService {
     private HashPrintServiceAttributeSet psas;
-    private ArrayList<PrintServiceAttributeListener> psall;
+    /* See javadoc for overview. Presumably there'll be few (if more than one)
+       listners registering but many more events fireing */
+    private final CopyOnWriteArrayList<PrintServiceAttributeListener> psall;
+    private final URI uri;
+    private final Proxy proxy;
+
+    protected IppPrinter(URI uri, Proxy proxy) {
+        if (uri == null)
+            throw new IllegalArgumentException("Uri cannot be null!");
+        this.uri = uri;
+        this.proxy = proxy;
+        psall = new CopyOnWriteArrayList<PrintServiceAttributeListener>();
+    }
+
+    /**
+     * Get the value of uri
+     *
+     * @return the value of uri
+     */
+    public URI getUri() {
+        return uri;
+    }
+
+    protected IppURLConnection getConnection() throws IOException {
+        return PrintServer.getConnection(uri, proxy);
+    }
 
     public String getName() {
         return getAttribute(PrinterName.class).toString();
@@ -65,6 +96,10 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
             psall.remove(listener);
     }
 
+    public List<PrintServiceAttributeListener> getListeners() {
+        return Collections.unmodifiableList(psall);
+    }
+    
     private void raisePrintServiceAttributeEvent(PrintServiceAttributeEvent psae) {
         for (PrintServiceAttributeListener psal : psall)
             psal.attributeUpdate(psae);

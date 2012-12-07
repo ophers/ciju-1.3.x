@@ -29,6 +29,7 @@ import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
+import org.ciju.cups.CupsServer;
 import org.ciju.client.ipp.Handler;
 import org.ciju.client.ipp.IppURLConnection;
 
@@ -44,6 +45,7 @@ public class PrintServer extends PrintServiceLookup {
     private static final String packageName;
     private static final String REGISTER_HANDLERS = "org.ciju.client.RegisterHandlers";
     private static final boolean hndlrs;
+    private enum Type { CUPS }
 
     // Logging facilities
     /* package */ static final Logger logger;
@@ -96,13 +98,27 @@ public class PrintServer extends PrintServiceLookup {
         proxy = null;
     }
     
-    public PrintServer(URI uri, Proxy proxy) {
+    protected PrintServer(URI uri, Proxy proxy) {
         if (!uri.getScheme().equalsIgnoreCase("ipp") && 
             !uri.getScheme().equalsIgnoreCase("ipps"))
             throw new IllegalArgumentException("Only 'ipp' and 'ipps' URIs are supported.");
         sm = System.getSecurityManager();
         this.uri = uri;
         this.proxy = proxy;
+    }
+
+    public static PrintServer create(URI uri, Proxy proxy) {
+        switch (checkServerType(uri, proxy)) {
+            case CUPS:
+                return new CupsServer(uri, proxy);
+            default:
+                throw new AssertionError();
+        }
+    }
+
+    private static Type checkServerType(URI uri, Proxy proxy) {
+        // Only Type currently known
+        return Type.CUPS;
     }
 
     /**
@@ -118,10 +134,10 @@ public class PrintServer extends PrintServiceLookup {
         if (uri == null)
             throw new IllegalStateException("This default instance has no URI to a Print-Server.");
         
-        return getConnection(uri);
+        return getConnection(uri, proxy);
     }
 
-    /* package */ IppURLConnection getConnection(URI uri) throws IOException {
+    /* package */ static IppURLConnection getConnection(URI uri, Proxy proxy) throws IOException {
         if (hndlrs) {
             if (proxy == null)
                 return (IppURLConnection) uri.toURL().openConnection();
@@ -144,9 +160,8 @@ public class PrintServer extends PrintServiceLookup {
     public PrintService[] getPrintServices() {
         if (sm != null)
             sm.checkPrintJobAccess();
-        if (uri == null)
-            throw new IllegalStateException("This default instance has no URI to a Print-Server.");
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // This default instance has no clue as to how to interrogate a Print-CupsServer
+        return new PrintService[0];
     }
 
     @Override
