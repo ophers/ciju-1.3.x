@@ -18,6 +18,9 @@
 package org.ciju.client;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import javax.print.CancelablePrintJob;
 import javax.print.Doc;
 import javax.print.DocPrintJob;
@@ -39,9 +42,17 @@ import javax.print.event.PrintJobListener;
  */
 public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob {
 
-    private IppPrinter printer;
-    private ArrayList<PrintJobListener> pjll;
-    private ArrayList<PrintJobAttributeListenerEntry> pjall;
+    private final IppPrinter printer;
+    /* See javadoc for overview. Presumably there'll be few (if more than one)
+       listners registering but many more events fireing */
+    private final CopyOnWriteArrayList<PrintJobListener> pjll;
+    private final CopyOnWriteArrayList<PrintJobAttributeListenerEntry> pjall;
+
+    protected IppJob(IppPrinter printer) {
+        this.printer = printer;
+        this.pjll = new CopyOnWriteArrayList<PrintJobListener>();
+        this.pjall = new CopyOnWriteArrayList<PrintJobAttributeListenerEntry>();
+    }
 
     public PrintService getPrintService() {
         return printer;
@@ -61,30 +72,41 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
             pjll.remove(listener);
     }
 
-    private enum PrintJobEventType { DATA, ATTENTION, CANCELLED, FAILED, COMPLETED, NO_MORE }
-    
-    private void raisePrintJobEvent(PrintJobEventType pjet, PrintJobEvent pje) {
-        for (PrintJobListener pjl : pjll)
-            switch (pjet) {
-            case DATA:
-                pjl.printDataTransferCompleted(pje);
+    public List<PrintJobListener> getListeners(PrintJobEvent pje) {
+        return Collections.unmodifiableList(pjll);
+    }
+
+    private void raisePrintJobEvent(PrintJobEvent pje) {
+        switch (pje.getPrintEventType()) {
+            case PrintJobEvent.DATA_TRANSFER_COMPLETE:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printDataTransferCompleted(pje);
                 break;
-            case ATTENTION:
-                pjl.printJobRequiresAttention(pje);
+            case PrintJobEvent.REQUIRES_ATTENTION:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobRequiresAttention(pje);
                 break;
-            case CANCELLED:
-                pjl.printJobCanceled(pje);
+            case PrintJobEvent.JOB_CANCELED:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobCanceled(pje);
                 break;
-            case FAILED:
-                pjl.printJobFailed(pje);
+            case PrintJobEvent.JOB_FAILED:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobFailed(pje);
                 break;
-            case COMPLETED:
-                pjl.printJobCompleted(pje);
+            case PrintJobEvent.JOB_COMPLETE:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobCompleted(pje);
                 break;
-            case NO_MORE:
-                pjl.printJobNoMoreEvents(pje);
+            case PrintJobEvent.NO_MORE_EVENTS:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobNoMoreEvents(pje);
                 break;
-            }
+            default:
+                // As a library cannot throw AssertionError directly
+                throw new IllegalArgumentException(new AssertionError(
+                        "This PrintEventType " + pje.getPrintEventType() + " is unknown!"));
+        }
     }
 
     public void addPrintJobAttributeListener(PrintJobAttributeListener listener, PrintJobAttributeSet attributes) {
@@ -99,6 +121,16 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
         }
     }
 
+    public List<PrintJobAttributeListener> getListeners(PrintJobAttributeEvent pjae) {
+        final ArrayList<PrintJobAttributeListener> list;
+        if (pjall.isEmpty())
+            return new ArrayList<PrintJobAttributeListener>(0);
+        else
+            list = new ArrayList<PrintJobAttributeListener>(1);
+        
+        return list;
+    }
+    
     private void raisePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
         for (PrintJobAttributeListenerEntry pjale : pjall) {
             if (pjale.attributes == null)
