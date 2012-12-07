@@ -17,12 +17,10 @@
 
 package org.ciju.client.event;
 
-import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.print.PrintService;
 import javax.print.event.PrintEvent;
 import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
@@ -32,7 +30,6 @@ import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 import org.ciju.client.IppJob;
 import org.ciju.client.IppPrinter;
-import org.ciju.client.PrintServer;
 
 /**
  *
@@ -57,35 +54,24 @@ public class EventDispatcher implements Runnable {
                 }
                 else if (pe instanceof PrintJobEvent) {
                     final PrintJobEvent pje = (PrintJobEvent) pe;
-                    final Iterator<PrintJobListener> it = ((IppJob) pe.getSource()).listnerIterator(pje);
                     if (pje.getPrintEventType() == PrintJobEvent.DATA_TRANSFER_COMPLETE)
                         for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
                             pjl.printDataTransferCompleted(pje);
                     else if (pje.getPrintEventType() == PrintJobEvent.REQUIRES_ATTENTION)
-                        for (; it.hasNext();) {
-                            PrintJobListener psal = it.next();
-                            psal.printJobRequiresAttention(pje);
-                        }
+                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
+                            pjl.printJobRequiresAttention(pje);
                     else if (pje.getPrintEventType() == PrintJobEvent.JOB_CANCELED)
-                        for (; it.hasNext();) {
-                            PrintJobListener psal = it.next();
-                            psal.printJobCanceled(pje);
-                        }
+                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
+                            pjl.printJobCanceled(pje);
                     else if (pje.getPrintEventType() == PrintJobEvent.JOB_FAILED)
-                        for (; it.hasNext();) {
-                            PrintJobListener psal = it.next();
-                            psal.printJobFailed(pje);
-                        }
+                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
+                            pjl.printJobFailed(pje);
                     else if (pje.getPrintEventType() == PrintJobEvent.JOB_COMPLETE)
-                        for (; it.hasNext();) {
-                            PrintJobListener psal = it.next();
-                            psal.printJobCompleted(pje);
-                        }
+                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
+                            pjl.printJobCompleted(pje);
                     else if (pje.getPrintEventType() == PrintJobEvent.NO_MORE_EVENTS)
-                        for (; it.hasNext();) {
-                            PrintJobListener psal = it.next();
-                            psal.printJobNoMoreEvents(pje);
-                        }
+                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
+                            pjl.printJobNoMoreEvents(pje);
                 }
             }
         }
