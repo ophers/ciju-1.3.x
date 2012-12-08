@@ -22,6 +22,8 @@ import java.net.Proxy;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.print.DocFlavor;
@@ -29,6 +31,7 @@ import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
+import org.ciju.client.event.EventDispatcher;
 import org.ciju.cups.CupsServer;
 import org.ciju.client.ipp.Handler;
 import org.ciju.client.ipp.IppURLConnection;
@@ -42,12 +45,10 @@ public class PrintServer extends PrintServiceLookup {
     private final SecurityManager sm;
     private final URI uri;
     private final Proxy proxy;
-    private static final String packageName;
-    private static final String REGISTER_HANDLERS = "org.ciju.client.RegisterHandlers";
-    private static final boolean hndlrs;
     private enum Type { CUPS }
 
     // Logging facilities
+    private static final String packageName;
     /* package */ static final Logger logger;
     static {
         String name = PrintServer.class.getName();
@@ -56,6 +57,8 @@ public class PrintServer extends PrintServiceLookup {
     }
 
     // Register the IPP ContentHandler and URLStreamHandler
+    private static final String REGISTER_HANDLERS = "org.ciju.client.RegisterHandlers";
+    private static final boolean hndlrs;
     static {
         hndlrs = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
             public Boolean run() {
@@ -90,6 +93,24 @@ public class PrintServer extends PrintServiceLookup {
             logger.log(Level.SEVERE, "Failed to register IPP ContentHandler and/or URLStreamHandler!", ex);
         }
         return false;
+    }
+
+    // Event Dispatcher thread initialization
+    private static BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue;
+    private static Thread eventDispatchThread = null;
+    /*
+     * This method starts the event dispatch thread the first time it
+     * is called.  The event dispatch thread will be started only
+     * if someone registers a listener.
+     */
+    /* package */ static synchronized void startEventDispatchThreadIfNecessary() {
+        if (eventDispatchThread == null) {
+            logger.log(Level.INFO, "Starting event dispatch thread.");
+            eventQueue = new LinkedBlockingQueue<EventDispatcher.PrintEventEntry>();
+            eventDispatchThread = new Thread(new EventDispatcher(eventQueue));
+            eventDispatchThread.setDaemon(true);
+            eventDispatchThread.start();
+        }
     }
 
     public PrintServer() {

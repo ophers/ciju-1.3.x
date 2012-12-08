@@ -19,6 +19,10 @@ package org.ciju.cups;
 
 import java.net.Proxy;
 import java.net.URI;
+import javax.print.DocFlavor;
+import javax.print.MultiDocPrintService;
+import javax.print.PrintService;
+import javax.print.attribute.AttributeSet;
 import org.ciju.client.PrintServer;
 
 
@@ -26,6 +30,26 @@ public class CupsServer extends PrintServer {
 
     public CupsServer(URI uri, Proxy proxy) {
         super(uri, proxy);
+    }
+
+    @Override
+    public PrintService[] getPrintServices(DocFlavor flavor, AttributeSet attributes) {
+        return super.getPrintServices(flavor, attributes); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public PrintService[] getPrintServices() {
+        return super.getPrintServices(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public MultiDocPrintService[] getMultiDocPrintServices(DocFlavor[] flavors, AttributeSet attributes) {
+        return super.getMultiDocPrintServices(flavors, attributes); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public PrintService getDefaultPrintService() {
+        return super.getDefaultPrintService(); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
