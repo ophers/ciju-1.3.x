@@ -112,6 +112,11 @@ public class PrintServer extends PrintServiceLookup {
             eventDispatchThread.start();
         }
     }
+    
+    /* package */ void enqueuePrintEvent(EventDispatcher.PrintEventEntry pee) {
+        startEventDispatchThreadIfNecessary();
+        eventQueue.add(pee);
+    }
 
     public PrintServer() {
         sm = System.getSecurityManager();
