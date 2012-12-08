@@ -126,24 +126,27 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
         if (pjall.isEmpty())
             return new ArrayList<PrintJobAttributeListener>(0);
         else
-            list = new ArrayList<PrintJobAttributeListener>(1);
-        
-        return list;
-    }
-    
-    private void raisePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
+            list = new ArrayList<PrintJobAttributeListener>(pjall.size());
         for (PrintJobAttributeListenerEntry pjale : pjall) {
             if (pjale.attributes == null)
-                pjale.listner.attributeUpdate(pjae);
+                list.add(pjale.listner);
             else {
                 PrintJobAttributeSet attrs = pjae.getAttributes();
                 for (Attribute pja : pjale.attributes.toArray())
                     if (attrs.containsKey(pja.getCategory())) {
-                        pjale.listner.attributeUpdate(pjae);
+                        list.add(pjale.listner);
                         break;
                     }
             }
         }
+        
+        list.trimToSize();
+        return list;
+    }
+    
+    private void raisePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
+        for (PrintJobAttributeListener pjal : getListeners(pjae))
+            pjal.attributeUpdate(pjae);
     }
 
     public void print(Doc doc, PrintRequestAttributeSet attributes) throws PrintException {

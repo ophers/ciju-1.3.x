@@ -17,6 +17,7 @@
 
 package org.ciju.client.event;
 
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -37,7 +38,11 @@ import org.ciju.client.IppPrinter;
  */
 public class EventDispatcher implements Runnable {
     private static final Logger logger = Logger.getLogger(EventDispatcher.class.getName());
-    private final BlockingQueue<PrintEvent> eventQueue = new LinkedBlockingQueue<PrintEvent>();
+    private final BlockingQueue<PrintEvent> eventQueue;
+
+    public EventDispatcher(BlockingQueue<PrintEvent> eventQueue) {
+        this.eventQueue = eventQueue;
+    }
 
     public void run() {
         try {
@@ -54,29 +59,46 @@ public class EventDispatcher implements Runnable {
                 }
                 else if (pe instanceof PrintJobEvent) {
                     final PrintJobEvent pje = (PrintJobEvent) pe;
-                    if (pje.getPrintEventType() == PrintJobEvent.DATA_TRANSFER_COMPLETE)
-                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
-                            pjl.printDataTransferCompleted(pje);
-                    else if (pje.getPrintEventType() == PrintJobEvent.REQUIRES_ATTENTION)
-                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
-                            pjl.printJobRequiresAttention(pje);
-                    else if (pje.getPrintEventType() == PrintJobEvent.JOB_CANCELED)
-                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
-                            pjl.printJobCanceled(pje);
-                    else if (pje.getPrintEventType() == PrintJobEvent.JOB_FAILED)
-                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
-                            pjl.printJobFailed(pje);
-                    else if (pje.getPrintEventType() == PrintJobEvent.JOB_COMPLETE)
-                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
-                            pjl.printJobCompleted(pje);
-                    else if (pje.getPrintEventType() == PrintJobEvent.NO_MORE_EVENTS)
-                        for (PrintJobListener pjl : ((IppJob) pe.getSource()).getListeners(pje))
-                            pjl.printJobNoMoreEvents(pje);
+                    final List<PrintJobListener> pjll = ((IppJob) pe.getSource()).getListeners(pje);
+                    dispatchPrintJobEvent(pje, pjll);
                 }
             }
         }
         catch (InterruptedException ie) {
             logger.log(Level.WARNING, "Event dispatcher thread interrupted. Exiting.", ie);
         }
-    }    
+    }
+
+    protected void dispatchPrintJobEvent(PrintJobEvent pje, List<PrintJobListener> pjll) {
+        switch (pje.getPrintEventType()) {
+            case PrintJobEvent.DATA_TRANSFER_COMPLETE:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printDataTransferCompleted(pje);
+                break;
+            case PrintJobEvent.REQUIRES_ATTENTION:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobRequiresAttention(pje);
+                break;
+            case PrintJobEvent.JOB_CANCELED:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobCanceled(pje);
+                break;
+            case PrintJobEvent.JOB_FAILED:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobFailed(pje);
+                break;
+            case PrintJobEvent.JOB_COMPLETE:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobCompleted(pje);
+                break;
+            case PrintJobEvent.NO_MORE_EVENTS:
+                for (PrintJobListener pjl : pjll)
+                    pjl.printJobNoMoreEvents(pje);
+                break;
+            default:
+                // As a library cannot throw AssertionError directly
+                throw new IllegalArgumentException(new AssertionError(
+                        "This PrintEventType " + pje.getPrintEventType() + " is unknown!"));
+        }
+    }
 }
