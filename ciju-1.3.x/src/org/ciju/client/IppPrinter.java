@@ -22,6 +22,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
@@ -39,6 +40,7 @@ import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
+import org.ciju.client.event.EventDispatcher;
 import org.ciju.client.ipp.IppURLConnection;
 
 /**
@@ -50,14 +52,16 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
     /* See javadoc for overview. Presumably there'll be few (if more than one)
        listners registering but many more events fireing */
     private final CopyOnWriteArrayList<PrintServiceAttributeListener> psall;
+    private final BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue;
     private final URI uri;
     private final Proxy proxy;
 
-    protected IppPrinter(URI uri, Proxy proxy) {
+    protected IppPrinter(URI uri, Proxy proxy, BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue) {
         if (uri == null)
             throw new IllegalArgumentException("Uri cannot be null!");
         this.uri = uri;
         this.proxy = proxy;
+        this.eventQueue = eventQueue;
         psall = new CopyOnWriteArrayList<PrintServiceAttributeListener>();
     }
 
@@ -94,10 +98,6 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
     public void removePrintServiceAttributeListener(PrintServiceAttributeListener listener) {
         if (listener != null)
             psall.remove(listener);
-    }
-
-    public List<PrintServiceAttributeListener> getListeners() {
-        return Collections.unmodifiableList(psall);
     }
     
     private void raisePrintServiceAttributeEvent(PrintServiceAttributeEvent psae) {
