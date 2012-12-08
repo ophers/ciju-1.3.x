@@ -20,6 +20,7 @@ package org.ciju.client;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.print.CancelablePrintJob;
 import javax.print.Doc;
@@ -35,6 +36,7 @@ import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
+import org.ciju.client.event.EventDispatcher;
 
 /**
  *
@@ -43,13 +45,15 @@ import javax.print.event.PrintJobListener;
 public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob {
 
     private final IppPrinter printer;
+    private final BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue;
     /* See javadoc for overview. Presumably there'll be few (if more than one)
        listners registering but many more events fireing */
     private final CopyOnWriteArrayList<PrintJobListener> pjll;
     private final CopyOnWriteArrayList<PrintJobAttributeListenerEntry> pjall;
 
-    protected IppJob(IppPrinter printer) {
+    protected IppJob(IppPrinter printer, BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue) {
         this.printer = printer;
+        this.eventQueue = eventQueue;
         this.pjll = new CopyOnWriteArrayList<PrintJobListener>();
         this.pjall = new CopyOnWriteArrayList<PrintJobAttributeListenerEntry>();
     }
@@ -70,10 +74,6 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
     public void removePrintJobListener(PrintJobListener listener) {
         if (listener != null)
             pjll.remove(listener);
-    }
-
-    public List<PrintJobListener> getListeners(PrintJobEvent pje) {
-        return Collections.unmodifiableList(pjll);
     }
 
     private void raisePrintJobEvent(PrintJobEvent pje) {
@@ -121,7 +121,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
         }
     }
 
-    public List<PrintJobAttributeListener> getListeners(PrintJobAttributeEvent pjae) {
+    private List<PrintJobAttributeListener> getListeners(PrintJobAttributeEvent pjae) {
         final ArrayList<PrintJobAttributeListener> list;
         if (pjall.isEmpty())
             return new ArrayList<PrintJobAttributeListener>(0);

@@ -19,7 +19,6 @@ package org.ciju.client.event;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.print.event.PrintEvent;
@@ -29,8 +28,6 @@ import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
-import org.ciju.client.IppJob;
-import org.ciju.client.IppPrinter;
 
 /**
  *
@@ -38,28 +35,29 @@ import org.ciju.client.IppPrinter;
  */
 public class EventDispatcher implements Runnable {
     private static final Logger logger = Logger.getLogger(EventDispatcher.class.getName());
-    private final BlockingQueue<PrintEvent> eventQueue;
+    private final BlockingQueue<PrintEventEntry> eventQueue;
 
-    public EventDispatcher(BlockingQueue<PrintEvent> eventQueue) {
+    public EventDispatcher(BlockingQueue<PrintEventEntry> eventQueue) {
         this.eventQueue = eventQueue;
     }
 
     public void run() {
         try {
             while (true) {
-                final PrintEvent pe = eventQueue.take();
+                final PrintEventEntry pee = eventQueue.take();
+                final PrintEvent pe = pee.event;
                 if (pe instanceof PrintServiceAttributeEvent) {
-                    for (PrintServiceAttributeListener psal : ((IppPrinter) pe.getSource()).getListeners())
+                    for (PrintServiceAttributeListener psal : pee.getListeners(PrintServiceAttributeListener.class))
                         psal.attributeUpdate((PrintServiceAttributeEvent) pe);
                 }
                 else if (pe instanceof PrintJobAttributeEvent) {
                     final PrintJobAttributeEvent pjae = (PrintJobAttributeEvent) pe;
-                    for (PrintJobAttributeListener pjal : ((IppJob) pe.getSource()).getListeners(pjae))
+                    for (PrintJobAttributeListener pjal : pee.getListeners(PrintJobAttributeListener.class))
                         pjal.attributeUpdate(pjae);
                 }
                 else if (pe instanceof PrintJobEvent) {
                     final PrintJobEvent pje = (PrintJobEvent) pe;
-                    final List<PrintJobListener> pjll = ((IppJob) pe.getSource()).getListeners(pje);
+                    final List<PrintJobListener> pjll = pee.getListeners(PrintJobListener.class);
                     dispatchPrintJobEvent(pje, pjll);
                 }
             }
@@ -96,9 +94,35 @@ public class EventDispatcher implements Runnable {
                     pjl.printJobNoMoreEvents(pje);
                 break;
             default:
+                final String message = "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
+                logger.log(Level.SEVERE, message);
                 // As a library cannot throw AssertionError directly
-                throw new IllegalArgumentException(new AssertionError(
-                        "This PrintEventType " + pje.getPrintEventType() + " is unknown!"));
+                throw new IllegalArgumentException(new AssertionError(message));
+        }
+    }
+
+    public static class PrintEventEntry {
+        private final PrintEvent event;
+        private final List<?> listeners;
+
+        public PrintEventEntry(PrintServiceAttributeEvent event, List<PrintServiceAttributeListener> listeners) {
+            this.event = event;
+            this.listeners = listeners;
+        }
+
+        public PrintEventEntry(PrintJobAttributeEvent event, List<PrintJobAttributeListener> listeners) {
+            this.event = event;
+            this.listeners = listeners;
+        }
+
+        public PrintEventEntry(PrintJobEvent event, List<PrintJobListener> listeners) {
+            this.event = event;
+            this.listeners = listeners;
+        }
+
+        @SuppressWarnings("unchecked")
+        private <T> List<T> getListeners(Class<T> aClass) {
+            return (List<T>) listeners;
         }
     }
 }
