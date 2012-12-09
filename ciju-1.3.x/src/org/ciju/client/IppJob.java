@@ -18,9 +18,7 @@
 package org.ciju.client;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.print.CancelablePrintJob;
 import javax.print.Doc;
@@ -45,15 +43,13 @@ import org.ciju.client.event.EventDispatcher;
 public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob {
 
     private final IppPrinter printer;
-    private final BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue;
     /* See javadoc for overview. Presumably there'll be few (if more than one)
        listners registering but many more events fireing */
     private final CopyOnWriteArrayList<PrintJobListener> pjll;
     private final CopyOnWriteArrayList<PrintJobAttributeListenerEntry> pjall;
 
-    protected IppJob(IppPrinter printer, BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue) {
+    protected IppJob(IppPrinter printer) {
         this.printer = printer;
-        this.eventQueue = eventQueue;
         this.pjll = new CopyOnWriteArrayList<PrintJobListener>();
         this.pjall = new CopyOnWriteArrayList<PrintJobAttributeListenerEntry>();
     }
@@ -108,6 +104,11 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
                         "This PrintEventType " + pje.getPrintEventType() + " is unknown!"));
         }
     }
+    
+    private void enqueuePrintJobEvent(PrintJobEvent pje) {
+        if (!pjll.isEmpty())
+            PrintServer.enqueuePrintEvent(new EventDispatcher.PrintEventEntry(pje, pjll));
+    }
 
     public void addPrintJobAttributeListener(PrintJobAttributeListener listener, PrintJobAttributeSet attributes) {
         if (listener != null) {
@@ -147,6 +148,12 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
     private void raisePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
         for (PrintJobAttributeListener pjal : getListeners(pjae))
             pjal.attributeUpdate(pjae);
+    }
+    
+    private void enqueuePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
+        final List<PrintJobAttributeListener> ll = getListeners(pjae);
+        if (!ll.isEmpty())
+            PrintServer.enqueuePrintEvent(new EventDispatcher.PrintEventEntry(pjae, ll));
     }
 
     public void print(Doc doc, PrintRequestAttributeSet attributes) throws PrintException {

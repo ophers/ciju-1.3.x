@@ -101,7 +101,7 @@ public class PrintServer extends PrintServiceLookup {
     /*
      * This method starts the event dispatch thread the first time it
      * is called.  The event dispatch thread will be started only
-     * if someone registers a listener.
+     * if someone registers a listener and an event is fired.
      */
     /* package */ static synchronized void startEventDispatchThreadIfNecessary() {
         if (eventDispatchThread == null) {
@@ -113,7 +113,7 @@ public class PrintServer extends PrintServiceLookup {
         }
     }
     
-    /* package */ void enqueuePrintEvent(EventDispatcher.PrintEventEntry pee) {
+    /* package */ static void enqueuePrintEvent(EventDispatcher.PrintEventEntry pee) {
         startEventDispatchThreadIfNecessary();
         eventQueue.add(pee);
     }
