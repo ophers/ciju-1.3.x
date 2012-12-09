@@ -22,6 +22,7 @@ import java.net.Proxy;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -31,7 +32,13 @@ import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
-import org.ciju.client.event.EventDispatcher;
+import javax.print.event.PrintEvent;
+import javax.print.event.PrintJobAttributeEvent;
+import javax.print.event.PrintJobAttributeListener;
+import javax.print.event.PrintJobEvent;
+import javax.print.event.PrintJobListener;
+import javax.print.event.PrintServiceAttributeEvent;
+import javax.print.event.PrintServiceAttributeListener;
 import org.ciju.cups.CupsServer;
 import org.ciju.client.ipp.Handler;
 import org.ciju.client.ipp.IppURLConnection;
@@ -98,6 +105,98 @@ public class PrintServer extends PrintServiceLookup {
     // Event Dispatcher thread initialization
     private static BlockingQueue<EventDispatcher.PrintEventEntry> eventQueue;
     private static Thread eventDispatchThread = null;
+
+    /**
+     *
+     * @author Opher Shachar
+     */
+    protected static class EventDispatcher implements Runnable {
+        public void run() {
+            try {
+                while (true) {
+                    final PrintEventEntry pee = eventQueue.take();
+                    final PrintEvent pe = pee.event;
+                    if (pe instanceof PrintServiceAttributeEvent) {
+                        for (PrintServiceAttributeListener psal : pee.getListeners(PrintServiceAttributeListener.class))
+                            psal.attributeUpdate((PrintServiceAttributeEvent) pe);
+                    }
+                    else if (pe instanceof PrintJobAttributeEvent) {
+                        final PrintJobAttributeEvent pjae = (PrintJobAttributeEvent) pe;
+                        for (PrintJobAttributeListener pjal : pee.getListeners(PrintJobAttributeListener.class))
+                            pjal.attributeUpdate(pjae);
+                    }
+                    else if (pe instanceof PrintJobEvent) {
+                        final PrintJobEvent pje = (PrintJobEvent) pe;
+                        final List<PrintJobListener> pjll = pee.getListeners(PrintJobListener.class);
+                        dispatchPrintJobEvent(pje, pjll);
+                    }
+                }
+            }
+            catch (InterruptedException ie) {
+                logger.log(Level.WARNING, "Event dispatcher thread interrupted. Exiting.", ie);
+            }
+        }
+
+        protected void dispatchPrintJobEvent(PrintJobEvent pje, List<PrintJobListener> pjll) {
+            switch (pje.getPrintEventType()) {
+                case PrintJobEvent.DATA_TRANSFER_COMPLETE:
+                    for (PrintJobListener pjl : pjll)
+                        pjl.printDataTransferCompleted(pje);
+                    break;
+                case PrintJobEvent.REQUIRES_ATTENTION:
+                    for (PrintJobListener pjl : pjll)
+                        pjl.printJobRequiresAttention(pje);
+                    break;
+                case PrintJobEvent.JOB_CANCELED:
+                    for (PrintJobListener pjl : pjll)
+                        pjl.printJobCanceled(pje);
+                    break;
+                case PrintJobEvent.JOB_FAILED:
+                    for (PrintJobListener pjl : pjll)
+                        pjl.printJobFailed(pje);
+                    break;
+                case PrintJobEvent.JOB_COMPLETE:
+                    for (PrintJobListener pjl : pjll)
+                        pjl.printJobCompleted(pje);
+                    break;
+                case PrintJobEvent.NO_MORE_EVENTS:
+                    for (PrintJobListener pjl : pjll)
+                        pjl.printJobNoMoreEvents(pje);
+                    break;
+                default:
+                    final String message = "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
+                    logger.log(Level.SEVERE, message);
+                    // As a library cannot throw AssertionError directly
+                    throw new IllegalArgumentException(new AssertionError(message));
+            }
+        }
+
+        public static class PrintEventEntry {
+            private final PrintEvent event;
+            private final List<?> listeners;
+
+            public PrintEventEntry(PrintServiceAttributeEvent event, List<PrintServiceAttributeListener> listeners) {
+                this.event = event;
+                this.listeners = listeners;
+            }
+
+            public PrintEventEntry(PrintJobAttributeEvent event, List<PrintJobAttributeListener> listeners) {
+                this.event = event;
+                this.listeners = listeners;
+            }
+
+            public PrintEventEntry(PrintJobEvent event, List<PrintJobListener> listeners) {
+                this.event = event;
+                this.listeners = listeners;
+            }
+
+            @SuppressWarnings("unchecked")
+            private <T> List<T> getListeners(Class<T> aClass) {
+                return (List<T>) listeners;
+            }
+        }
+    }
+    
     /*
      * This method starts the event dispatch thread the first time it
      * is called.  The event dispatch thread will be started only
@@ -107,7 +206,7 @@ public class PrintServer extends PrintServiceLookup {
         if (eventDispatchThread == null) {
             logger.log(Level.INFO, "Starting event dispatch thread.");
             eventQueue = new LinkedBlockingQueue<EventDispatcher.PrintEventEntry>();
-            eventDispatchThread = new Thread(new EventDispatcher(eventQueue));
+            eventDispatchThread = new Thread(new EventDispatcher());
             eventDispatchThread.setDaemon(true);
             eventDispatchThread.start();
         }
