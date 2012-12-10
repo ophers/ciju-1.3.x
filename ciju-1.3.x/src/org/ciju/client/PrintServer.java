@@ -111,33 +111,45 @@ public class PrintServer extends PrintServiceLookup {
      * @author Opher Shachar
      */
     protected static class EventDispatcher implements Runnable {
-        public void run() {
-            try {
-                while (true) {
+        public final void run() {
+            while (true) {
+                try {
                     final PrintEventEntry pee = eventQueue.take();
-                    final PrintEvent pe = pee.event;
-                    if (pe instanceof PrintServiceAttributeEvent) {
-                        for (PrintServiceAttributeListener psal : pee.getListeners(PrintServiceAttributeListener.class))
-                            psal.attributeUpdate((PrintServiceAttributeEvent) pe);
-                    }
-                    else if (pe instanceof PrintJobAttributeEvent) {
-                        final PrintJobAttributeEvent pjae = (PrintJobAttributeEvent) pe;
-                        for (PrintJobAttributeListener pjal : pee.getListeners(PrintJobAttributeListener.class))
-                            pjal.attributeUpdate(pjae);
-                    }
-                    else if (pe instanceof PrintJobEvent) {
-                        final PrintJobEvent pje = (PrintJobEvent) pe;
-                        final List<PrintJobListener> pjll = pee.getListeners(PrintJobListener.class);
-                        dispatchPrintJobEvent(pje, pjll);
-                    }
+                    dispatchPrintEvent(pee);
                 }
-            }
-            catch (InterruptedException ie) {
-                logger.log(Level.WARNING, "Event dispatcher thread interrupted. Exiting.", ie);
+                catch (RuntimeException re) {
+                    logger.log(Level.INFO, "An event listener threw an exception." + 
+                            " Some listeners may not have been invoked.", re);
+                }
+                catch (InterruptedException ie) {
+                    logger.log(Level.WARNING, "Event dispatcher thread interrupted. Exiting.", ie);
+                    return;
+                }
             }
         }
 
-        protected void dispatchPrintJobEvent(PrintJobEvent pje, List<PrintJobListener> pjll) {
+        private void dispatchPrintEvent(final PrintEventEntry pee) {
+            final PrintEvent pe = pee.event;
+            if (pe instanceof PrintServiceAttributeEvent) {
+                for (PrintServiceAttributeListener psal : pee.getListeners(PrintServiceAttributeListener.class))
+                    psal.attributeUpdate((PrintServiceAttributeEvent) pe);
+            }
+            else if (pe instanceof PrintJobAttributeEvent) {
+                final PrintJobAttributeEvent pjae = (PrintJobAttributeEvent) pe;
+                for (PrintJobAttributeListener pjal : pee.getListeners(PrintJobAttributeListener.class))
+                    pjal.attributeUpdate(pjae);
+            }
+            else if (pe instanceof PrintJobEvent) {
+                final PrintJobEvent pje = (PrintJobEvent) pe;
+                final List<PrintJobListener> pjll = pee.getListeners(PrintJobListener.class);
+                dispatchPrintJobEvent(pje, pjll);
+            }
+            else {
+                dispatchUnknownPrintEvent(pe, pee.listeners);
+            }
+        }
+        
+        private void dispatchPrintJobEvent(PrintJobEvent pje, List<PrintJobListener> pjll) {
             switch (pje.getPrintEventType()) {
                 case PrintJobEvent.DATA_TRANSFER_COMPLETE:
                     for (PrintJobListener pjl : pjll)
@@ -164,11 +176,22 @@ public class PrintServer extends PrintServiceLookup {
                         pjl.printJobNoMoreEvents(pje);
                     break;
                 default:
-                    final String message = "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
-                    logger.log(Level.SEVERE, message);
-                    // As a library cannot throw AssertionError directly
-                    throw new IllegalArgumentException(new AssertionError(message));
+                    if (!dispatchUnknownPrintJobEvent(pje, pjll)) {
+                        final String message = "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
+                        logger.log(Level.SEVERE, message);
+                        // As a library cannot throw AssertionError directly
+                        throw new IllegalArgumentException(new AssertionError(message));
+                    }
             }
+        }
+
+        protected void dispatchUnknownPrintEvent(PrintEvent pe, List<?> listeners) {
+            // This does nothing. Should be overriden in interested subclasses.
+        }
+
+        protected boolean dispatchUnknownPrintJobEvent(PrintJobEvent pje, List<PrintJobListener> listeners) {
+            // This does nothing. Should be overriden in interested subclasses.
+            return false;
         }
 
         public static class PrintEventEntry {
