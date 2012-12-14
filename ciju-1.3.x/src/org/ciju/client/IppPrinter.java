@@ -38,7 +38,6 @@ import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 import org.ciju.client.ipp.IppURLConnection;
-import org.ciju.client.PrintServer.EventDispatcher;
 
 /**
  *
@@ -102,7 +101,7 @@ public class IppPrinter implements PrintService, MultiDocPrintService {
     
     private void enqueuePrintServiceAttributeEvent(PrintServiceAttributeEvent psae) {
         if (!psall.isEmpty())
-            PrintServer.enqueuePrintEvent(new EventDispatcher.PrintEventEntry(psae, psall));
+            PrintServer.enqueuePrintEvent(psae, psall);
     }
 
     public PrintServiceAttributeSet getAttributes() {

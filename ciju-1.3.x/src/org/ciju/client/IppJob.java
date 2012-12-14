@@ -34,7 +34,6 @@ import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
-import org.ciju.client.PrintServer.EventDispatcher;
 
 /**
  *
@@ -107,7 +106,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
     
     private void enqueuePrintJobEvent(PrintJobEvent pje) {
         if (!pjll.isEmpty())
-            PrintServer.enqueuePrintEvent(new EventDispatcher.PrintEventEntry(pje, pjll));
+            PrintServer.enqueuePrintEvent(pje, pjll);
     }
 
     public void addPrintJobAttributeListener(PrintJobAttributeListener listener, PrintJobAttributeSet attributes) {
@@ -153,7 +152,7 @@ public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob
     private void enqueuePrintJobAttributeEvent(PrintJobAttributeEvent pjae) {
         final List<PrintJobAttributeListener> ll = getListeners(pjae);
         if (!ll.isEmpty())
-            PrintServer.enqueuePrintEvent(new EventDispatcher.PrintEventEntry(pjae, ll));
+            PrintServer.enqueuePrintEvent(pjae, ll);
     }
 
     public void print(Doc doc, PrintRequestAttributeSet attributes) throws PrintException {

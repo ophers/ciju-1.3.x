@@ -19,13 +19,10 @@ package org.ciju.cups;
 
 import java.net.Proxy;
 import java.net.URI;
-import java.util.List;
 import javax.print.DocFlavor;
 import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
 import javax.print.attribute.AttributeSet;
-import javax.print.event.PrintJobEvent;
-import javax.print.event.PrintJobListener;
 import org.ciju.client.PrintServer;
 
 
