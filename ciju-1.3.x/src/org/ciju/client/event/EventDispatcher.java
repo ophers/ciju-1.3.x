@@ -41,7 +41,7 @@ public class EventDispatcher implements Runnable {
     // Logging facilities
     private static final Logger logger = Logger.getLogger(EventDispatcher.class.getName());
 
-    protected EventDispatcher(DispatchPrintEvent dispatchOther) {
+    public EventDispatcher(DispatchPrintEvent dispatchOther) {
         this.eventQueue = new LinkedBlockingQueue<PrintEventEntry>();
         this.dispatchOther = dispatchOther;
     }
@@ -56,7 +56,7 @@ public class EventDispatcher implements Runnable {
                 final PrintEventEntry pee = eventQueue.take();
                 dispatchPrintEvent(pee);
             } catch (RuntimeException re) {
-                logger.log(Level.INFO, "An event listener threw an exception." + " Some listeners may not have been invoked.", re);
+                logger.log(Level.INFO, "An event listener threw an exception. Some listeners may not have been invoked.", re);
             } catch (InterruptedException ie) {
                 logger.log(Level.WARNING, "Event dispatcher thread interrupted. Exiting.", ie);
                 return;

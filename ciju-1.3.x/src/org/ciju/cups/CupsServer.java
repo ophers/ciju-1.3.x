@@ -19,6 +19,8 @@ package org.ciju.cups;
 
 import java.net.Proxy;
 import java.net.URI;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.DocFlavor;
 import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
@@ -28,8 +30,23 @@ import org.ciju.client.PrintServer;
 
 public class CupsServer extends PrintServer {
 
+    // Logging facilities
+    /* package */ static final Logger logger;
+    static {
+        String name = PrintServer.class.getName();
+        logger = Logger.getLogger(name.substring(0, name.lastIndexOf('.')));
+    }
+
+    private static boolean ced_registered = false;
+    
     public CupsServer(URI uri, Proxy proxy) {
         super(uri, proxy);
+        synchronized (CupsServer.class) {
+            if (!ced_registered) {
+                setDispatchPrintEvent(new CupsEventDispatcher());
+                ced_registered = true;
+            }
+        }
     }
 
     @Override
