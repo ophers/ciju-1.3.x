@@ -14,21 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.ciju.client.event;
 
-import java.util.List;
-import javax.print.event.PrintEvent;
-import javax.print.event.PrintJobEvent;
-import javax.print.event.PrintJobListener;
+package org.ciju.client;
+
+import java.net.Proxy;
+import java.net.URI;
 
 /**
  *
  * @author Opher Shachar
  */
-public interface DispatchPrintEvent {
+public class CupsPrinter extends IppPrinter {
 
-    public boolean dispatchPrintEvent(PrintEvent pe, List<?> listeners);
+    protected CupsPrinter(URI uri, Proxy proxy) {
+        super(uri, proxy);
+    }
 
-    public boolean dispatchPrintJobEvent(PrintJobEvent pje, List<? extends PrintJobListener> listeners);
-    
 }

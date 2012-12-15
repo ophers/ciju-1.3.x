@@ -15,23 +15,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.cups;
+package org.ciju.client.event;
 
 import java.util.List;
 import javax.print.event.PrintEvent;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
-import org.ciju.client.event.DispatchPrintEvent;
 
 
 public class CupsEventDispatcher implements DispatchPrintEvent {
+       
+   /** 
+    * The job was moved to another printer.
+    */
+   public static final int JOB_MOVED = 1001;
 
     public boolean dispatchPrintEvent(PrintEvent pe, List<?> listeners) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return false;
     }
 
-    public boolean dispatchPrintJobEvent(PrintJobEvent pje, List<PrintJobListener> listeners) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public boolean dispatchPrintJobEvent(PrintJobEvent pje, List<? extends PrintJobListener> listeners) {
+        switch (pje.getPrintEventType()) {
+            case JOB_MOVED:
+                for (PrintJobListener pjl : listeners) {
+                    if (pjl instanceof CupsPrintJobListener)
+                        ((CupsPrintJobListener) pjl).printJobMoved(pje);
+                }
+                break;
+            default:
+                return false;
+        }
+        return true;
     }
 
 }

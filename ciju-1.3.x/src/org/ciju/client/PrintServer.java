@@ -31,11 +31,9 @@ import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
 import javax.print.event.PrintEvent;
-import org.ciju.client.event.DispatchPrintEvent;
 import org.ciju.client.event.EventDispatcher;
 import org.ciju.client.ipp.Handler;
 import org.ciju.client.ipp.IppURLConnection;
-import org.ciju.cups.CupsServer;
 
 /**
  *
@@ -99,7 +97,6 @@ public class PrintServer extends PrintServiceLookup {
     // Event Dispatcher thread initialization
     private static Thread eventDispatchThread = null;
     private static EventDispatcher eventDispatcher = null;
-    private static DispatchPrintEvent dispatchOther = null;
     
     /**
      * This method starts the event dispatch thread the first time it
@@ -109,19 +106,11 @@ public class PrintServer extends PrintServiceLookup {
     private static synchronized void startEventDispatchThreadIfNecessary() {
         if (eventDispatchThread == null) {
             logger.log(Level.INFO, "Starting event dispatch thread.");
-            eventDispatcher = new EventDispatcher(dispatchOther);
+            eventDispatcher = new EventDispatcher();
             eventDispatchThread = new Thread(eventDispatcher);
             eventDispatchThread.setDaemon(true);
             eventDispatchThread.start();
         }
-    }
-    
-    protected static synchronized void setDispatchPrintEvent(DispatchPrintEvent dpe) {
-        if (eventDispatchThread != null)
-            throw new IllegalStateException("Event dispatch thread already started.");
-        else if (dispatchOther != null)
-            throw new IllegalStateException("Custom print event dispacher already set.");
-        dispatchOther = dpe;
     }
     
     protected static void enqueuePrintEvent(PrintEvent event, List<?> listeners) {

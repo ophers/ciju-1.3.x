@@ -14,20 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.ciju.client.event;
 
-package org.ciju.cups;
-
-import org.ciju.client.IppJob;
-import org.ciju.client.IppPrinter;
+import javax.print.event.PrintJobEvent;
+import javax.print.event.PrintJobListener;
 
 /**
  *
  * @author Opher Shachar
  */
-public class CupsJob extends IppJob {
-
-    protected CupsJob(IppPrinter printer) {
-        super(printer);
-    }
-
+public interface CupsPrintJobListener extends PrintJobListener {
+    
+    public void printJobMoved(PrintJobEvent pje);
 }

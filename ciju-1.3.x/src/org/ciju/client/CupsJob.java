@@ -15,20 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.cups;
-
-import java.net.Proxy;
-import java.net.URI;
-import org.ciju.client.IppPrinter;
+package org.ciju.client;
 
 /**
  *
  * @author Opher Shachar
  */
-public class CupsPrinter extends IppPrinter {
+public class CupsJob extends IppJob {
 
-    protected CupsPrinter(URI uri, Proxy proxy) {
-        super(uri, proxy);
+    protected CupsJob(IppPrinter printer) {
+        super(printer);
     }
 
 }
