@@ -47,7 +47,7 @@ public class EventDispatcher implements Runnable {
     }
 
     public EventDispatcher() {
-        this(null);
+        this(new CupsEventDispatcher());
     }
 
     public final void run() {
@@ -80,7 +80,7 @@ public class EventDispatcher implements Runnable {
             final List<PrintJobListener> pjll = pee.getListeners(PrintJobListener.class);
             dispatchPrintJobEvent(pje, pjll);
         } else {
-            if (dispatchOther != null && !dispatchOther.dispatchPrintEvent(pe, pee.listeners)) {
+            if (dispatchOther == null || !dispatchOther.dispatchPrintEvent(pe, pee.listeners)) {
                 final String message = "This PrintEvent " + pe + " is unknown!";
                 logger.log(Level.SEVERE, message);
                 // As a library cannot throw AssertionError directly
@@ -122,7 +122,7 @@ public class EventDispatcher implements Runnable {
                 }
                 break;
             default:
-                if (dispatchOther != null && !dispatchOther.dispatchPrintJobEvent(pje, pjll)) {
+                if (dispatchOther == null || !dispatchOther.dispatchPrintJobEvent(pje, pjll)) {
                     final String message = "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
                     logger.log(Level.SEVERE, message);
                     // As a library cannot throw AssertionError directly
