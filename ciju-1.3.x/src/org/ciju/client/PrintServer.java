@@ -71,20 +71,17 @@ public class PrintServer extends PrintServiceLookup {
             boolean doit = Boolean.parseBoolean(System.getProperty(REGISTER_HANDLERS, "true"));
             if (doit) {
                 // Register content handler
-                StringBuilder prop = new StringBuilder(packageName)
-                        .append('|')
-                        .append(System.getProperty("java.content.handler.pkgs", ""));
-                if (prop.length() == packageName.length() + 1)
-                    prop.setLength(packageName.length());
+                String pkgs = System.getProperty("java.content.handler.pkgs", "");
+                StringBuilder prop = new StringBuilder(packageName);
+                if (pkgs.length() > 0)
+                    prop.append('|').append(pkgs);
                 System.setProperty("java.content.handler.pkgs", prop.toString());
                 
                 // Register protocol handler
-                prop.setLength(0);
-                prop.append(packageName)
-                    .append('|')
-                    .append(System.getProperty("java.protocol.handler.pkgs", ""));
-                if (prop.length() == packageName.length() + 1)
-                    prop.setLength(packageName.length());
+                pkgs = System.getProperty("java.protocol.handler.pkgs", "");
+                prop.setLength(packageName.length());
+                if (pkgs.length() > 0)
+                    prop.append('|').append(pkgs);
                 System.setProperty("java.protocol.handler.pkgs", prop.toString());
                 return true;
             }
