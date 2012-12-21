@@ -52,7 +52,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
     /**
      * The {@link IppObject} object that represents the request.
      */
-    protected IppObject ipp;
+    protected IppRequest ipp;
 
     /**
      * Constructor for the IppURLConnection class.
@@ -128,7 +128,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
      */
-    public IppURLConnection setIppRequest(IppObject request) {
+    public IppURLConnection setIppRequest(IppRequest request) {
         if (connected)
             throw new IllegalStateException("Already connected");
         if (request == null) 
@@ -141,7 +141,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
      * Get the {@link IppObject} request object set earlier with {@link #setIppRequest}.
      * @return the <code>IppObject</code> object set with <code>setIppRequest</code>
      */
-    public IppObject getIppRequest() {
+    public IppRequest getIppRequest() {
         return ipp;
     }
     
