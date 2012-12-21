@@ -17,21 +17,14 @@
 
 package org.ciju.client.ipp;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-
 /**
  *
  * @author Opher Shachar
  */
-public class IppTransport {
+public class IppRequest extends IppObject {
 
-    public static void writeRequest(OutputStream os, IppRequest ipp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public static IppResponse processResponse(InputStream inputStream, int contentLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public IppRequest() {
+        super();
     }
 
 }

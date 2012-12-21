@@ -31,7 +31,7 @@ import java.net.URLConnection;
  */
 public class ipp extends ContentHandler implements ContentHandlerFactory
 {
-    private static ipp singleton = new ipp(); 
+    private static final ipp singleton = new ipp(); 
 
 
     /**

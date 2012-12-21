@@ -151,7 +151,7 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
     }
 
     @Override
-    public IppURLConnection setIppRequest(IppObject request) {
+    public IppURLConnection setIppRequest(IppRequest request) {
         if (gos_called)
             throw new IllegalStateException("Output stream was previously requested.");
         return super.setIppRequest(request);
