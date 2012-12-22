@@ -26,7 +26,7 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
  */
 public class IppObject {
 
-    Attribute findAttribute(String attributesnaturallanguage, ValueTag valueTag) {
+    Attribute getAttribute(String name, ValueTag valueTag) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

@@ -143,7 +143,7 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
         if (ipp == null)
             throw new IllegalStateException("IPP request was not set.");
         String al = getRequestProperty("Accept-Language");
-        Attribute attr = ipp.findAttribute("attributes-natural-language", ValueTag.NATURAL_LANGUAGE);
+        Attribute attr = ipp.getAttribute("attributes-natural-language", ValueTag.NATURAL_LANGUAGE);
         setRequestProperty("Accept-Language", attr.toString());
         addRequestProperty("Accept-Language", al);
         OutputStream os = getOutputStream();
