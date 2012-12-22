@@ -32,12 +32,12 @@ public class GenericTextSyntax extends TextSyntax {
     protected GenericTextSyntax(String value, Locale locale, ValueTag tag) {
         super(value, locale);
         if (tag == ValueTag.NAME)
-            if (locale == null)
+            if (locale == null || locale.equals(Locale.getDefault()))
                 this.tag = ValueTag.NAME_WITHOUT_LANGUAGE;
             else
                 this.tag = ValueTag.NAME_WITH_LANGUAGE;
         else if (tag == ValueTag.TEXT)
-            if (locale == null)
+            if (locale == null || locale.equals(Locale.getDefault()))
                 this.tag = ValueTag.TEXT_WITHOUT_LANGUAGE;
             else
                 this.tag = ValueTag.TEXT_WITH_LANGUAGE;
