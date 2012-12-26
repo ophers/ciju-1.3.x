@@ -58,10 +58,13 @@ public class IppEncoding {
         }
         
         
-        private static final Map<Integer, DelimiterTag> vmap = new HashMap<Integer, DelimiterTag>(8, 1);
-        static {
-            for (DelimiterTag e : DelimiterTag.values())
+        private static final Map<Integer, DelimiterTag> vmap = initVmap();
+        private static Map<Integer, DelimiterTag> initVmap() {
+            final DelimiterTag[] dts = DelimiterTag.values();
+            final HashMap<Integer, DelimiterTag> vmap = new HashMap<Integer, DelimiterTag>(dts.length);
+            for (DelimiterTag e : dts)
                 vmap.put(e.value, e);
+            return vmap;
         }
         
         public static DelimiterTag valueOf(Integer i) {
@@ -140,10 +143,13 @@ public class IppEncoding {
         }
         
         
-        private static final Map<Integer, ValueTag> vmap = new HashMap<Integer, ValueTag>(25, 1);
-        static {
-            for (ValueTag e : ValueTag.values())
+        private static final Map<Integer, ValueTag> vmap = initVmap();
+        private static Map<Integer, ValueTag> initVmap() {
+            final ValueTag[] vts = ValueTag.values();
+            final HashMap<Integer, ValueTag> vmap = new HashMap<Integer, ValueTag>(vts.length);
+            for (ValueTag e : vts)
                 vmap.put(e.value, e);
+            return vmap;
         }
         
         public static ValueTag valueOf(Integer i) {
