@@ -28,7 +28,7 @@ public class IppEncoding {
 
     public static final int PORT = 631;
     
-    public enum DelimiterTag {
+    public enum GroupTag {
         // 0x00 is reserved for future IETF standard track document
         OPERATION(0x01),        // operation-attributes-tag
         JOB(0x02),              // job-attributes-tag
@@ -49,7 +49,7 @@ public class IppEncoding {
         
         private final int value;
         
-        private DelimiterTag(int value) {
+        private GroupTag(int value) {
             this.value = value;
         }
         
@@ -58,17 +58,17 @@ public class IppEncoding {
         }
         
         
-        private static final Map<Integer, DelimiterTag> vmap = initVmap();
-        private static Map<Integer, DelimiterTag> initVmap() {
-            final DelimiterTag[] dts = DelimiterTag.values();
-            final HashMap<Integer, DelimiterTag> vmap = new HashMap<Integer, DelimiterTag>(dts.length);
-            for (DelimiterTag e : dts)
+        private static final Map<Integer, GroupTag> vmap = initVmap();
+        private static Map<Integer, GroupTag> initVmap() {
+            final GroupTag[] dts = GroupTag.values();
+            final HashMap<Integer, GroupTag> vmap = new HashMap<Integer, GroupTag>(dts.length);
+            for (GroupTag e : dts)
                 vmap.put(e.value, e);
             return vmap;
         }
         
-        public static DelimiterTag valueOf(Integer i) {
-            DelimiterTag e = vmap.get(i);
+        public static GroupTag valueOf(Integer i) {
+            GroupTag e = vmap.get(i);
             if (i == null)
                 throw new NullPointerException("i is null");
             if (e == null)
@@ -103,10 +103,11 @@ public class IppEncoding {
         DATE_TIME(0x31),
         RESOLUTION(0x32),
         RANGE_OF_INTEGER(0x33),
-        // 0x34 is reserved        
+        // 0x34 - see below
         TEXT_WITH_LANGUAGE(0x35),
         NAME_WITH_LANGUAGE(0x36),
-        // 0x37-0x3F are reserved        
+        // 0x37 - see below
+        // 0x38-0x3F are reserved
         
         // The following specifies the character-string values
         // 0x40 is reserved
@@ -119,7 +120,13 @@ public class IppEncoding {
         CHARSET(0x47),
         NATURAL_LANGUAGE(0x48),
         MIME_MEDIA_TYPE(0x49),
-        // 0x4A-0x5F are reserved
+        // 0x4A - see below
+        // 0x4B-0x5F are reserved
+        
+        // From RFC3382: IPP/1.1 - The 'collection' attribute syntax
+        BEGIN_COLLECTION(0x34),        
+        END_COLLECTION(0x37),        
+        MEMBER_ATTR_NAME(0x4A),        
         
         // 0x60-0x7E are reserved
         // 0x7F is reserved for extending types beyond the 255 values
