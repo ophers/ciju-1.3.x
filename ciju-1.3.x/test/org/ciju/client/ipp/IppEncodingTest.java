@@ -50,16 +50,16 @@ public class IppEncodingTest {
 
     @Test
     public void testSomeMethod() {
-        IppEncoding.DelimiterTag dt[] = new IppEncoding.DelimiterTag[8];
+        IppEncoding.GroupTag dt[] = new IppEncoding.GroupTag[8];
         int i = 0;
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x01);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x02);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x03);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x04);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x05);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x06);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x07);
-        dt[i++] = IppEncoding.DelimiterTag.valueOf(0x09);
-        assertArrayEquals(IppEncoding.DelimiterTag.values(), dt);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x01);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x02);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x03);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x04);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x05);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x06);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x07);
+        dt[i++] = IppEncoding.GroupTag.valueOf(0x09);
+        assertArrayEquals(IppEncoding.GroupTag.values(), dt);
     }
 }
