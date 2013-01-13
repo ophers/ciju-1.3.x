@@ -20,7 +20,6 @@ package org.ciju.client.application;
 import org.ciju.client.ipp.IppTransport;
 import java.io.IOException;
 import java.net.ContentHandler;
-import java.net.ContentHandlerFactory;
 import java.net.URLConnection;
 
 /**
@@ -29,10 +28,7 @@ import java.net.URLConnection;
  *
  * @author Opher Shachar
  */
-public class ipp extends ContentHandler implements ContentHandlerFactory
-{
-    private static final ipp singleton = new ipp(); 
-
+public class ipp extends ContentHandler {
 
     /**
      * {@inheritDoc} Reads an IPP response from the input stream of {@link URLConnection urlc} and
@@ -42,21 +38,6 @@ public class ipp extends ContentHandler implements ContentHandlerFactory
      */
     public Object getContent(URLConnection urlc) throws IOException {
         return IppTransport.processResponse(urlc.getInputStream(), urlc.getContentLength());
-    }
-
-
-    /**
-     * Return the singleton instance of this class
-     *
-     * @param mimetype only supports application/ipp
-     * @return an instance of this class (a sub-type of {@link ContentHandler})
-     *      if {@code mimetype} is supported or null otherwise.
-     */
-    public ContentHandler createContentHandler(String mimetype) {
-        if (mimetype.equalsIgnoreCase("application/ipp"))
-            return singleton;
-        else
-            return null;
     }
 
 }
