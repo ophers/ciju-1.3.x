@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Opher Shachar
+ * Copyright (C) 2013 Opher Shachar
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,22 @@
 
 package org.ciju.client.ipp;
 
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.IOException;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+
 
 /**
- *
- * @author Opher Shachar
+ * This class is part of the Apache HttpClient supporting classes.
+ * @author Opher
  */
-public class IppTransport {
+public class IppResponseHandler implements ResponseHandler<IppResponse> {
 
-    public static void writeRequest(OutputStream os, IppRequest ipp) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    public static IppResponse processResponse(InputStream inputStream, long contentLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public IppResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+        final HttpEntity entity = response.getEntity();
+        return IppTransport.processResponse(entity.getContent(), entity.getContentLength());
     }
 
 }
