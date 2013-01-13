@@ -135,7 +135,9 @@ public class PrintServer extends PrintServiceLookup {
             case CUPS:
                 return new CupsServer(uri, proxy);
             default:
-                throw new AssertionError();
+                // As a library cannot throw AssertionError directly
+                throw new IllegalArgumentException(new AssertionError(
+                        "The server represented by " + uri + " is unsupported!"));
         }
     }
 

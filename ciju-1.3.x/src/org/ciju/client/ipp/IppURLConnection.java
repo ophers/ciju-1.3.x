@@ -38,9 +38,9 @@ import java.net.*;
  * A possible use pattern could be: <blockquote><pre>
  * Authenticator.setDefault(...);
  * URL url = new URL("ipp://...");
- * IppObject request = ...;
+ * IppRequest request = ...;
  * IppURLConnection urlc = (IppURLConnection) url.openConnection();
- * IppObject response = (IppObject) urlc.setIppRequest(request).getContent();
+ * IppResponse response = (IppResponse) urlc.setIppRequest(request).getContent();
  * </pre></blockquote>
  * For a server application (ie. running on JavaEE) there is no public API to URLConnection
  * that allows specifying credentials on a per connection basis.
@@ -50,7 +50,7 @@ import java.net.*;
 public abstract class IppURLConnection extends HttpURLConnection {
     
     /**
-     * The {@link IppObject} object that represents the request.
+     * The {@link IppRequest} object that represents the request.
      */
     protected IppRequest ipp;
 
@@ -63,65 +63,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
     }
 
     /**
-     * This <code>URLConnection</code> has by default its doOutput flag set to
-     * <code>true</code>. It may not be set to <code>false</code>.
-     * @param dooutput  must be <code>true</code>.
-     * @throws IllegalArgumentException if dooutput is passed a value of false.
-     */
-    @Override
-    public void setDoOutput(boolean dooutput) {
-        if (!dooutput)
-            throw new IllegalArgumentException("Empty requests are not valid!");
-        super.setDoOutput(dooutput);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <br>The property <code>Content-Type</code> is set by default to
-     * <code>application/ipp</code> and may not be set a different value.
-     * @throws IllegalStateException if already connected
-     * @throws NullPointerException if key is <code>null</code>
-     * @throws IllegalArgumentException if trying to set <code>Content-Type</code>
-     * to anything other than <code>application/ipp</code>.
-     */
-    @Override
-    public void setRequestProperty(String key, String value) {
-        if (key.equalsIgnoreCase("Content-Type") && !value.equalsIgnoreCase("application/ipp"))
-            throw new IllegalArgumentException("Content-Type may only be 'application/ipp'!");
-        super.setRequestProperty(key, value);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>NOTE: The property <code>Content-Type</code> is set by default to
-     * <code>application/ipp</code> and may not be set a different value.
-     * @throws IllegalStateException if already connected
-     * @throws NullPointerException if key is <CODE>null</CODE>
-     * @throws IllegalArgumentException if trying to change <code>Content-Type</code>.
-     */
-    @Override
-    public void addRequestProperty(String key, String value) {
-        if (key.equalsIgnoreCase("Content-Type"))
-            throw new IllegalArgumentException("Content-Type may only be 'application/ipp'!");
-        super.addRequestProperty(key, value);
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>NOTE: The request method is set by default to <code>POST</code>
-     * and may not be set a different value.
-     * @throws ProtocolException if trying to set <code>method</code>
-     * to anything other than <code>POST</code>.
-     */
-    @Override
-    public void setRequestMethod(String method) throws ProtocolException {
-        if (!method.equalsIgnoreCase("POST"))
-            throw new IllegalArgumentException("Request method must be POST!");
-        super.setRequestMethod(method);
-    }
-
-    /**
-     * Set the {@link IppObject} request object to send to the server. This method
+     * Set the {@link IppRequest} request object to send to the server. This method
      * doesn't cause the request to be sent or this object to be connected.
      * <br>Once set the <i>ipp request</i> cannot be cleared.
      * @param request The <code>IppObject</code> request object.
@@ -138,7 +80,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
     }
 
     /**
-     * Get the {@link IppObject} request object set earlier with {@link #setIppRequest}.
+     * Get the {@link IppRequest} request object set earlier with {@link #setIppRequest}.
      * @return the <code>IppObject</code> object set with <code>setIppRequest</code>
      */
     public IppRequest getIppRequest() {

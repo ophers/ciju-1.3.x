@@ -110,7 +110,13 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
     }
 
     /**
-     * @see IppURLConnection#setRequestProperty
+     * {@inheritDoc}
+     * <p>NOTE: The property <code>Content-Type</code> is set by default to
+     * <code>application/ipp</code> and may not be set a different value.
+     * @throws IllegalStateException if already connected
+     * @throws NullPointerException if key is <code>null</code>
+     * @throws IllegalArgumentException if trying to set <code>Content-Type</code>
+     * to anything other than <code>application/ipp</code>.
      */
     @Override
     public void setRequestProperty(String key, String value) {
@@ -120,7 +126,12 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
     }
 
     /**
-     * @see IppURLConnection#addRequestProperty
+     * {@inheritDoc}
+     * <p>NOTE: The property <code>Content-Type</code> is set by default to
+     * <code>application/ipp</code> and may not be set a different value.
+     * @throws IllegalStateException if already connected
+     * @throws NullPointerException if key is <CODE>null</CODE>
+     * @throws IllegalArgumentException if trying to change <code>Content-Type</code>.
      */
     @Override
     public void addRequestProperty(String key, String value) {
@@ -130,13 +141,31 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
     }
 
     /**
-     * @see IppURLConnection#setRequestMethod
+     * {@inheritDoc}
+     * <p>NOTE: The request method is set by default to <code>POST</code>
+     * and may not be set a different value.
+     * @throws ProtocolException if trying to set <code>method</code>
+     * to anything other than <code>POST</code>.
      */
     @Override
     public void setRequestMethod(String method) throws ProtocolException {
         if (!method.equalsIgnoreCase("POST"))
             throw new IllegalArgumentException("Request method must be POST!");
         huc.setRequestMethod(method);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>NOTE: This <code>URLConnection</code> has by default its doOutput
+     * flag set to <code>true</code>. It may not be set to <code>false</code>.
+     * @param dooutput  must be <code>true</code>.
+     * @throws IllegalArgumentException if dooutput is passed a value of false.
+     */
+    @Override
+    public void setDoOutput(boolean dooutput) {
+        if (!dooutput)
+            throw new IllegalArgumentException("Empty requests are not valid!");
+        huc.setDoOutput(dooutput);
     }
 
     private void sendIppRequest() throws IOException {
