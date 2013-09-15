@@ -15,16 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.client.impl.application;
+
+import org.ciju.client.ipp.IppTransport;
+import java.io.IOException;
+import java.net.ContentHandler;
+import java.net.URLConnection;
 
 /**
+ * Class to perform {@link URLConnection#getContent()} for <tt>application/ipp</tt>
+ * MIME type.
  *
  * @author Opher Shachar
  */
-public class IppResponse extends IppObject {
+public class ipp extends ContentHandler {
 
-    public IppResponse() {
-        super();
+    /**
+     * {@inheritDoc} Reads an IPP response from the input stream of {@link URLConnection urlc} and
+     * creates an IPP object.
+     * @return an IPP object representing an IPP response.
+     */
+    public Object getContent(URLConnection urlc) throws IOException {
+        return IppTransport.processResponse(urlc.getInputStream(), urlc.getContentLength());
     }
 
 }

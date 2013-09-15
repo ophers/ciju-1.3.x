@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.client.impl.ipp;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
 import org.ciju.client.ipp.IppEncoding.ValueTag;
+import org.ciju.client.ipp.IppRequest;
+import org.ciju.client.ipp.IppTransport;
+import org.ciju.client.ipp.IppURLConnection;
 
 
 /**
@@ -45,8 +48,8 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
  */
 /*package*/ class IppURLConnectionImpl extends IppURLConnection {
 
-    private Handler handler;
-    private HttpURLConnection huc;
+    private final Handler handler;
+    private final HttpURLConnection huc;
     private boolean gos_called;
 
     /**
@@ -171,10 +174,6 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
     private void sendIppRequest() throws IOException {
         if (ipp == null)
             throw new IllegalStateException("IPP request was not set.");
-        String al = getRequestProperty("Accept-Language");
-        Attribute attr = ipp.getAttribute("attributes-natural-language", ValueTag.NATURAL_LANGUAGE);
-        setRequestProperty("Accept-Language", attr.toString());
-        addRequestProperty("Accept-Language", al);
         OutputStream os = getOutputStream();
         IppTransport.writeRequest(os, ipp);
     }

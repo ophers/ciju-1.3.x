@@ -22,5 +22,5 @@ package org.ciju.client.ipps;
  * class. It's purpose is to allow 'ipps' {@linkplain java.net.URL}s to be created.
  * @author Opher Shachar
  */
-public class Handler extends org.ciju.client.ipp.Handler {
+public class Handler extends org.ciju.client.impl.ipp.Handler {
 }

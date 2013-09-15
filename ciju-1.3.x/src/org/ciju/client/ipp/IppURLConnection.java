@@ -18,6 +18,9 @@
 package org.ciju.client.ipp;
 
 import java.net.*;
+import javax.print.attribute.Attribute;
+import static org.ciju.client.ipp.IppEncoding.GroupTag;
+import static org.ciju.client.ipp.IppEncoding.ValueTag;
 
 
 /**
@@ -40,7 +43,7 @@ import java.net.*;
  * URL url = new URL("ipp://...");
  * IppRequest request = ...;
  * IppURLConnection urlc = (IppURLConnection) url.openConnection();
- * IppResponse response = (IppResponse) urlc.setIppRequest(request).getContent();
+ * IppObject response = (IppObject) urlc.setIppRequest(request).getContent();
  * </pre></blockquote>
  * For a server application (ie. running on JavaEE) there is no public API to URLConnection
  * that allows specifying credentials on a per connection basis.
@@ -67,6 +70,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
      * doesn't cause the request to be sent or this object to be connected.
      * <br>Once set the <i>ipp request</i> cannot be cleared.
      * @param request The <code>IppObject</code> request object.
+     * @return this object (allows for builder pattern)
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
      */
@@ -76,6 +80,10 @@ public abstract class IppURLConnection extends HttpURLConnection {
         if (request == null) 
 	    throw new NullPointerException("IPP request is null");
         ipp = request;
+        String al = getRequestProperty("Accept-Language");
+        Attribute attr = ipp.getAttribute("attributes-natural-language", GroupTag.OPERATION, ValueTag.NATURAL_LANGUAGE);
+        setRequestProperty("Accept-Language", attr.toString());
+        if (al != null) addRequestProperty("Accept-Language", al);
         return this;
     }
 
