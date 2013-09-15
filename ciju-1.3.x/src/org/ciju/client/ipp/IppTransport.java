@@ -26,11 +26,34 @@ import java.io.OutputStream;
  */
 public class IppTransport {
 
+    /**
+     *
+     * @param os
+     * @param ipp
+     */
     public static void writeRequest(OutputStream os, IppRequest ipp) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public static IppResponse processResponse(InputStream inputStream, long contentLength) {
+    /**
+     *
+     * @param inputStream
+     * @param contentLength
+     * @return
+     */
+    public static IppObject processResponse(InputStream inputStream, long contentLength) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    /**
+     *
+     * @param <T>
+     * @param inputStream
+     * @param contentLength
+     * @param type
+     * @return
+     */
+    public static <T extends IppObject> T processResponse(InputStream inputStream, long contentLength, Class<T> type) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

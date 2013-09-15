@@ -18,6 +18,7 @@
 package org.ciju.client.ipp;
 
 import javax.print.attribute.Attribute;
+import org.ciju.client.ipp.IppEncoding.GroupTag;
 import org.ciju.client.ipp.IppEncoding.ValueTag;
 
 /**
@@ -26,7 +27,7 @@ import org.ciju.client.ipp.IppEncoding.ValueTag;
  */
 public class IppObject {
 
-    Attribute getAttribute(String name, ValueTag valueTag) {
+    Attribute getAttribute(String name, GroupTag groupTag, ValueTag valueTag) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

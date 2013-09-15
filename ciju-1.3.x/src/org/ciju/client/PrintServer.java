@@ -32,7 +32,7 @@ import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
 import javax.print.event.PrintEvent;
 import org.ciju.client.event.EventDispatcher;
-import org.ciju.client.ipp.Handler;
+import org.ciju.client.impl.ipp.Handler;
 import org.ciju.client.ipp.IppURLConnection;
 
 /**
@@ -56,7 +56,7 @@ public class PrintServer extends PrintServiceLookup {
     }
 
     // Register the IPP ContentHandler and URLStreamHandler
-    private static final String REGISTER_HANDLERS = "org.ciju.client.RegisterHandlers";
+    private static final String REGISTER_HANDLERS = packageName + ".RegisterHandlers";
     private static final boolean hndlrs;
     static {
         hndlrs = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.client.impl.ipp;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -25,6 +25,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import org.ciju.client.ipp.IppEncoding;
+import org.ciju.client.ipp.IppURLConnection;
 
 /**
  *
@@ -41,6 +43,7 @@ public class Handler extends URLStreamHandler {
      * @param p the {@linkplain Proxy} through which to connect, {@linkplain Proxy#NO_PROXY}
      *      for direct connection or <code>null</code> to use the system's default
      *      {@linkplain ProxySelector} settings.
+     * @return 
      * @throws MalformedURLException if some error occurred while constructing the URL
      *      from the URI <code>u</code>.
      * @throws IOException if failed to create a connection.

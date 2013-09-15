@@ -37,13 +37,14 @@ import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
+import org.ciju.client.ipp.IppObject;
 import org.ciju.client.ipp.IppURLConnection;
 
 /**
  *
  * @author Opher Shachar
  */
-public class IppPrinter implements PrintService, MultiDocPrintService {
+public class IppPrinter extends IppObject implements PrintService, MultiDocPrintService {
     private HashPrintServiceAttributeSet psas;
     /* See javadoc for overview. Presumably there'll be few (if more than one)
        listners registering but many more events fireing */

@@ -15,22 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.client.impl.apache;
 
 import java.io.IOException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
+import org.ciju.client.ipp.IppObject;
+import org.ciju.client.ipp.IppTransport;
 
 
 /**
  * This class is part of the Apache HttpClient supporting classes.
  * @author Opher
  */
-public class IppResponseHandler implements ResponseHandler<IppResponse> {
+public class IppResponseHandler implements ResponseHandler<IppObject> {
 
-    public IppResponse handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+    public IppObject handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
         final HttpEntity entity = response.getEntity();
         return IppTransport.processResponse(entity.getContent(), entity.getContentLength());
     }
