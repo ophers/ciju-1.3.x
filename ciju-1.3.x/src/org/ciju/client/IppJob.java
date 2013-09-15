@@ -34,12 +34,13 @@ import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
+import org.ciju.client.ipp.IppObject;
 
 /**
  *
  * @author Opher Shachar
  */
-public class IppJob implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob {
+public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, CancelablePrintJob {
 
     private final IppPrinter printer;
     /* See javadoc for overview. Presumably there'll be few (if more than one)
