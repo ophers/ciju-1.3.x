@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.ipp;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -61,16 +61,16 @@ public class IppEncoding {
         private static final Map<Integer, GroupTag> vmap = initVmap();
         private static Map<Integer, GroupTag> initVmap() {
             final GroupTag[] dts = GroupTag.values();
-            final HashMap<Integer, GroupTag> vmap = new HashMap<Integer, GroupTag>(dts.length);
+            final HashMap<Integer, GroupTag> vmap = new HashMap<Integer, GroupTag>(dts.length * 4/3 + 1);
             for (GroupTag e : dts)
                 vmap.put(e.value, e);
             return vmap;
         }
         
         public static GroupTag valueOf(Integer i) {
-            GroupTag e = vmap.get(i);
             if (i == null)
                 throw new NullPointerException("i is null");
+            GroupTag e = vmap.get(i);
             if (e == null)
                 throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
             return e;
@@ -153,16 +153,16 @@ public class IppEncoding {
         private static final Map<Integer, ValueTag> vmap = initVmap();
         private static Map<Integer, ValueTag> initVmap() {
             final ValueTag[] vts = ValueTag.values();
-            final HashMap<Integer, ValueTag> vmap = new HashMap<Integer, ValueTag>(vts.length);
+            final HashMap<Integer, ValueTag> vmap = new HashMap<Integer, ValueTag>(vts.length * 4/3 + 1);
             for (ValueTag e : vts)
                 vmap.put(e.value, e);
             return vmap;
         }
         
         public static ValueTag valueOf(Integer i) {
-            ValueTag e = vmap.get(i);
             if (i == null)
                 throw new NullPointerException("i is null");
+            ValueTag e = vmap.get(i);
             if (e == null)
                 throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
             return e;
@@ -251,16 +251,16 @@ public class IppEncoding {
         private static final Map<Integer, OpCode> vmap = initVmap();
         private static Map<Integer, OpCode> initVmap() {
             final OpCode[] ocs = OpCode.values();
-            final HashMap<Integer, OpCode> vmap = new HashMap<Integer, OpCode>(ocs.length);
+            final HashMap<Integer, OpCode> vmap = new HashMap<Integer, OpCode>(ocs.length * 4/3 + 1);
             for (OpCode e : ocs)
                 vmap.put(e.value, e);
             return vmap;
         }
         
         public static OpCode valueOf(Integer i) {
-            OpCode e = vmap.get(i);
             if (i == null)
                 throw new NullPointerException("i is null");
+            OpCode e = vmap.get(i);
             if (e == null)
                 throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
             return e;
