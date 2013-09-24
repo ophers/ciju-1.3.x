@@ -17,10 +17,11 @@
 
 package org.ciju.client.ipp;
 
+import org.ciju.ipp.IppRequest;
 import java.net.*;
 import javax.print.attribute.Attribute;
-import static org.ciju.client.ipp.IppEncoding.GroupTag;
-import static org.ciju.client.ipp.IppEncoding.ValueTag;
+import static org.ciju.ipp.IppEncoding.GroupTag;
+import static org.ciju.ipp.IppEncoding.ValueTag;
 
 
 /**
@@ -81,7 +82,7 @@ public abstract class IppURLConnection extends HttpURLConnection {
 	    throw new NullPointerException("IPP request is null");
         ipp = request;
         String al = getRequestProperty("Accept-Language");
-        Attribute attr = ipp.getAttribute("attributes-natural-language", GroupTag.OPERATION, ValueTag.NATURAL_LANGUAGE);
+        Attribute attr = ipp.getAttributesNaturalLanguage();
         setRequestProperty("Accept-Language", attr.toString());
         if (al != null) addRequestProperty("Accept-Language", al);
         return this;

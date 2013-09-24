@@ -37,7 +37,7 @@ import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
-import org.ciju.client.ipp.IppObject;
+import org.ciju.ipp.IppObject;
 import org.ciju.client.ipp.IppURLConnection;
 
 /**

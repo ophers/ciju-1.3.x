@@ -34,7 +34,7 @@ import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
-import org.ciju.client.ipp.IppObject;
+import org.ciju.ipp.IppObject;
 
 /**
  *

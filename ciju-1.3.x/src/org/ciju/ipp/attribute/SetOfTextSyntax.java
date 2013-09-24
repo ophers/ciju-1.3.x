@@ -15,20 +15,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.ipp.attribute;
 
-import javax.print.attribute.Attribute;
-import org.ciju.client.ipp.IppEncoding.GroupTag;
-import org.ciju.client.ipp.IppEncoding.ValueTag;
+import java.util.ArrayList;
+import java.util.Collection;
+import javax.print.attribute.TextSyntax;
+
 
 /**
  *
- * @author Opher Shachar
+ * @author Opher
  */
-public class IppObject {
+public abstract class SetOfTextSyntax extends ArrayList<TextSyntax> {
 
-    Attribute getAttribute(String name, GroupTag groupTag, ValueTag valueTag) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    protected SetOfTextSyntax(Collection<? extends TextSyntax> attrs) {
+        super(attrs);
+    }
+    
+    protected SetOfTextSyntax(TextSyntax attr) {
+        super(1);
+        add(attr);
     }
 
 }

@@ -25,7 +25,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
-import org.ciju.client.ipp.IppEncoding;
+import org.ciju.ipp.IppEncoding;
 import org.ciju.client.ipp.IppURLConnection;
 
 /**
@@ -35,9 +35,10 @@ import org.ciju.client.ipp.IppURLConnection;
 public class Handler extends URLStreamHandler {
     
     /**
-     * Instantiate a {@link IppURLConnection} using a IPP/S <b>URI</b> and Proxy.
+     * Instantiate an {@link IppURLConnection} using an IPP/S <b>{@linkplain URI}</b>
+     * and {@link Proxy}.
      * <br>In restricted (secured) environments it may be that we couldn't register
-     * our URL Stream Handler so this would fail: new URL("ipp://...")
+     * our URL Stream Handler so this would fail: <tt>new URL("ipp://...")</tt>
      * <br>Consequently we allow for a IPP/S URI via this constructor.
      * @param u a IPP/S {@linkplain URI} for an IPP print service.
      * @param p the {@linkplain Proxy} through which to connect, {@linkplain Proxy#NO_PROXY}
@@ -62,7 +63,7 @@ public class Handler extends URLStreamHandler {
         }
         else if (scheme.equalsIgnoreCase("ipps")) {
             scheme = "https";
-            handler = new org.ciju.client.ipps.Handler();
+            handler = new org.ciju.client.impl.ipps.Handler();
         }
         else
             throw new IllegalArgumentException("The scheme may only be ipp or ipps.");

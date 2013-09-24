@@ -15,7 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.ipp;
+
+import javax.print.attribute.Attribute;
+import static org.ciju.ipp.IppEncoding.GroupTag;
+import static org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
  *
@@ -25,6 +29,11 @@ public class IppRequest extends IppObject {
 
     public IppRequest() {
         super();
+    }
+
+    public Attribute getAttributesNaturalLanguage() {
+        return getAttribute("attributes-natural-language", GroupTag.OPERATION, ValueTag.NATURAL_LANGUAGE);
+        // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 }
