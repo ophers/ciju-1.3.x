@@ -16,6 +16,7 @@
  */
 package org.ciju.client.ipp;
 
+import org.ciju.ipp.IppEncoding;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;

@@ -25,8 +25,8 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
-import org.ciju.client.ipp.IppEncoding.ValueTag;
-import org.ciju.client.ipp.IppRequest;
+import org.ciju.ipp.IppEncoding.ValueTag;
+import org.ciju.ipp.IppRequest;
 import org.ciju.client.ipp.IppTransport;
 import org.ciju.client.ipp.IppURLConnection;
 

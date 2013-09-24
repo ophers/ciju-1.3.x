@@ -15,48 +15,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.ipp.attribute;
 
-import org.ciju.ipp.IppRequest;
-import org.ciju.ipp.IppObject;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.Collection;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.DocAttribute;
+import javax.print.attribute.PrintJobAttribute;
+import javax.print.attribute.PrintRequestAttribute;
+import javax.print.attribute.PrintServiceAttribute;
+import javax.print.attribute.SupportedValuesAttribute;
+import javax.print.attribute.TextSyntax;
 
-/**
- *
- * @author Opher Shachar
- */
-public class IppTransport {
 
-    /**
-     *
-     * @param os
-     * @param ipp
-     */
-    public static void writeRequest(OutputStream os, IppRequest ipp) {
+public class GenericSetOfTextAttribute extends SetOfTextSyntax
+implements DocAttribute, PrintJobAttribute, PrintRequestAttribute, PrintServiceAttribute, SupportedValuesAttribute {
+
+    public GenericSetOfTextAttribute(Collection<? extends TextSyntax> attrs) {
+        super(attrs);
+    }
+
+    public GenericSetOfTextAttribute(TextSyntax attr) {
+        super(attr);
+    }
+
+    public Class<? extends Attribute> getCategory() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    /**
-     *
-     * @param inputStream
-     * @param contentLength
-     * @return
-     */
-    public static IppObject processResponse(InputStream inputStream, long contentLength) {
+    public String getName() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
-    /**
-     *
-     * @param <T>
-     * @param inputStream
-     * @param contentLength
-     * @param type
-     * @return
-     */
-    public static <T extends IppObject> T processResponse(InputStream inputStream, long contentLength, Class<T> type) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
 }
