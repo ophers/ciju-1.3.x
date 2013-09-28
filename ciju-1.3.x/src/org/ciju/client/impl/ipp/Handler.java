@@ -43,7 +43,7 @@ public class Handler extends URLStreamHandler {
      * @param u a IPP/S {@linkplain URI} for an IPP print service.
      * @param p the {@linkplain Proxy} through which to connect, {@linkplain Proxy#NO_PROXY}
      *      for direct connection or <code>null</code> to use the system's default
-     *      {@linkplain ProxySelector} settings.
+     *      {@linkplain java.net.ProxySelector} settings.
      * @return 
      * @throws MalformedURLException if some error occurred while constructing the URL
      *      from the URI <code>u</code>.
