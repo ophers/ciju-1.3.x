@@ -32,6 +32,7 @@ import javax.print.PrintServiceLookup;
 import javax.print.attribute.AttributeSet;
 import javax.print.event.PrintEvent;
 import org.ciju.client.event.EventDispatcher;
+import org.ciju.client.impl.apache.ApacheConnection;
 import org.ciju.client.impl.ipp.Handler;
 import org.ciju.client.ipp.IppURLConnection;
 
@@ -44,7 +45,6 @@ public class PrintServer extends PrintServiceLookup {
     private final SecurityManager sm;
     private final URI uri;
     private final Proxy proxy;
-    private enum Type { CUPS }
 
     // Logging facilities
     private static final String packageName;
@@ -130,20 +130,23 @@ public class PrintServer extends PrintServiceLookup {
         this.proxy = proxy;
     }
 
+    private enum Type { CUPS, DEFAULT }
+    private static Type checkServerType(URI uri, Proxy proxy) {
+        // TODO: devise a check to determine IPP Server type
+        return Type.CUPS;
+    }
+
     public static PrintServer create(URI uri, Proxy proxy) {
         switch (checkServerType(uri, proxy)) {
             case CUPS:
                 return new CupsServer(uri, proxy);
+            case DEFAULT:
+                return new PrintServer(uri, proxy);
             default:
                 // As a library cannot throw AssertionError directly
-                throw new IllegalArgumentException(new AssertionError(
+                throw new RuntimeException(new AssertionError(
                         "The server represented by " + uri + " is unsupported!"));
         }
-    }
-
-    private static Type checkServerType(URI uri, Proxy proxy) {
-        // Only Type currently known
-        return Type.CUPS;
     }
 
     /**
@@ -162,15 +165,34 @@ public class PrintServer extends PrintServiceLookup {
         return getConnection(uri, proxy);
     }
 
+    private enum ConnLib { URLC, APACHE }
+    private static ConnLib connLib;
     /* package */ static IppURLConnection getConnection(URI uri, Proxy proxy) throws IOException {
-        if (hndlrs) {
-            if (proxy == null)
-                return (IppURLConnection) uri.toURL().openConnection();
-            else
-                return (IppURLConnection) uri.toURL().openConnection(proxy);
+        if (connLib == null) {
+            // This is the first connection to be requested. Decide on a connection library.
+            synchronized (PrintServer.class) {
+                if (connLib == null) {
+                    // The Double-checked locking pattern here is safe as connLib is an enum.
+                    try {
+                        IppURLConnection conn = new ApacheConnection(uri, proxy);
+                        connLib = ConnLib.APACHE;
+                        return conn;
+                    } catch (NoClassDefFoundError e) {
+                        // Apache http client is not available.
+                        connLib = ConnLib.URLC;
+                    }
+                }
+            }
         }
-        else {
-            return Handler.openConnection(uri, proxy);
+        switch (connLib) {
+            case APACHE:
+                return new ApacheConnection(uri, proxy);
+            case URLC:
+                return Handler.openConnection(uri, proxy);
+            default:
+                // As a library cannot throw AssertionError directly
+                throw new RuntimeException(new AssertionError(
+                        "Could not instanciate connection!"));
         }
     }
 

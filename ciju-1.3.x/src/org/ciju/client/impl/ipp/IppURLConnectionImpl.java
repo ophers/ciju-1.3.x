@@ -25,10 +25,10 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
-import org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.IppRequest;
 import org.ciju.client.ipp.IppTransport;
 import org.ciju.client.ipp.IppURLConnection;
+import org.ciju.ipp.IppObject;
 
 
 /**
@@ -40,17 +40,18 @@ import org.ciju.client.ipp.IppURLConnection;
  *    IppURLConnection urlc = (IppURLConnection) url.openConnection();
  * </pre></blockquote>
  * This implementation wraps a {@link HttpURLConnection} and proxies all but a handful
- * of methods to the wrapped <pre>HttpURLConnection</pre>. This form of implementation
+ * of methods to the wrapped <tt>HttpURLConnection</tt>. This form of implementation
  * is suggested by <a href="http://tools.ietf.org/html/rfc2910#section-5">section 5</a>
  * of RFC2910.
  *
  * @author	Opher
  */
-/*package*/ class IppURLConnectionImpl extends IppURLConnection {
+/*package*/ class IppURLConnectionImpl extends HttpURLConnection implements IppURLConnection {
 
     private final Handler handler;
     private final HttpURLConnection huc;
     private boolean gos_called;
+    private IppRequest ipp;
 
     /**
      * Constructor for the IppURLConnectionImpl class. To make a direct connection
@@ -178,11 +179,23 @@ import org.ciju.client.ipp.IppURLConnection;
         IppTransport.writeRequest(os, ipp);
     }
 
-    @Override
     public IppURLConnection setIppRequest(IppRequest request) {
         if (gos_called)
             throw new IllegalStateException("Output stream was previously requested.");
-        return super.setIppRequest(request);
+        if (connected)
+            throw new IllegalStateException("Already connected");
+        if (request == null) 
+	    throw new NullPointerException("IPP request is null");
+        ipp = request;
+//        String al = getRequestProperty("Accept-Language");
+        Attribute attr = ipp.getAttributesNaturalLanguage();
+        setRequestProperty("Accept-Language", attr.toString());
+//        if (al != null) addRequestProperty("Accept-Language", al);
+        return this;
+    }
+
+    public IppRequest getIppRequest() {
+        return ipp;
     }
 
     @Override
@@ -207,9 +220,18 @@ import org.ciju.client.ipp.IppURLConnection;
     }
 
     @Override
-    public Object getContent() throws IOException {
+    public IppObject getContent() throws IOException {
         getInputStream();
-        return huc.getContent();
+        return (IppObject) huc.getContent();
+    }
+
+    public <T extends IppObject> T getContent(T o) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T extends IppObject> T getContent(Class<T> t) throws IOException {
+        return (T) getContent(new Class[] { t });
     }
 
 // <editor-fold defaultstate="collapsed" desc="delegated methods">
