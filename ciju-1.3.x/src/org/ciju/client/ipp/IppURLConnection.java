@@ -17,11 +17,9 @@
 
 package org.ciju.client.ipp;
 
+import java.io.IOException;
 import org.ciju.ipp.IppRequest;
-import java.net.*;
-import javax.print.attribute.Attribute;
-import static org.ciju.ipp.IppEncoding.GroupTag;
-import static org.ciju.ipp.IppEncoding.ValueTag;
+import org.ciju.ipp.IppObject;
 
 
 /**
@@ -51,20 +49,7 @@ import static org.ciju.ipp.IppEncoding.ValueTag;
  *
  * @author	Opher
  */
-public abstract class IppURLConnection extends HttpURLConnection {
-    
-    /**
-     * The {@link IppRequest} object that represents the request.
-     */
-    protected IppRequest ipp;
-
-    /**
-     * Constructor for the IppURLConnection class.
-     * @param u the {@linkplain URL} for the connection.
-     */
-    protected IppURLConnection(URL u) {
-        super(u);
-    }
+public interface IppURLConnection {
 
     /**
      * Set the {@link IppRequest} request object to send to the server. This method
@@ -75,25 +60,40 @@ public abstract class IppURLConnection extends HttpURLConnection {
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
      */
-    public IppURLConnection setIppRequest(IppRequest request) {
-        if (connected)
-            throw new IllegalStateException("Already connected");
-        if (request == null) 
-	    throw new NullPointerException("IPP request is null");
-        ipp = request;
-        String al = getRequestProperty("Accept-Language");
-        Attribute attr = ipp.getAttributesNaturalLanguage();
-        setRequestProperty("Accept-Language", attr.toString());
-        if (al != null) addRequestProperty("Accept-Language", al);
-        return this;
-    }
+    public abstract IppURLConnection setIppRequest(IppRequest request);
 
     /**
      * Get the {@link IppRequest} request object set earlier with {@link #setIppRequest}.
-     * @return the <code>IppObject</code> object set with <code>setIppRequest</code>
+     * @return the <code>IppRequest</code> object set with <code>setIppRequest</code>
      */
-    public IppRequest getIppRequest() {
-        return ipp;
-    }
+    public abstract IppRequest getIppRequest();
+
+    /**
+     * Retrieves the content for the {@link IppRequest} sent on this connection.
+     * @return the {@linkplain IppObject} fetched. The instanceof operator should be used to determine the specific kind of object returned.
+     * @throws java.io.IOException if an I/O error occurs while getting the content.
+     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
+     */
+    public abstract IppObject getContent() throws IOException;
+
+    /**
+     * Retrieves the content for the {@link IppRequest} sent on this connection.
+     * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
+     * @param o The object to use as the response.
+     * @return the {@linkplain IppObject} fetched (the object passed as input).
+     * @throws java.io.IOException if an I/O error occurs while getting the content.
+     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
+     */
+    public abstract <T extends IppObject> T getContent(T o) throws IOException;
+
+    /**
+     * Retrieves the content for the {@link IppRequest} sent on this connection.
+     * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
+     * @param t The class to use as the response.
+     * @return the {@linkplain IppObject}, or a descendant thereof, fetched.
+     * @throws java.io.IOException if an I/O error occurs while getting the content.
+     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
+     */
+    public abstract <T extends IppObject> T getContent(Class<T> t) throws IOException;
     
 }
