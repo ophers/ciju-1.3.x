@@ -18,6 +18,8 @@
 package org.ciju.client.ipp;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppObject;
 
@@ -49,51 +51,13 @@ import org.ciju.ipp.IppObject;
  *
  * @author	Opher
  */
-public interface IppURLConnection {
+public abstract class IppURLConnection extends HttpURLConnection implements IppConnection {
 
-    /**
-     * Set the {@link IppRequest} request object to send to the server. This method
-     * doesn't cause the request to be sent or this object to be connected.
-     * <br>Once set the <i>ipp request</i> cannot be cleared.
-     * @param request The <code>IppObject</code> request object.
-     * @return this object (allows for builder pattern)
-     * @throws IllegalStateException if already connected
-     * @throws NullPointerException if request is <code>null</code>
-     */
-    public abstract IppURLConnection setIppRequest(IppRequest request);
+    public IppURLConnection(URL u) {
+        super(u);
+    }
 
-    /**
-     * Get the {@link IppRequest} request object set earlier with {@link #setIppRequest}.
-     * @return the <code>IppRequest</code> object set with <code>setIppRequest</code>
-     */
-    public abstract IppRequest getIppRequest();
-
-    /**
-     * Retrieves the content for the {@link IppRequest} sent on this connection.
-     * @return the {@linkplain IppObject} fetched. The instanceof operator should be used to determine the specific kind of object returned.
-     * @throws java.io.IOException if an I/O error occurs while getting the content.
-     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
-     */
+    @Override
     public abstract IppObject getContent() throws IOException;
 
-    /**
-     * Retrieves the content for the {@link IppRequest} sent on this connection.
-     * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
-     * @param o The object to use as the response.
-     * @return the {@linkplain IppObject} fetched (the object passed as input).
-     * @throws java.io.IOException if an I/O error occurs while getting the content.
-     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
-     */
-    public abstract <T extends IppObject> T getContent(T o) throws IOException;
-
-    /**
-     * Retrieves the content for the {@link IppRequest} sent on this connection.
-     * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
-     * @param t The class to use as the response.
-     * @return the {@linkplain IppObject}, or a descendant thereof, fetched.
-     * @throws java.io.IOException if an I/O error occurs while getting the content.
-     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
-     */
-    public abstract <T extends IppObject> T getContent(Class<T> t) throws IOException;
-    
 }
