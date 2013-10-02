@@ -34,7 +34,7 @@ import javax.print.event.PrintEvent;
 import org.ciju.client.event.EventDispatcher;
 import org.ciju.client.impl.apache.ApacheConnection;
 import org.ciju.client.impl.ipp.Handler;
-import org.ciju.client.ipp.IppURLConnection;
+import org.ciju.client.ipp.IppConnection;
 
 /**
  *
@@ -158,7 +158,7 @@ public class PrintServer extends PrintServiceLookup {
         return uri;
     }
 
-    protected IppURLConnection getConnection() throws IOException {
+    protected IppConnection getConnection() throws IOException {
         if (uri == null)
             throw new IllegalStateException("This default instance has no URI to a Print-Server.");
         
@@ -167,14 +167,15 @@ public class PrintServer extends PrintServiceLookup {
 
     private enum ConnLib { URLC, APACHE }
     private static ConnLib connLib;
-    /* package */ static IppURLConnection getConnection(URI uri, Proxy proxy) throws IOException {
+    /* package */ static IppConnection getConnection(URI uri, Proxy proxy) throws IOException {
         if (connLib == null) {
             // This is the first connection to be requested. Decide on a connection library.
             synchronized (PrintServer.class) {
                 if (connLib == null) {
-                    // The Double-checked locking pattern here is safe as connLib is an enum.
+                    /* FYI: The Double-checked locking pattern here is safe wihtout using
+                       'volotile' as connLib is an enum. */
                     try {
-                        IppURLConnection conn = new ApacheConnection(uri, proxy);
+                        IppConnection conn = new ApacheConnection(uri, proxy);
                         connLib = ConnLib.APACHE;
                         return conn;
                     } catch (NoClassDefFoundError e) {
@@ -192,7 +193,7 @@ public class PrintServer extends PrintServiceLookup {
             default:
                 // As a library cannot throw AssertionError directly
                 throw new RuntimeException(new AssertionError(
-                        "Could not instanciate connection!"));
+                        "Unexpeted connection library configured!"));
         }
     }
 
@@ -223,7 +224,7 @@ public class PrintServer extends PrintServiceLookup {
         if (sm != null)
             sm.checkPrintJobAccess();
         try {
-            IppURLConnection urlc = getConnection();
+            IppConnection urlc = getConnection();
 //            urlc.
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);

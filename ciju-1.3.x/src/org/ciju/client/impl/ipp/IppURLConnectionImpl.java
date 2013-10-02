@@ -46,7 +46,7 @@ import org.ciju.ipp.IppObject;
  *
  * @author	Opher
  */
-/*package*/ class IppURLConnectionImpl extends HttpURLConnection implements IppURLConnection {
+/*package*/ class IppURLConnectionImpl extends IppURLConnection {
 
     private final Handler handler;
     private final HttpURLConnection huc;

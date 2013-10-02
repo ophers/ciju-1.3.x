@@ -20,18 +20,18 @@ package org.ciju.client.impl.apache;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
-import org.ciju.client.ipp.IppURLConnection;
+import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppRequest;
 
 
-public class ApacheConnection implements IppURLConnection {
+public class ApacheConnection implements IppConnection {
 
-    public ApacheConnection(URI uri, Proxy proxy) {
+    public ApacheConnection(URI uri, Proxy proxy) throws IOException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public IppURLConnection setIppRequest(IppRequest request) {
+    public IppConnection setIppRequest(IppRequest request) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

@@ -38,7 +38,7 @@ import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 import org.ciju.ipp.IppObject;
-import org.ciju.client.ipp.IppURLConnection;
+import org.ciju.client.ipp.IppConnection;
 
 /**
  *
@@ -69,7 +69,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         return uri;
     }
 
-    protected IppURLConnection getConnection() throws IOException {
+    protected IppConnection getConnection() throws IOException {
         return PrintServer.getConnection(uri, proxy);
     }
 
