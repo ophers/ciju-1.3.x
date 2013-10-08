@@ -60,16 +60,6 @@ public interface IppConnection {
     /**
      * Retrieves the content for the {@link IppRequest} sent on this connection.
      * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
-     * @param o The object to use as the response.
-     * @return the {@linkplain IppObject} fetched (the object passed as input).
-     * @throws java.io.IOException if an I/O error occurs while getting the content.
-     * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
-     */
-    public <T extends IppObject> T getContent(T o) throws IOException;
-
-    /**
-     * Retrieves the content for the {@link IppRequest} sent on this connection.
-     * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
      * @param t The class to use as the response.
      * @return the {@linkplain IppObject}, or a descendant thereof, fetched.
      * @throws java.io.IOException if an I/O error occurs while getting the content.

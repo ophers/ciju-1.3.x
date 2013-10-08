@@ -225,10 +225,6 @@ import org.ciju.ipp.IppObject;
         return (IppObject) huc.getContent();
     }
 
-    public <T extends IppObject> T getContent(T o) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
     @SuppressWarnings("unchecked")
     public <T extends IppObject> T getContent(Class<T> t) throws IOException {
         return (T) getContent(new Class[] { t });
