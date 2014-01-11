@@ -67,13 +67,20 @@ public class IppEncoding {
             return vmap;
         }
         
+        /**
+         * Returns the enum constant of this type with the specified value. 
+         * The integer must match an identifier used to declare an enum constant in this type.
+         * @param i the value 
+         * @return the enum constant with the specified value
+         * @throws IllegalArgumentException if this enum type has no constant with the specified value
+         */
         public static GroupTag valueOf(Integer i) {
-            if (i == null)
-                throw new NullPointerException("i is null");
             GroupTag e = vmap.get(i);
-            if (e == null)
-                throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
-            return e;
+            if (e != null)
+                return e;
+            if (i == null)
+                throw new NullPointerException("Integer is null");
+            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
         }
     }
     
@@ -159,13 +166,20 @@ public class IppEncoding {
             return vmap;
         }
         
+        /**
+         * Returns the enum constant of this type with the specified value. 
+         * The integer must match an identifier used to declare an enum constant in this type.
+         * @param i the value 
+         * @return the enum constant with the specified value
+         * @throws IllegalArgumentException if this enum type has no constant with the specified value
+         */
         public static ValueTag valueOf(Integer i) {
-            if (i == null)
-                throw new NullPointerException("i is null");
             ValueTag e = vmap.get(i);
-            if (e == null)
-                throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
-            return e;
+            if (e != null)
+                return e;
+            if (i == null)
+                throw new NullPointerException("Integer is null");
+            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
         }
     }
     
@@ -257,13 +271,20 @@ public class IppEncoding {
             return vmap;
         }
         
+        /**
+         * Returns the enum constant of this type with the specified value. 
+         * The integer must match an identifier used to declare an enum constant in this type.
+         * @param i the value 
+         * @return the enum constant with the specified value
+         * @throws IllegalArgumentException if this enum type has no constant with the specified value
+         */
         public static OpCode valueOf(Integer i) {
-            if (i == null)
-                throw new NullPointerException("i is null");
             OpCode e = vmap.get(i);
-            if (e == null)
-                throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
-            return e;
+            if (e != null)
+                return e;
+            if (i == null)
+                throw new NullPointerException("Integer is null");
+            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
         }
     }
 }
