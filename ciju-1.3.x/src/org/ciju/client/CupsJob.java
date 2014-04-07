@@ -17,6 +17,8 @@
 
 package org.ciju.client;
 
+import javax.print.Doc;
+
 /**
  *
  * @author Opher Shachar
@@ -27,4 +29,12 @@ public class CupsJob extends IppJob {
         super(printer);
     }
 
+    // Stub for some unique CUPS Job methods...
+    public void moveJob(CupsPrinter printer) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    public Doc getDocument(int num) {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
 }

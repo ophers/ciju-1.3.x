@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Opher Shachar
+ * Copyright (C) 2013 Opher Shachar
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,20 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.ipp;
+package org.ciju.client.impl.ipp.attribute;
 
 import javax.print.attribute.Attribute;
-import org.ciju.ipp.IppEncoding.GroupTag;
-import org.ciju.ipp.IppEncoding.ValueTag;
+import javax.print.attribute.standard.*;
+import static org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
  *
  * @author Opher Shachar
  */
-public abstract class IppObject {
-
-    Attribute getAttribute(String name, GroupTag groupTag, ValueTag valueTag) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+public enum Attributes {
+    COPIES(Copies.class, ValueTag.INTEGER)
+    ;
+    
+    private Class<? extends Attribute> attrClass;
+    private ValueTag syntax;
+    Attributes(Class<? extends Attribute> c, ValueTag s) {
+        attrClass = c;
+        syntax = s;
+    }
+    
+    public static Attribute create(String attr, ValueTag s, Object o) {
+        Attributes a = Attributes.valueOf(attr);
+//        PageRanges pr = (PageRanges) a.attrClass.newInstance();
+        
+        return null;
     }
 
 }

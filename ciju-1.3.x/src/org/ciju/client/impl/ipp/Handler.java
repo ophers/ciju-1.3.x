@@ -25,8 +25,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppEncoding;
-import org.ciju.client.ipp.IppURLConnection;
 
 /**
  *
@@ -35,7 +35,7 @@ import org.ciju.client.ipp.IppURLConnection;
 public class Handler extends URLStreamHandler {
     
     /**
-     * Instantiate an {@link IppURLConnection} using an IPP/S <b>{@linkplain URI}</b>
+     * Instantiate an {@link IppURLConnectionImpl} using an IPP/S <b>{@linkplain URI}</b>
      * and {@link Proxy}.
      * <br>In restricted (secured) environments it may be that we couldn't register
      * our URL Stream Handler so this would fail: <tt>new URL("ipp://...")</tt>
@@ -54,7 +54,7 @@ public class Handler extends URLStreamHandler {
      *      or the URI <code>u</code> does not specify one of the schemes:
      *      <b>ipp</b> or <b>ipps</b>.
      */
-    public static IppURLConnection openConnection(URI u, Proxy p) throws IOException {
+    public static IppConnection openConnection(URI u, Proxy p) throws IOException {
         Handler handler;
         String scheme = u.getScheme();
         if (scheme.equalsIgnoreCase("ipp")) {
