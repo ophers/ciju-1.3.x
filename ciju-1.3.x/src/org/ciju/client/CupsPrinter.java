@@ -30,4 +30,20 @@ public class CupsPrinter extends IppPrinter {
         super(uri, proxy);
     }
 
+    // Stub for some unique CUPS Printer methods...
+    public String getPPD() {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    public void setAsDefault() {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+    
+    public void rejectJobs() {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+    
+    public void acceptJobs() {
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
 }

@@ -28,6 +28,8 @@ public class IppEncoding {
 
     public static final int PORT = 631;
     
+    public static final short DEF_VERSION = 0x0101;
+    
     public enum GroupTag {
         // 0x00 is reserved for future IETF standard track document
         OPERATION(0x01),        // operation-attributes-tag

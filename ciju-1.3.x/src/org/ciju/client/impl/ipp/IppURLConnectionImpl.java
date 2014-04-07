@@ -25,9 +25,9 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
+import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppRequest;
 import org.ciju.client.ipp.IppTransport;
-import org.ciju.client.ipp.IppURLConnection;
 import org.ciju.ipp.IppObject;
 
 
@@ -46,7 +46,7 @@ import org.ciju.ipp.IppObject;
  *
  * @author	Opher
  */
-/*package*/ class IppURLConnectionImpl extends IppURLConnection {
+/*package*/ class IppURLConnectionImpl extends HttpURLConnection implements IppConnection {
 
     private final Handler handler;
     private final HttpURLConnection huc;
@@ -179,7 +179,7 @@ import org.ciju.ipp.IppObject;
         IppTransport.writeRequest(os, ipp);
     }
 
-    public IppURLConnection setIppRequest(IppRequest request) {
+    public IppConnection setIppRequest(IppRequest request) {
         if (gos_called)
             throw new IllegalStateException("Output stream was previously requested.");
         if (connected)

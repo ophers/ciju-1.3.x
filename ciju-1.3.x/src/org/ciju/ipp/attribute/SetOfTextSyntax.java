@@ -17,7 +17,6 @@
 
 package org.ciju.ipp.attribute;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import javax.print.attribute.TextSyntax;
 
@@ -26,15 +25,14 @@ import javax.print.attribute.TextSyntax;
  *
  * @author Opher
  */
-public abstract class SetOfTextSyntax extends ArrayList<TextSyntax> {
+public abstract class SetOfTextSyntax extends SetOfSyntax<TextSyntax> {
 
     protected SetOfTextSyntax(Collection<? extends TextSyntax> attrs) {
         super(attrs);
     }
     
     protected SetOfTextSyntax(TextSyntax attr) {
-        super(1);
-        add(attr);
+        super(attr);
     }
 
 }

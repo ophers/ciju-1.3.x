@@ -26,11 +26,43 @@ import static org.ciju.ipp.IppEncoding.ValueTag;
  * @author Opher Shachar
  */
 public class IppRequest extends IppObject {
+    
+    private final IppHeader header;
 
     public IppRequest() {
-        super();
+        header = new IppHeader();
     }
 
+    public IppRequest(IppEncoding.OpCode opCode) {
+        header = new IppHeader(opCode);
+    }
+
+    public IppRequest(IppEncoding.OpCode opCode, int requestId) {
+        header = new IppHeader(opCode, requestId);
+    }
+
+    public short getVersion() {
+        return header.getVersion();
+    }
+
+    public IppEncoding.OpCode getOpCode() {
+        return IppEncoding.OpCode.valueOf(Integer.valueOf(header.getCode()));
+    }
+
+    public void setOpCode(IppEncoding.OpCode opCode) {
+        header.setCode((short) opCode.getValue());
+    }
+
+    public int getRequestId() {
+        return header.getRequestId();
+    }
+
+    public void setRequestId(int requestId) {
+        header.setRequestId(requestId);
+    }
+    
+    //public IppEncoding.OpCode get
+    
     public Attribute getAttributesNaturalLanguage() {
         return getAttribute("attributes-natural-language", GroupTag.OPERATION, ValueTag.NATURAL_LANGUAGE);
         // throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
