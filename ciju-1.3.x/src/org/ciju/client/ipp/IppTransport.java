@@ -44,7 +44,7 @@ public class IppTransport {
      * @return
      */
     public static IppObject processResponse(InputStream inputStream, long contentLength) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return processResponse(inputStream, contentLength, new IppObject() {});
     }
 
     /**
@@ -52,10 +52,10 @@ public class IppTransport {
      * @param <T>
      * @param inputStream
      * @param contentLength
-     * @param type
+     * @param obj
      * @return
      */
-    public static <T extends IppObject> T processResponse(InputStream inputStream, long contentLength, Class<T> type) {
+    public static <T extends IppObject> T processResponse(InputStream inputStream, long contentLength, T obj) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

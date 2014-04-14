@@ -20,6 +20,9 @@ package org.ciju.client;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
@@ -69,6 +72,18 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         return uri;
     }
 
+    public Collection<IppJob> getJobs() {
+        return getJobs(new ArrayList<IppJob>(), IppJob.class);
+    }
+
+    public <T extends IppJob> Collection<T> getJobs(Collection<T> coll, Class<T> type) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public <T extends IppJob> void getJobs(ListIterator<T> iter, Class<T> type) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
     protected IppConnection getConnection() throws IOException {
         return PrintServer.getConnection(uri, proxy);
     }
@@ -121,9 +136,8 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
     }
 
     public boolean isDocFlavorSupported(DocFlavor flavor) {
-        DocFlavor[] flavors = getSupportedDocFlavors(); // by contract never null
-        for (int i=0; i < flavors.length; i++)
-            if (flavor.equals(flavors[i]))
+        for (DocFlavor flavor1 : getSupportedDocFlavors() /* by contract never null */)
+            if (flavor.equals(flavor1))
                 return true;
         return false;
     }
