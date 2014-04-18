@@ -20,6 +20,7 @@ package org.ciju.client.impl.apache;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
+import org.ciju.client.IppObjectFactory;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppRequest;
@@ -43,7 +44,7 @@ public class ApacheConnection implements IppConnection {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public <T extends IppObject> T getContent(Class<T> t) throws IOException {
+    public <T extends IppObject> T getContent(IppObjectFactory<T> fact) throws IOException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

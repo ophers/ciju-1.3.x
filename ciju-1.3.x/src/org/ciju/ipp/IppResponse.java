@@ -20,33 +20,37 @@ package org.ciju.ipp;
 /**
  *
  * @author Opher Shachar
+ * @param <T>
  */
-public class IppRequest extends IppObject {
+public class IppResponse<T extends IppObject> extends IppObject {
     
+    private final T obj;
     private final IppHeader header;
 
-    public IppRequest() {
-        header = new IppHeader();
+    public IppResponse(short version) {
+        this(version, null);
     }
-
-    public IppRequest(IppEncoding.OpCode opCode) {
-        header = new IppHeader(opCode);
-    }
-
-    public IppRequest(IppEncoding.OpCode opCode, int requestId) {
-        header = new IppHeader(opCode, requestId);
+    
+    @SuppressWarnings("unchecked")
+    public IppResponse(short version, T obj) {
+        if (obj != null)
+            this.obj = obj;
+        else
+            this.obj = (T) this;
+            
+        this.header = new IppHeader(version);
     }
 
     public short getVersion() {
         return header.getVersion();
     }
 
-    public IppEncoding.OpCode getOpCode() {
-        return IppEncoding.OpCode.valueOf(Integer.valueOf(header.getCode()));
+    public short getResponseCode() {
+        return header.getCode();
     }
 
-    public void setOpCode(IppEncoding.OpCode opCode) {
-        header.setCode((short) opCode.getValue());
+    public void setResponseCode(short responseCode) {
+        header.setCode(responseCode);
     }
 
     public int getRequestId() {
@@ -57,4 +61,12 @@ public class IppRequest extends IppObject {
         header.setRequestId(requestId);
     }
 
+    public T getObject() {
+        if (obj != this)
+            return obj;
+        else
+            return null;
+    }
+    
+    // TODO: Delegate relevant methods to 'obj'
 }

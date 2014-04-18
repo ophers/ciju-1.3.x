@@ -44,7 +44,7 @@ public class Handler extends URLStreamHandler {
      * @param p the {@linkplain Proxy} through which to connect, {@linkplain Proxy#NO_PROXY}
      *      for direct connection or <code>null</code> to use the system's default
      *      {@linkplain java.net.ProxySelector} settings.
-     * @return 
+     * @return an {@link IppConnection} for the given uri.
      * @throws MalformedURLException if some error occurred while constructing the URL
      *      from the URI <code>u</code>.
      * @throws IOException if failed to create a connection.

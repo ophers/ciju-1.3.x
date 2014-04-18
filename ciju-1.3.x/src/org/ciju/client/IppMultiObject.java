@@ -29,37 +29,24 @@ import org.ciju.ipp.IppObject;
 /* package */ class IppMultiObject<T extends IppObject> extends IppObject {
     private final Collection<T> col;
     private final ListIterator<T> li;
-    private final Class<T> type;
+    private final IppObjectFactory<T> fact;
     
     private T currObj;
     
-    private void init() throws InstantiationException, IllegalAccessException {
-        currObj = type.newInstance();
-    }
-    
-    public IppMultiObject(Collection<T> col, Class<T> type) throws InstantiationException, IllegalAccessException {
+    public IppMultiObject(Collection<T> col, IppObjectFactory<T> fact) {
         this.col = col;
-        this.type = type;
+        this.fact = fact;
         this.li = null;
-        init();
     }
     
-    public IppMultiObject(ListIterator<T> li, Class<T> type) throws InstantiationException, IllegalAccessException {
+    public IppMultiObject(ListIterator<T> li, IppObjectFactory<T> fact) {
         this.li = li;
-        this.type = type;
+        this.fact = fact;
         this.col = null;
-        init();
     }
     
     private void add() {
-        try {
-            // Do something with currObj ...
-            currObj = type.newInstance();
-            
-        } catch (InstantiationException ex) {
-            /// Cannot happen
-        } catch (IllegalAccessException ex) {
-            /// Cannot happen
-        }
+        // Do something with currObj ...
+        currObj = fact.create();
     }
 }

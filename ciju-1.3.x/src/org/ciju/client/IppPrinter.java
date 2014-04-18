@@ -73,14 +73,18 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
     }
 
     public Collection<IppJob> getJobs() {
-        return getJobs(new ArrayList<IppJob>(), IppJob.class);
+        return getJobs(new ArrayList<IppJob>(), new IppObjectFactory<IppJob>() {
+            public IppJob create() {
+                return new IppJob(IppPrinter.this);
+            }
+        });
     }
 
-    public <T extends IppJob> Collection<T> getJobs(Collection<T> coll, Class<T> type) {
+    public <T extends IppJob> Collection<T> getJobs(Collection<T> coll, IppObjectFactory<T> fact) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public <T extends IppJob> void getJobs(ListIterator<T> iter, Class<T> type) {
+    public <T extends IppJob> void getJobs(ListIterator<T> iter, IppObjectFactory<T> fact) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
@@ -168,7 +172,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         else
             attributes.add(attrval);
         AttributeSet unsup = getUnsupportedAttributes(flavor, attributes);
-        return (unsup == null) || !unsup.containsKey(attrval.getCategory());
+        return unsup == null || !unsup.containsKey(attrval.getCategory());
     }
 
     public AttributeSet getUnsupportedAttributes(DocFlavor flavor, AttributeSet attributes) {

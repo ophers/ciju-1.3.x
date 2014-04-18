@@ -22,17 +22,18 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
-import org.ciju.ipp.IppObject;
 import org.ciju.client.ipp.IppTransport;
+import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppResponse;
 
 
 /**
  * This class is part of the Apache HttpClient supporting classes.
  * @author Opher
  */
-public class IppResponseHandler implements ResponseHandler<IppObject> {
+public class IppResponseHandler implements ResponseHandler<IppResponse<IppObject>> {
 
-    public IppObject handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
+    public IppResponse<IppObject> handleResponse(HttpResponse response) throws ClientProtocolException, IOException {
         final HttpEntity entity = response.getEntity();
         return IppTransport.processResponse(entity.getContent(), entity.getContentLength());
     }

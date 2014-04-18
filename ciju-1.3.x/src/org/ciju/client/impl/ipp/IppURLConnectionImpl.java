@@ -25,6 +25,7 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
+import org.ciju.client.IppObjectFactory;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppRequest;
 import org.ciju.client.ipp.IppTransport;
@@ -50,7 +51,6 @@ import org.ciju.ipp.IppObject;
 
     private final Handler handler;
     private final HttpURLConnection huc;
-    private boolean gos_called;
     private IppRequest ipp;
 
     /**
@@ -175,13 +175,11 @@ import org.ciju.ipp.IppObject;
     private void sendIppRequest() throws IOException {
         if (ipp == null)
             throw new IllegalStateException("IPP request was not set.");
-        OutputStream os = getOutputStream();
+        OutputStream os = huc.getOutputStream();
         IppTransport.writeRequest(os, ipp);
     }
 
     public IppConnection setIppRequest(IppRequest request) {
-        if (gos_called)
-            throw new IllegalStateException("Output stream was previously requested.");
         if (connected)
             throw new IllegalStateException("Already connected");
         if (request == null) 
@@ -200,34 +198,25 @@ import org.ciju.ipp.IppObject;
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        if (ipp != null)
-            throw new IllegalStateException("IPP request was previously set.");
-        gos_called = true;
-        return huc.getOutputStream();
+        throw new UnsupportedOperationException("Use setIppRequest(...) to send IPP request.");
     }
 
     @Override
     public InputStream getInputStream() throws IOException {
-        if (!gos_called)
-            sendIppRequest();
+        sendIppRequest();
         return huc.getInputStream();
     }
 
-    @Override
-    public Object getContent(Class[] classes) throws IOException {
-        getInputStream();
-        return huc.getContent(classes);
-    }
-
+    // Method getContent() left for URLConnection so that .
     @Override
     public IppObject getContent() throws IOException {
-        getInputStream();
-        return (IppObject) huc.getContent();
+        return (IppObject) super.getContent();
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends IppObject> T getContent(Class<T> t) throws IOException {
-        return (T) getContent(new Class[] { t });
+    // Method getContent(Class[] classes) left for URLConnection.
+
+    public <T extends IppObject> T getContent(IppObjectFactory<T> fact) throws IOException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 // <editor-fold defaultstate="collapsed" desc="delegated methods">

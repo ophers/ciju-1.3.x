@@ -51,10 +51,8 @@ package org.ciju.ipp;
         this.version = IppEncoding.DEF_VERSION;
     }
 
-    public IppHeader(short version, IppEncoding.OpCode code, int requestId) {
+    public IppHeader(short version) {
         this.version = version;
-        this.code = (short) code.getValue();
-        this.requestId = requestId;
     }
 
     public IppHeader(IppEncoding.OpCode code, int requestId) {
@@ -67,12 +65,6 @@ package org.ciju.ipp;
         this();
         this.code = (short) code.getValue();
         this.requestId = 1;
-    }
-
-    public IppHeader(short version, short responseCode, int requestId) {
-        this.version = version;
-        this.code = responseCode;
-        this.requestId = requestId;
     }
 
 }
