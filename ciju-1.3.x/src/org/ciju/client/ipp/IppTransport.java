@@ -21,6 +21,7 @@ import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppObject;
 import java.io.InputStream;
 import java.io.OutputStream;
+import org.ciju.ipp.IppResponse;
 
 /**
  *
@@ -41,21 +42,21 @@ public class IppTransport {
      *
      * @param inputStream
      * @param contentLength
-     * @return
+     * @return an {@link IppResponse} object from the response.
      */
-    public static IppObject processResponse(InputStream inputStream, long contentLength) {
-        return processResponse(inputStream, contentLength, new IppObject() {});
+    public static IppResponse<IppObject> processResponse(InputStream inputStream, long contentLength) {
+        return processResponse(inputStream, contentLength, null);
     }
 
     /**
      *
-     * @param <T>
      * @param inputStream
      * @param contentLength
      * @param obj
-     * @return
+     * @param <T>
+     * @return an {@link IppResponse} object encompassing the given obj.
      */
-    public static <T extends IppObject> T processResponse(InputStream inputStream, long contentLength, T obj) {
+    public static <T extends IppObject> IppResponse<T> processResponse(InputStream inputStream, long contentLength, T obj) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

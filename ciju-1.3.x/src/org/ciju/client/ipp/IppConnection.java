@@ -18,17 +18,18 @@
 package org.ciju.client.ipp;
 
 import java.io.IOException;
+import org.ciju.client.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppObject;
 
 
 /**
- * Definition of the interface for an IPP connection consumed by {@link org.ciju.client}.* classes.
- * We provide two implementations of this interface. One is {@link org.ciju.client.ipp.IppURLConnection} that
- * extends {@link java.net.HttpURLConnection} and the other wraps an {@link org.apache.http.client.HttpClient Apache Client} class.
+ * Definition of the interface for an IPP connection consumed by 
+ * <a href="{@docRoot}/org/ciju/client/package-summary.html">org.ciju.client</a>.* classes.
+ * We provide two implementations of this interface. One extends {@link java.net.HttpURLConnection} 
+ * and the other wraps an {@link org.apache.http.client.HttpClient Apache Client} class.
  *
  * @author	Opher
- * @see org.ciju.client.ipp.IppURLConnection
  */
 public interface IppConnection {
 
@@ -41,13 +42,13 @@ public interface IppConnection {
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
      */
-    public IppConnection setIppRequest(IppRequest request);
+    IppConnection setIppRequest(IppRequest request);
 
     /**
      * Get the {@link IppRequest} request object set earlier with {@link #setIppRequest}.
      * @return the <code>IppRequest</code> object set with <code>setIppRequest</code>
      */
-    public IppRequest getIppRequest();
+    IppRequest getIppRequest();
 
     /**
      * Retrieves the content for the {@link IppRequest} sent on this connection.
@@ -55,16 +56,16 @@ public interface IppConnection {
      * @throws java.io.IOException if an I/O error occurs while getting the content.
      * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
      */
-    public IppObject getContent() throws IOException;
+    IppObject getContent() throws IOException;
 
     /**
      * Retrieves the content for the {@link IppRequest} sent on this connection.
      * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
-     * @param t The class to use as the response.
+     * @param fact The class to use as the response.
      * @return the {@linkplain IppObject}, or a descendant thereof, fetched.
      * @throws java.io.IOException if an I/O error occurs while getting the content.
      * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
      */
-    public <T extends IppObject> T getContent(Class<T> t) throws IOException;
+    <T extends IppObject> T getContent(IppObjectFactory<T> fact) throws IOException;
     
 }

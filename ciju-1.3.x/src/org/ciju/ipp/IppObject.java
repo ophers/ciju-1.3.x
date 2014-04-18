@@ -25,10 +25,14 @@ import org.ciju.ipp.IppEncoding.ValueTag;
  *
  * @author Opher Shachar
  */
-public abstract class IppObject {
+public class IppObject {
 
-    Attribute getAttribute(String name, GroupTag groupTag, ValueTag valueTag) {
+    public Attribute getAttribute(String name, GroupTag groupTag, ValueTag valueTag) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    public Attribute getAttributesNaturalLanguage() {
+        return getAttribute("attributes-natural-language", GroupTag.OPERATION, ValueTag.NATURAL_LANGUAGE);
     }
 
 }
