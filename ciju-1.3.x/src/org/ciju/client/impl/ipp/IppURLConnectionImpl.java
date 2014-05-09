@@ -25,7 +25,7 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
-import org.ciju.client.IppObjectFactory;
+import org.ciju.ipp.IppObjectFactory;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppRequest;
 import org.ciju.client.ipp.IppTransport;

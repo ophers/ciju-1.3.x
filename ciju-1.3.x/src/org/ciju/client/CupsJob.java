@@ -25,7 +25,7 @@ import javax.print.Doc;
  */
 public class CupsJob extends IppJob {
 
-    protected CupsJob(IppPrinter printer) {
+    protected CupsJob(CupsPrinter printer) {
         super(printer);
     }
 

@@ -20,7 +20,7 @@ package org.ciju.client.impl.apache;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
-import org.ciju.client.IppObjectFactory;
+import org.ciju.ipp.IppObjectFactory;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppRequest;

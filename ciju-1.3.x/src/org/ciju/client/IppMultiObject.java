@@ -20,6 +20,7 @@ package org.ciju.client;
 import java.util.Collection;
 import java.util.ListIterator;
 import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppObjectFactory;
 
 /**
  *
