@@ -32,20 +32,20 @@ public class IppEncoding {
     
     public enum GroupTag {
         // 0x00 is reserved for future IETF standard track document
-        OPERATION(0x01),        // operation-attributes-tag
-        JOB(0x02),              // job-attributes-tag
-        END(0x03),              // end-of-attributes-tag
-        PRINTER(0x04),          // printer-attributes-tag
-        UNSUPPORTED(0x05),      // unsupported-attributes-tag
+        /** operation-attributes-tag */             OPERATION(0x01),
+        /** job-attributes-tag */                   JOB(0x02),
+        /** end-of-attributes-tag */                END(0x03),
+        /** printer-attributes-tag */               PRINTER(0x04),
+        /** unsupported-attributes-tag */           UNSUPPORTED(0x05),
         
         // From RFC3995: IPP/1.1 - Event Notifications and Subscriptions
-        SUBSCRIPTION(0x06),     // subscription-attributes-tag
-        EVENT(0x07),            // event-notification-attributes-tag
+        /** subscription-attributes-tag */          SUBSCRIPTION(0x06),
+        /** event-notification-attributes-tag */    EVENT(0x07),
         
         // 0x08 is reserved
         
         // From PWG5100.5: IPP/2.2 - Document Object
-        DOCUMENT(0x09)          // document-attributes-tag
+        /** document-attributes-tag */              DOCUMENT(0x09)
         // 0x0A-0x0F are reserved
         ;
         
@@ -60,13 +60,12 @@ public class IppEncoding {
         }
         
         
-        private static final Map<Integer, GroupTag> vmap = initVmap();
-        private static Map<Integer, GroupTag> initVmap() {
+        private static final Map<Integer, GroupTag> vmap;
+        static {
             final GroupTag[] dts = GroupTag.values();
-            final HashMap<Integer, GroupTag> vmap = new HashMap<Integer, GroupTag>(dts.length * 4/3 + 1);
+            vmap = new HashMap<Integer, GroupTag>(dts.length * 4/3 + 1);
             for (GroupTag e : dts)
                 vmap.put(e.value, e);
-            return vmap;
         }
         
         /**
@@ -159,13 +158,12 @@ public class IppEncoding {
         }
         
         
-        private static final Map<Integer, ValueTag> vmap = initVmap();
-        private static Map<Integer, ValueTag> initVmap() {
+        private static final Map<Integer, ValueTag> vmap;
+        static {
             final ValueTag[] vts = ValueTag.values();
-            final HashMap<Integer, ValueTag> vmap = new HashMap<Integer, ValueTag>(vts.length * 4/3 + 1);
+            vmap = new HashMap<Integer, ValueTag>(vts.length * 4/3 + 1);
             for (ValueTag e : vts)
                 vmap.put(e.value, e);
-            return vmap;
         }
         
         /**
@@ -264,13 +262,12 @@ public class IppEncoding {
         }
         
         
-        private static final Map<Integer, OpCode> vmap = initVmap();
-        private static Map<Integer, OpCode> initVmap() {
+        private static final Map<Integer, OpCode> vmap;
+        static {
             final OpCode[] ocs = OpCode.values();
-            final HashMap<Integer, OpCode> vmap = new HashMap<Integer, OpCode>(ocs.length * 4/3 + 1);
+            vmap = new HashMap<Integer, OpCode>(ocs.length * 4/3 + 1);
             for (OpCode e : ocs)
                 vmap.put(e.value, e);
-            return vmap;
         }
         
         /**
