@@ -15,9 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client;
-
-import org.ciju.ipp.IppObject;
+package org.ciju.ipp;
 
 /**
  *

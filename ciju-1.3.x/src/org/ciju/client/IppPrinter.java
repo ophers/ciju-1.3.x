@@ -40,8 +40,9 @@ import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
-import org.ciju.ipp.IppObject;
 import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppObjectFactory;
 
 /**
  *
@@ -72,7 +73,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         return uri;
     }
 
-    public Collection<IppJob> getJobs() {
+    public Collection<? extends IppJob> getJobs() {
         return getJobs(new ArrayList<IppJob>(), new IppObjectFactory<IppJob>() {
             public IppJob create() {
                 return new IppJob(IppPrinter.this);

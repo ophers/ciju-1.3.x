@@ -17,10 +17,19 @@
 
 package org.ciju.client.ipp;
 
-import org.ciju.ipp.IppRequest;
-import org.ciju.ipp.IppObject;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.EnumSyntax;
+import javax.print.attribute.IntegerSyntax;
+import javax.print.attribute.URISyntax;
+import org.ciju.ipp.IppEncoding.ValueTag;
+import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppResponse;
 
 /**
@@ -57,7 +66,53 @@ public class IppTransport {
      * @return an {@link IppResponse} object encompassing the given obj.
      */
     public static <T extends IppObject> IppResponse<T> processResponse(InputStream inputStream, long contentLength, T obj) {
+        final CharsetEncoder ascii = Charset.forName("US-ASCII").newEncoder();
+        final CharsetEncoder utf8  = Charset.forName("UTF-8").newEncoder();
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    private static void writeIppAttribute(Attribute a, DataOutput out, CharsetEncoder utf8) throws IOException {
+        ValueTag vt = deduceValueTag(a);
+        out.write(vt.getValue());
+        out.writeShort(a.getName().length());
+        out.writeBytes(a.getName());            // the standard mandates Name to be ASCII
+        writeIppValue(vt, out, a);
+        // Attribute value print loop
+        boolean last = true;
+        while (!last) {
+            out.write(vt.getValue());
+            out.writeShort(0);                  // nameless attribute indicates a multi-value
+            // FIXME: select a's next value
+            writeIppValue(vt, out, a);
+        }
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    private static ValueTag deduceValueTag(Attribute a) throws IOException {
+        if (a instanceof IntegerSyntax) {
+            return ValueTag.INTEGER;
+        }
+        else if (a instanceof URISyntax) {
+            return ValueTag.URI;
+        }
+        throw new IllegalArgumentException("Attribute does not implement a known Syntax.");
+    }
+    
+    private static void writeIppValue(ValueTag vt, DataOutput out, Attribute a) throws IOException {
+        switch (vt) {
+            case INTEGER:
+                out.writeShort(4);
+                out.writeInt(((IntegerSyntax) a).getValue());
+                break;
+            case ENUM:
+                out.writeShort(4);
+                out.writeInt(((EnumSyntax) a).getValue());
+                break;
+            case BOOLEAN:
+                out.writeShort(1);
+                out.write(((EnumSyntax) a).getValue());
+                break;
+        }
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

@@ -18,7 +18,7 @@
 package org.ciju.client.ipp;
 
 import java.io.IOException;
-import org.ciju.client.IppObjectFactory;
+import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppObject;
 

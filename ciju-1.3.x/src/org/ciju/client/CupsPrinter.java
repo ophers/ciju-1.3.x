@@ -19,6 +19,9 @@ package org.ciju.client;
 
 import java.net.Proxy;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collection;
+import org.ciju.ipp.IppObjectFactory;
 
 /**
  *
@@ -45,5 +48,18 @@ public class CupsPrinter extends IppPrinter {
     
     public void acceptJobs() {
         throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public Collection<CupsJob> getJobs() {
+        return getJobs(new ArrayList<CupsJob>(), new IppObjectFactory<CupsJob>() {
+            public CupsJob create() {
+                return new CupsJob(CupsPrinter.this);
+            }
+        });
     }
 }

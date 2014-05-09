@@ -17,9 +17,17 @@
 
 package org.ciju.client.impl.ipp.attribute;
 
+import java.io.DataOutput;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.attribute.Attribute;
-import javax.print.attribute.standard.*;
-import static org.ciju.ipp.IppEncoding.ValueTag;
+import javax.print.attribute.IntegerSyntax;
+import javax.print.attribute.standard.Copies;
+import org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
  *
@@ -29,18 +37,57 @@ public enum Attributes {
     COPIES(Copies.class, ValueTag.INTEGER)
     ;
     
-    private Class<? extends Attribute> attrClass;
-    private ValueTag syntax;
+    private final Class<? extends Attribute> attrClass;
+    private final ValueTag vt;
+    
     Attributes(Class<? extends Attribute> c, ValueTag s) {
         attrClass = c;
-        syntax = s;
+        vt = s;
     }
     
     public static Attribute create(String attr, ValueTag s, Object o) {
-        Attributes a = Attributes.valueOf(attr);
+        Attribute a = createSpecific(attr, s, o);
+        if (a == null)
+            a = createGeneric(attr, s, o);
+        return a;
+    }
+    
+    private static Attribute createSpecific(String attr, ValueTag s, Object o) {
+        Attributes as = null;
+        Attribute  a  = null;
+        try {
+            as = Attributes.valueOf(attr.toUpperCase().replace('-', '_'));
+            switch (s) {
+                case INTEGER:
+                case BOOLEAN:
+                case ENUM:
+                    a = as.attrClass.getConstructor(int.class).newInstance(o);
+                    
+            }
+//            Copies((IntegerSyntax)a).
 //        PageRanges pr = (PageRanges) a.attrClass.newInstance();
+            return a;
+        } catch (InstantiationException ex) {
+            Logger.getLogger(Attributes.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalAccessException ex) {
+            Logger.getLogger(Attributes.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (NoSuchMethodException ex) {
+            Logger.getLogger(Attributes.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SecurityException ex) {
+            Logger.getLogger(Attributes.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InvocationTargetException ex) {
+            Logger.getLogger(Attributes.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IllegalArgumentException ex) {
+            if (as != null)
+                Logger.getLogger(Attributes.class.getName()).log(Level.SEVERE, null, ex);
+            // otherwise no such attribute known - OK
+        }
         
         return null;
     }
 
+    private static Attribute createGeneric(String attr, ValueTag s, Object o) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
 }
