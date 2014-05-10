@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.Iterator;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
@@ -75,42 +76,48 @@ public class IppTransport {
         ValueTag vt = deduceValueTag(a);
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
-        out.writeBytes(a.getName());            // the standard mandates Name to be ASCII
-        writeIppValue(vt, out, a);
-        // Attribute value print loop
-        boolean last = true;
-        while (!last) {
-            out.write(vt.getValue());
-            out.writeShort(0);                  // nameless attribute indicates a multi-value
-            // FIXME: select a's next value
-            writeIppValue(vt, out, a);
+        out.writeBytes(a.getName());                // the standard mandates Name to be US-ASCII
+        if (vt.getValue() < 0x20)                   // out-of-band value
+            out.writeShort(0);                      // has zero-length
+        else if (a instanceof Iterable) {
+            Iterator iter = ((Iterable) a).iterator();
+            writeIppValue(vt, out, iter.next());    // the standard mandates at least one value
+            // Attribute value print loop
+            while (iter.hasNext()) {
+                Object o = iter.next();             // the standard allows for each value to have
+                ValueTag ovt = deduceValueTag(o);   // a diffrent syntax
+                out.write(ovt.getValue());
+                out.writeShort(0);                  // nameless attribute indicates a multi-value
+                writeIppValue(ovt, out, o);
+            }
         }
-        throw new UnsupportedOperationException("Not supported yet.");
+        else
+            writeIppValue(vt, out, a);
     }
 
-    private static ValueTag deduceValueTag(Attribute a) throws IOException {
-        if (a instanceof IntegerSyntax) {
+    private static ValueTag deduceValueTag(Object o) throws IOException {
+        if (o instanceof IntegerSyntax) {
             return ValueTag.INTEGER;
         }
-        else if (a instanceof URISyntax) {
+        else if (o instanceof URISyntax) {
             return ValueTag.URI;
         }
         throw new IllegalArgumentException("Attribute does not implement a known Syntax.");
     }
     
-    private static void writeIppValue(ValueTag vt, DataOutput out, Attribute a) throws IOException {
+    private static void writeIppValue(ValueTag vt, DataOutput out, Object o) throws IOException {
         switch (vt) {
             case INTEGER:
                 out.writeShort(4);
-                out.writeInt(((IntegerSyntax) a).getValue());
+                out.writeInt(((IntegerSyntax) o).getValue());
                 break;
             case ENUM:
                 out.writeShort(4);
-                out.writeInt(((EnumSyntax) a).getValue());
+                out.writeInt(((EnumSyntax) o).getValue());
                 break;
             case BOOLEAN:
                 out.writeShort(1);
-                out.write(((EnumSyntax) a).getValue());
+                out.write(((EnumSyntax) o).getValue());
                 break;
         }
         throw new UnsupportedOperationException("Not supported yet.");
