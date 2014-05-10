@@ -72,12 +72,12 @@ public class IppTransport {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    private static void writeIppAttribute(Attribute a, DataOutput out, CharsetEncoder utf8) throws IOException {
+    private static void writeIppAttribute(Attribute a, DataOutput out) throws IOException {
         ValueTag vt = deduceValueTag(a);
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
         out.writeBytes(a.getName());                // the standard mandates Name to be US-ASCII
-        if (vt.getValue() < 0x20)                   // out-of-band value
+        if (vt.getValue() < 0x20)                   // an out-of-band value
             out.writeShort(0);                      // has zero-length
         else if (a instanceof Iterable) {
             Iterator iter = ((Iterable) a).iterator();
@@ -85,10 +85,10 @@ public class IppTransport {
             // Attribute value print loop
             while (iter.hasNext()) {
                 Object o = iter.next();             // the standard allows for each value to have
-                ValueTag ovt = deduceValueTag(o);   // a diffrent syntax
-                out.write(ovt.getValue());
+                vt = deduceValueTag(o);             // a diffrent syntax
+                out.write(vt.getValue());
                 out.writeShort(0);                  // nameless attribute indicates a multi-value
-                writeIppValue(ovt, out, o);
+                writeIppValue(vt, out, o);
             }
         }
         else
