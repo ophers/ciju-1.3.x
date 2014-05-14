@@ -23,8 +23,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Iterator;
+import java.util.TimeZone;
 import javax.print.attribute.Attribute;
+import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
 import javax.print.attribute.URISyntax;
@@ -72,6 +77,31 @@ public class IppTransport {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    /**
+     * The picture of the encoding of an attribute is:
+     * -----------------------------------------
+     * |                value-tag              |   1 byte
+     * -----------------------------------------
+     * |            name-length  (value is u)  |   2 bytes
+     * -----------------------------------------
+     * |                  name                 |   u bytes
+     * -----------------------------------------
+     * |           value-length  (value is v)  |   2 bytes
+     * -----------------------------------------
+     * |                  value                |   v bytes
+     * -----------------------------------------
+     * 
+     * The picture for next values in multi-valued attribute is:
+     * -----------------------------------------
+     * |               value-tag               |   1 byte
+     * -----------------------------------------
+     * |       name-length  (value is 0x0000)  |   2 bytes
+     * -----------------------------------------
+     * |         value-length (value is w)     |   2 bytes
+     * -----------------------------------------
+     * |                 value                 |   w bytes
+     * -----------------------------------------
+     */
     private static void writeIppAttribute(Attribute a, DataOutput out) throws IOException {
         ValueTag vt = deduceValueTag(a);
         out.write(vt.getValue());
@@ -104,20 +134,52 @@ public class IppTransport {
         }
         throw new IllegalArgumentException("Attribute does not implement a known Syntax.");
     }
-    
+
+    /**
+     * The picture of the encoding of a value is:
+     * ---------------------
+     * |   value-length    |   2 bytes
+     * ---------------------
+     * |          value    |   v bytes
+     * ---------------------
+     */
     private static void writeIppValue(ValueTag vt, DataOutput out, Object o) throws IOException {
         switch (vt) {
             case INTEGER:
                 out.writeShort(4);
                 out.writeInt(((IntegerSyntax) o).getValue());
                 break;
+            case BOOLEAN:
+                out.writeShort(1);
+                out.write(((EnumSyntax) o).getValue());
+                break;
             case ENUM:
                 out.writeShort(4);
                 out.writeInt(((EnumSyntax) o).getValue());
                 break;
-            case BOOLEAN:
-                out.writeShort(1);
-                out.write(((EnumSyntax) o).getValue());
+            case DATE_TIME:
+                // setup calendar object
+                Date date = ((DateTimeSyntax) o).getValue();
+                Calendar cal = new GregorianCalendar();
+                cal.setTime(date);
+                // write value
+                out.writeShort(11);
+                out.writeShort(cal.get(Calendar.YEAR));
+                out.write(cal.get(Calendar.MONTH));
+                out.write(cal.get(Calendar.DAY_OF_MONTH));
+                out.write(cal.get(Calendar.HOUR_OF_DAY));
+                out.write(cal.get(Calendar.MINUTE));
+                out.write(cal.get(Calendar.SECOND));
+                out.write(cal.get(Calendar.MILLISECOND) / 100);
+                // timezone offset
+                int minoff = cal.get(Calendar.ZONE_OFFSET) / 60000;
+                if (minoff < 0) {
+                    out.write('-');
+                    minoff = -minoff;
+                } else
+                    out.write('+');
+                out.write(minoff / 60);
+                out.write(minoff % 60);
                 break;
         }
         throw new UnsupportedOperationException("Not supported yet.");
