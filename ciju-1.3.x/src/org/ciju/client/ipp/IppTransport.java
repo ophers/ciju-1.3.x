@@ -113,14 +113,15 @@ public class IppTransport {
         else
             iter = null;
         
-        // get the (first) value
+        // get the (first) value and value-tag
         Object o;
         if (iter == null)
             o = a;
         else
             o = iter.next();                        // the standard mandates at least one value
-        
         ValueTag vt = deduceValueTag(o);
+        
+        // write the attribute
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
         out.writeBytes(a.getName());                // the standard mandates Name to be US-ASCII
