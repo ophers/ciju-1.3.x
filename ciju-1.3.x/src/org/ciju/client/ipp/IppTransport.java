@@ -23,15 +23,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
-import java.util.TimeZone;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
+import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.URISyntax;
 import org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.IppObject;
@@ -103,26 +104,40 @@ public class IppTransport {
      * -----------------------------------------
      */
     private static void writeIppAttribute(Attribute a, DataOutput out) throws IOException {
-        ValueTag vt = deduceValueTag(a);
+        // determine if the attribute is multi-valued
+        Iterator iter;
+        if (a instanceof Iterable) 
+            iter = ((Iterable) a).iterator();
+        else if (a instanceof SetOfIntegerSyntax)
+            iter = Arrays.asList(((SetOfIntegerSyntax) a).getMembers()).iterator();
+        else
+            iter = null;
+        
+        // get the (first) value
+        Object o;
+        if (iter == null)
+            o = a;
+        else
+            o = iter.next();                        // the standard mandates at least one value
+        
+        ValueTag vt = deduceValueTag(o);
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
         out.writeBytes(a.getName());                // the standard mandates Name to be US-ASCII
         if (vt.getValue() < 0x20)                   // an out-of-band value
             out.writeShort(0);                      // has zero-length
-        else if (a instanceof Iterable) {
-            Iterator iter = ((Iterable) a).iterator();
-            writeIppValue(vt, out, iter.next());    // the standard mandates at least one value
+        else
+            writeIppValue(vt, out, o);
+        if (iter != null) {
             // Attribute value print loop
             while (iter.hasNext()) {
-                Object o = iter.next();             // the standard allows for each value to have
+                o = iter.next();                    // the standard allows for each value to have
                 vt = deduceValueTag(o);             // a diffrent syntax
                 out.write(vt.getValue());
                 out.writeShort(0);                  // nameless attribute indicates a multi-value
                 writeIppValue(vt, out, o);
             }
         }
-        else
-            writeIppValue(vt, out, a);
     }
 
     private static ValueTag deduceValueTag(Object o) throws IOException {
