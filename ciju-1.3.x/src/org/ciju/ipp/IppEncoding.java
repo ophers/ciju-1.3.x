@@ -17,8 +17,16 @@
 
 package org.ciju.ipp;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.print.attribute.standard.JobMessageFromOperator;
+import javax.print.attribute.standard.OutputDeviceAssigned;
+import javax.print.attribute.standard.PrinterInfo;
+import javax.print.attribute.standard.PrinterLocation;
+import javax.print.attribute.standard.PrinterMakeAndModel;
+import javax.print.attribute.standard.PrinterMessageFromOperator;
+import javax.print.attribute.standard.PrinterName;
 
 /**
  *
@@ -107,27 +115,27 @@ public class IppEncoding {
         // 0x24-0x2F are reserved        
         
         // The following specifies the octetString values
-        OCTET_STRING(0x30),
+        OCTET_STRING(0x30, 1023),
         DATE_TIME(0x31),
         RESOLUTION(0x32),
         RANGE_OF_INTEGER(0x33),
         // 0x34 - see below
-        TEXT_WITH_LANGUAGE(0x35),
-        NAME_WITH_LANGUAGE(0x36),
+        TEXT_WITH_LANGUAGE(0x35, 1090),
+        NAME_WITH_LANGUAGE(0x36, 322),
         // 0x37 - see below
         // 0x38-0x3F are reserved
         
         // The following specifies the character-string values
         // 0x40 is reserved
-        TEXT_WITHOUT_LANGUAGE(0x41),
-        NAME_WITHOUT_LANGUAGE(0x42),
+        TEXT_WITHOUT_LANGUAGE(0x41, 1023),
+        NAME_WITHOUT_LANGUAGE(0x42, 255),
         // 0x43 is reserved
-        KEYWORD(0x44),
-        URI(0x45),
-        URI_SCHEME(0x46),
-        CHARSET(0x47),
-        NATURAL_LANGUAGE(0x48),
-        MIME_MEDIA_TYPE(0x49),
+        KEYWORD(0x44, 255),
+        URI(0x45, 1023),
+        URI_SCHEME(0x46, 63),
+        CHARSET(0x47, 63),
+        NATURAL_LANGUAGE(0x48, 63),
+        MIME_MEDIA_TYPE(0x49, 255),
         // 0x4A - see below
         // 0x4B-0x5F are reserved
         
@@ -142,15 +150,22 @@ public class IppEncoding {
         // 0x00000000-0x3FFFFFFF are reserved for IETF standard track documents
         // 0x40000000-0x7FFFFFFF are reserved for vendor extensions
         
-        // The following are special markers 
+        // The following are special markers. do we need them?
         TEXT(0),
         NAME(0)
         ;
         
         private final int value;
+        public  final int MAX;
 
+        private ValueTag(int value, int max) {
+            this.value = value;
+            this.MAX = max;
+        }
+        
         private ValueTag(int value) {
             this.value = value;
+            this.MAX = Integer.MAX_VALUE;
         }
         
         public int getValue() {
@@ -285,5 +300,20 @@ public class IppEncoding {
                 throw new NullPointerException("Integer is null");
             throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
         }
+    }
+    
+    public static final Map<Class<?>, Integer> LengthLimits;
+    static {
+        Map<Class<?>, Integer> ll = new HashMap<Class<?>, Integer>();
+//        ll.put(StatusMessage.class, 255);                 // TODO: Define StatusMessage Attribute class
+//        ll.put(Message.class, 127);                       // TODO: Define Message Attribute class
+        ll.put(OutputDeviceAssigned.class, 127);
+        ll.put(JobMessageFromOperator.class, 127);
+        ll.put(PrinterName.class, 127);
+        ll.put(PrinterLocation.class, 127);
+        ll.put(PrinterInfo.class, 127);
+        ll.put(PrinterMakeAndModel.class, 127);
+        ll.put(PrinterMessageFromOperator.class, 127);
+        LengthLimits = Collections.unmodifiableMap(ll);
     }
 }
