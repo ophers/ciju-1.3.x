@@ -34,13 +34,13 @@ import org.ciju.ipp.IppObjectFactory;
     
     private T currObj;
     
-    public IppMultiObject(Collection<T> col, IppObjectFactory<T> fact) {
+    /* package */ IppMultiObject(Collection<T> col, IppObjectFactory<T> fact) {
         this.col = col;
         this.fact = fact;
         this.li = null;
     }
     
-    public IppMultiObject(ListIterator<T> li, IppObjectFactory<T> fact) {
+    /* package */ IppMultiObject(ListIterator<T> li, IppObjectFactory<T> fact) {
         this.li = li;
         this.fact = fact;
         this.col = null;

@@ -18,6 +18,7 @@
 package org.ciju.client.ipp;
 
 import java.io.DataOutput;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,16 +35,22 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
 import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributesImpl;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
 import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.SetOfIntegerSyntax;
+import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
+import javax.print.attribute.standard.JobHoldUntil;
 import org.ciju.ipp.IppEncoding;
-import org.ciju.ipp.IppEncoding.ValueTag;
+import static org.ciju.ipp.IppEncoding.ValueTag;
+import static org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppResponse;
@@ -54,12 +61,27 @@ import org.ciju.ipp.IppResponse;
  */
 public class IppTransport {
 
+    private final DataOutput out;
+    private final IppRequest request;
+    private final CharsetEncoder utf8enc;
+    private final ByteBuffer bb;
+
+    private IppTransport(DataOutput out, IppRequest request) {
+        this.out = out;
+        this.request = request;
+        this.utf8enc = Charset.forName("UTF-8").newEncoder();
+        this.bb = ByteBuffer.allocate(1023);
+    }
+
     /**
-     *
+     * 
      * @param os
      * @param ipp
+     * @throws java.io.IOException
      */
-    public static void writeRequest(OutputStream os, IppRequest ipp) {
+    public static void writeRequest(OutputStream os, IppRequest ipp) throws IOException {
+        IppTransport t = new IppTransport(new DataOutputStream(os), ipp);
+        t.writeRequest();
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -86,19 +108,51 @@ public class IppTransport {
         final CharsetEncoder utf8  = Charset.forName("UTF-8").newEncoder();
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
-    private final DataOutput out;
-    private final IppRequest request;
-    private final CharsetEncoder utf8enc;
-    private final ByteBuffer bb;
 
-    private IppTransport(DataOutput out, IppRequest request) {
-        this.out = out;
-        this.request = request;
-        this.utf8enc = Charset.forName("UTF-8").newEncoder();
-        this.bb = ByteBuffer.allocate(1023);
+    /**
+     * The picture of the encoding for a request or response is:
+     * -----------------------------------------------
+     * |                  version-number             |   2 bytes
+     * -----------------------------------------------
+     * |               operation-id (request)        |
+     * |                      or                     |   2 bytes
+     * |               status-code (response)        |
+     * -----------------------------------------------
+     * |                   request-id                |   4 bytes
+     * -----------------------------------------------
+     * |                 attribute-group             |   n bytes - 0 or more
+     * -----------------------------------------------
+     * |              end-of-attributes-tag          |   1 byte
+     * -----------------------------------------------
+     * |                     data                    |   q bytes - optional
+     * -----------------------------------------------
+     */
+    private void writeRequest() throws IOException {
+        // write request header
+        out.writeShort(request.getVersion());
+        out.writeShort(request.getOpCode().getValue());
+        out.writeShort(request.getRequestId());
+        writeOperAttrs(getNaturalLanguage(request.getLocale()));
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
+
+    private void writeOperAttrs(String anl) throws IOException {
+        // write operational attributes group tag
+        out.write(GroupTag.OPERATION.getValue());
+        // write charset attribute. Always utf-8.
+        out.write(ValueTag.CHARSET.getValue());
+        out.writeShort(18);
+        out.writeBytes("attributes-charset");
+        out.writeShort(5);
+        out.writeBytes("utf-8");
+        // write natural language attribute
+        out.write(ValueTag.NATURAL_LANGUAGE.getValue());
+        out.writeShort(27);
+        out.writeBytes("attributes-natural-language");
+        out.writeShort(anl.length());
+        out.writeBytes(anl);
+    }
+
     /**
      * The picture of the encoding of an attribute is:
      * -----------------------------------------
@@ -112,7 +166,7 @@ public class IppTransport {
      * -----------------------------------------
      * |                  value                |   v bytes
      * -----------------------------------------
-     * 
+     *
      * The picture for next values in multi-valued attribute is:
      * -----------------------------------------
      * |               value-tag               |   1 byte
@@ -127,13 +181,15 @@ public class IppTransport {
     private void writeIppAttribute(Attribute a) throws IOException {
         // determine if the attribute is multi-valued
         Iterator iter;
-        if (a instanceof Iterable) 
+        if (a instanceof Iterable)
             iter = ((Iterable) a).iterator();
+        else if (a instanceof Map)
+            iter = ((Map) a).entrySet().iterator();
         else if (a instanceof SetOfIntegerSyntax)
             iter = Arrays.asList(((SetOfIntegerSyntax) a).getMembers()).iterator();
         else
             iter = null;
-        
+
         // get the (first) value and value-tag
         Object o;
         if (iter == null)
@@ -141,7 +197,7 @@ public class IppTransport {
         else
             o = iter.next();                        // the standard mandates at least one value
         ValueTag vt = deduceValueTag(o);
-        
+
         // write the attribute
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
@@ -159,13 +215,36 @@ public class IppTransport {
         }
     }
 
+    /**
+     * The JPS Object Model has its quirks (mostly documented).
+     * So, for example, JobHoldUntil needs a special consideration.
+     */
     private ValueTag deduceValueTag(Object o) throws IOException {
-        if (o instanceof IntegerSyntax) {
+        if (o instanceof JobHoldUntil)
+            // writeIppValue() will handle this specially
+            return ValueTag.NAME_WITHOUT_LANGUAGE;
+        else if (o instanceof DateTimeSyntax)
+            return ValueTag.DATE_TIME;
+        else if (o instanceof EnumSyntax)
+            return AttributesImpl.deduceEnumIPPSyntax((EnumSyntax) o);
+        else if (o instanceof IntegerSyntax)
             return ValueTag.INTEGER;
-        }
-        else if (o instanceof URISyntax) {
+        else if (o instanceof ResolutionSyntax)
+            return ValueTag.RESOLUTION;
+        else if (o instanceof SetOfIntegerSyntax)
+            return ValueTag.RANGE_OF_INTEGER;
+        else if (o instanceof Size2DSyntax)
+            // writeIppValue() will handle this specially
+            return ValueTag.NAME_WITHOUT_LANGUAGE;
+        else if (o instanceof TextSyntax)
+            return deduceTextIPPSyntax((TextSyntax) o);
+        else if (o instanceof URISyntax)
             return ValueTag.URI;
-        }
+        else if (o instanceof int[])
+            return ValueTag.RANGE_OF_INTEGER;
+        else if (o instanceof Map.Entry)
+            return deduceValueTag(((Map.Entry) o).getKey());
+
         throw new IllegalArgumentException("Attribute does not implement a known Syntax.");
     }
 
@@ -179,6 +258,8 @@ public class IppTransport {
      */
     private void writeIppValue(ValueTag vt, Object o) throws IOException {
         int n = -1;                                 // used for TEXT/NAME_WITH*_LANGUAGE
+        Date date;
+        Calendar cal;
         switch (vt) {
             case UNSUPPORTED:
             case UNKNOWN:
@@ -209,8 +290,8 @@ public class IppTransport {
                 break;
             case DATE_TIME:
                 // setup calendar object
-                Date date = ((DateTimeSyntax) o).getValue();
-                Calendar cal = new GregorianCalendar();
+                date = ((DateTimeSyntax) o).getValue();
+                cal = new GregorianCalendar();
                 cal.setTime(date);
                 // write value
                 out.writeShort(11);
@@ -244,8 +325,7 @@ public class IppTransport {
                 break;
             case TEXT_WITH_LANGUAGE:
             case NAME_WITH_LANGUAGE:
-                TextSyntax t = (TextSyntax) o;
-                String nl = getNaturalLanguage(t.getLocale());
+                String nl = getNaturalLanguage(((TextSyntax) o).getLocale());
                 n = encodeStringUTF8(o.toString(), bb, deduceValueLimit(o.getClass(), vt.MAX));
                 out.writeShort(4 + nl.length() + n);
                 out.writeShort(nl.length());
@@ -253,18 +333,44 @@ public class IppTransport {
                 // fall through to the string cases
             case TEXT_WITHOUT_LANGUAGE:
             case NAME_WITHOUT_LANGUAGE:
-            case KEYWORD:
             case URI:
-            case URI_SCHEME:
-            case CHARSET:
-            case NATURAL_LANGUAGE:
-            case MIME_MEDIA_TYPE:
+                if (o instanceof JobHoldUntil) {
+                    date = ((JobHoldUntil) o).getValue();
+                    long diff = date.getTime() - System.currentTimeMillis();
+                    if (diff < 0 || diff > 24*60*60*1000)
+                        throw new IllegalArgumentException("JobHoldUntil either in the past or more than a day away.");
+                    cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
+                    cal.setTime(date);
+                    o = String.format("%TT", cal);
+                } else if (o instanceof Size2DSyntax) {
+                    Size2DSyntax ss = (Size2DSyntax) o;
+                    o = String.format("Custom.%.2fx%.2f%s", 
+                            ss.getX(Size2DSyntax.MM),
+                            ss.getY(Size2DSyntax.MM),
+                            "mm");
+                }
                 if (n < 0)
                     n = encodeStringUTF8(o.toString(), bb, deduceValueLimit(o.getClass(), vt.MAX));
                 out.writeShort(n);
                 out.write(bb.array(), 0, n);
+                break;
+            case KEYWORD:
+            case URI_SCHEME:
+            case CHARSET:
+            case NATURAL_LANGUAGE:
+            case MIME_MEDIA_TYPE:
+            case MEMBER_ATTR_NAME:
+                String str = o.toString();
+                if (str.length() > vt.MAX)
+                    throw new ProtocolException("Attribute string is longer than " + vt.MAX + ".");
+                out.writeShort(str.length());
+                out.writeBytes(str);                // these syntaxes are always US-ASCII
+                break;
+            default:
+                // As a library cannot throw AssertionError directly
+                throw new IllegalArgumentException(new AssertionError(
+                        "This ValueTag " + vt + " is unknown!"));
         }
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private int encodeStringUTF8(String str, ByteBuffer bb, int limit)
@@ -295,7 +401,21 @@ public class IppTransport {
             throw new IllegalArgumentException("Locale cannot have an empty language field.");
         if (lang.equals("iw"))
             lang = "he";                            // new code for Hebrew
-        // TODO: code all changed 2-letter language codes
+        else if (lang.equals("ji"))
+            lang = "yi";                            // new code for Yiddish
+        else if (lang.equals("in"))
+            lang = "id";                            // new code for Indonesian
         return country.length() == 0 ? lang : lang + "-" + country;
+    }
+
+    private ValueTag deduceTextIPPSyntax(TextSyntax o) {
+        boolean wol = o.getLocale().equals(request.getLocale());
+        Attribute a = (Attribute) o;
+        if (a.getName().endsWith("-name") ||
+            a.getName().equals("output-device-assigned"))
+            return wol ? ValueTag.NAME_WITHOUT_LANGUAGE :
+                         ValueTag.NAME_WITH_LANGUAGE;
+        return wol ? ValueTag.TEXT_WITHOUT_LANGUAGE :
+                     ValueTag.TEXT_WITH_LANGUAGE;
     }
 }

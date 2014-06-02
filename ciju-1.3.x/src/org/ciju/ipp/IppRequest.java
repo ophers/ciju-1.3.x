@@ -17,6 +17,8 @@
 
 package org.ciju.ipp;
 
+import java.util.Locale;
+
 /**
  *
  * @author Opher Shachar
@@ -24,17 +26,45 @@ package org.ciju.ipp;
 public class IppRequest extends IppObject {
     
     private final IppHeader header;
+    private final Locale    locale;
 
     public IppRequest() {
-        header = new IppHeader();
+        this.header = new IppHeader();
+        this.locale = Locale.getDefault();
     }
 
     public IppRequest(IppEncoding.OpCode opCode) {
-        header = new IppHeader(opCode);
+        this.header = new IppHeader(opCode);
+        this.locale = Locale.getDefault();
     }
 
     public IppRequest(IppEncoding.OpCode opCode, int requestId) {
-        header = new IppHeader(opCode, requestId);
+        this.header = new IppHeader(opCode, requestId);
+        this.locale = Locale.getDefault();
+    }
+
+    public IppRequest(Locale locale) {
+        this.header = new IppHeader();
+        this.locale = validate(locale);
+    }
+
+    public IppRequest(IppEncoding.OpCode opCode, Locale locale) {
+        this.header = new IppHeader(opCode);
+        this.locale = validate(locale);
+    }
+
+    public IppRequest(IppEncoding.OpCode opCode, int requestId, Locale locale) {
+        this.header = new IppHeader(opCode, requestId);
+        this.locale = validate(locale);
+    }
+
+    private Locale validate(Locale locale) throws NullPointerException, IllegalArgumentException {
+        if (locale == null) {
+            throw new NullPointerException("locale");
+        } else if (locale.getLanguage().length() == 0) {
+            throw new IllegalArgumentException("Locale cannot have an empty language field.");
+        }
+        return locale;
     }
 
     public short getVersion() {
@@ -57,4 +87,7 @@ public class IppRequest extends IppObject {
         header.setRequestId(requestId);
     }
 
+    public Locale getLocale() {
+        return locale;
+    }
 }

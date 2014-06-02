@@ -17,15 +17,10 @@
 
 package org.ciju.client.impl.ipp.attribute;
 
-import java.io.DataOutput;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.print.attribute.Attribute;
-import javax.print.attribute.IntegerSyntax;
 import javax.print.attribute.standard.Copies;
 import org.ciju.ipp.IppEncoding.ValueTag;
 
