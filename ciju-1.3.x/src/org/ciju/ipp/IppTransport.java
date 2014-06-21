@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client.ipp;
+package org.ciju.ipp;
 
 import java.io.DataOutput;
 import java.io.DataOutputStream;
@@ -35,7 +35,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.Locale;
-import java.util.Map;
+import static java.util.Map.Entry;
 import java.util.TimeZone;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributesImpl;
@@ -48,30 +48,17 @@ import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
 import javax.print.attribute.standard.JobHoldUntil;
-import org.ciju.ipp.IppEncoding;
-import static org.ciju.ipp.IppEncoding.ValueTag;
+import javax.print.attribute.standard.PrinterStateReason;
+import javax.print.attribute.standard.PrinterStateReasons;
+import javax.print.attribute.standard.Severity;
 import static org.ciju.ipp.IppEncoding.GroupTag;
-import org.ciju.ipp.IppObject;
-import org.ciju.ipp.IppRequest;
-import org.ciju.ipp.IppResponse;
+import static org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
  *
  * @author Opher Shachar
  */
 public class IppTransport {
-
-    private final DataOutput out;
-    private final IppRequest request;
-    private final CharsetEncoder utf8enc;
-    private final ByteBuffer bb;
-
-    private IppTransport(DataOutput out, IppRequest request) {
-        this.out = out;
-        this.request = request;
-        this.utf8enc = Charset.forName("UTF-8").newEncoder();
-        this.bb = ByteBuffer.allocate(1023);
-    }
 
     /**
      * 
@@ -109,8 +96,21 @@ public class IppTransport {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+
+    private final DataOutput out;
+    private final IppRequest request;
+    private final CharsetEncoder utf8enc;
+    private final ByteBuffer bb;
+
+    private IppTransport(DataOutput out, IppRequest request) {
+        this.out = out;
+        this.request = request;
+        this.utf8enc = Charset.forName("UTF-8").newEncoder();
+        this.bb = ByteBuffer.allocate(1023);
+    }
+
     /**
-     * The picture of the encoding for a request or response is:
+     * The picture of the encoding for a request or response is:<pre>
      * -----------------------------------------------
      * |                  version-number             |   2 bytes
      * -----------------------------------------------
@@ -126,6 +126,7 @@ public class IppTransport {
      * -----------------------------------------------
      * |                     data                    |   q bytes - optional
      * -----------------------------------------------
+     * </pre>
      */
     private void writeRequest() throws IOException {
         // write request header
@@ -151,10 +152,14 @@ public class IppTransport {
         out.writeBytes("attributes-natural-language");
         out.writeShort(anl.length());
         out.writeBytes(anl);
+        // write request operational attributes
+        for (Attribute attr : request.getOperAttrs())
+            writeIppAttribute(attr);
     }
 
     /**
      * The picture of the encoding of an attribute is:
+     * <pre>
      * -----------------------------------------
      * |                value-tag              |   1 byte
      * -----------------------------------------
@@ -166,8 +171,8 @@ public class IppTransport {
      * -----------------------------------------
      * |                  value                |   v bytes
      * -----------------------------------------
-     *
-     * The picture for next values in multi-valued attribute is:
+     * </pre>
+     * The picture for next values in multi-valued attribute is:<pre>
      * -----------------------------------------
      * |               value-tag               |   1 byte
      * -----------------------------------------
@@ -177,42 +182,74 @@ public class IppTransport {
      * -----------------------------------------
      * |                 value                 |   w bytes
      * -----------------------------------------
+     * </pre>
      */
     private void writeIppAttribute(Attribute a) throws IOException {
+        Iterator iter = null;
+        Object o = a;
         // determine if the attribute is multi-valued
-        Iterator iter;
-        if (a instanceof Iterable)
+        if (a instanceof Iterable) {
             iter = ((Iterable) a).iterator();
-        else if (a instanceof Map)
-            iter = ((Map) a).entrySet().iterator();
-        else if (a instanceof SetOfIntegerSyntax)
-            iter = Arrays.asList(((SetOfIntegerSyntax) a).getMembers()).iterator();
-        else
-            iter = null;
-
-        // get the (first) value and value-tag
-        Object o;
-        if (iter == null)
-            o = a;
-        else
             o = iter.next();                        // the standard mandates at least one value
-        ValueTag vt = deduceValueTag(o);
+        }
 
+        // get the value-tag
+        ValueTag vt = deduceValueTag(o);
         // write the attribute
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
         out.writeBytes(a.getName());                // the standard mandates Name to be US-ASCII
-        writeIppValue(vt, o);
-        if (iter != null) {
+        if (iter != null)
+            writeIppMultiValue(vt, o, iter);
+        else if (a instanceof PrinterStateReasons)
+            writeIppMultiValue(vt, (PrinterStateReasons) a);
+        else if (a instanceof SetOfIntegerSyntax)
+            writeIppMultiValue(vt, (SetOfIntegerSyntax) a);
+        else
+            writeIppValue(vt, a);
+    }
+
+    private void writeIppMultiValue(ValueTag vt, Object o, Iterator iter) throws IOException {
+        while (true) {            
+            if (o instanceof SetOfIntegerSyntax)
+                writeIppMultiValue(vt, (SetOfIntegerSyntax) o);
+            else
+                writeIppValue(vt, o);
             // Attribute value print loop
-            while (iter.hasNext()) {
+            if (iter.hasNext()) {
                 o = iter.next();                    // the standard allows for each value to have
                 vt = deduceValueTag(o);             // a diffrent syntax
                 out.write(vt.getValue());
                 out.writeShort(0);                  // nameless attribute indicates a multi-value
-                writeIppValue(vt, o);
             }
+            else break;
         }
+    }
+
+    private void writeIppMultiValue(ValueTag vt, PrinterStateReasons psr) throws IOException {
+        Iterator<Entry<PrinterStateReason, Severity>> iter = psr.entrySet().iterator();
+        Entry<PrinterStateReason, Severity> o;
+        do {            
+            o = iter.next();            
+            writeIppValue(vt, o.getKey().toString() + "-" + o.getValue().toString());
+            // Attribute value print loop
+            if (iter.hasNext()) {
+                out.write(vt.getValue());
+                out.writeShort(0);                  // nameless attribute indicates a multi-value
+            }
+        } while (iter.hasNext());
+    }
+
+    private void writeIppMultiValue(ValueTag vt, SetOfIntegerSyntax sois) throws IOException {
+        Iterator<int[]> iter = Arrays.asList(sois.getMembers()).iterator();
+        do {            
+            writeIppValue(vt, iter.next());
+            // Attribute value print loop
+            if (iter.hasNext()) {
+                out.write(vt.getValue());
+                out.writeShort(0);                  // nameless attribute indicates a multi-value
+            }
+        } while (iter.hasNext());
     }
 
     /**
@@ -222,7 +259,10 @@ public class IppTransport {
     private ValueTag deduceValueTag(Object o) throws IOException {
         if (o instanceof JobHoldUntil)
             // writeIppValue() will handle this specially
+            // TODO: Switch this attribute in IppRequest
             return ValueTag.NAME_WITHOUT_LANGUAGE;
+        else if (o instanceof PrinterStateReasons)
+            return ValueTag.KEYWORD;
         else if (o instanceof DateTimeSyntax)
             return ValueTag.DATE_TIME;
         else if (o instanceof EnumSyntax)
@@ -235,6 +275,7 @@ public class IppTransport {
             return ValueTag.RANGE_OF_INTEGER;
         else if (o instanceof Size2DSyntax)
             // writeIppValue() will handle this specially
+            // TODO: Switch this attribute in IppRequest
             return ValueTag.NAME_WITHOUT_LANGUAGE;
         else if (o instanceof TextSyntax)
             return deduceTextIPPSyntax((TextSyntax) o);
@@ -242,8 +283,6 @@ public class IppTransport {
             return ValueTag.URI;
         else if (o instanceof int[])
             return ValueTag.RANGE_OF_INTEGER;
-        else if (o instanceof Map.Entry)
-            return deduceValueTag(((Map.Entry) o).getKey());
 
         throw new IllegalArgumentException("Attribute does not implement a known Syntax.");
     }
@@ -335,6 +374,7 @@ public class IppTransport {
             case NAME_WITHOUT_LANGUAGE:
             case URI:
                 if (o instanceof JobHoldUntil) {
+                    // TODO: Switch this attribute in IppRequest
                     date = ((JobHoldUntil) o).getValue();
                     long diff = date.getTime() - System.currentTimeMillis();
                     if (diff < 0 || diff > 24*60*60*1000)
@@ -343,6 +383,7 @@ public class IppTransport {
                     cal.setTime(date);
                     o = String.format("%TT", cal);
                 } else if (o instanceof Size2DSyntax) {
+                    // TODO: Switch this attribute in IppRequest
                     Size2DSyntax ss = (Size2DSyntax) o;
                     o = String.format("Custom.%.2fx%.2f%s", 
                             ss.getX(Size2DSyntax.MM),
