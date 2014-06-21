@@ -22,7 +22,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.ResponseHandler;
-import org.ciju.client.ipp.IppTransport;
+import org.ciju.ipp.IppTransport;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppResponse;
 

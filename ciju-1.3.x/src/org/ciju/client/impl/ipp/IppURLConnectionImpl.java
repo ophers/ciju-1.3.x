@@ -28,7 +28,7 @@ import javax.print.attribute.Attribute;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppRequest;
-import org.ciju.client.ipp.IppTransport;
+import org.ciju.ipp.IppTransport;
 import org.ciju.ipp.IppObject;
 
 

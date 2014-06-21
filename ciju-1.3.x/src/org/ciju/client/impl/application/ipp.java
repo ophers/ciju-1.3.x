@@ -17,7 +17,7 @@
 
 package org.ciju.client.impl.application;
 
-import org.ciju.client.ipp.IppTransport;
+import org.ciju.ipp.IppTransport;
 import java.io.IOException;
 import java.net.ContentHandler;
 import java.net.URLConnection;

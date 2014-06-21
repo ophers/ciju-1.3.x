@@ -18,6 +18,7 @@
 package org.ciju.ipp;
 
 import java.util.Locale;
+import javax.print.attribute.Attribute;
 
 /**
  *
@@ -90,4 +91,8 @@ public class IppRequest extends IppObject {
     public Locale getLocale() {
         return locale;
     }
-}
+    
+    public Iterable<Attribute> getOperAttrs() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+ }
