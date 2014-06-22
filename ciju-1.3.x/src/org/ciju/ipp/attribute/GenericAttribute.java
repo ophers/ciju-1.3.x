@@ -113,55 +113,67 @@ public class GenericAttribute implements Attribute, List<Object> {
         return list.add(o);
     }
     
-    @Override
+    /**
+     * {@inheritDoc}
+     * <p><b><u>Note</u>:</b> This will be slower than the overloaded methods as
+     * the object is validated to be acceptable.
+     * @throws IllegalArgumentException if '<tt>o</tt>' does not implement a 
+     * known Syntax
+     */
     public boolean add(Object o) {
-        throw new IllegalArgumentException("Argument does not implement a known Syntax.");
+        valivateSyntax(o);
+        return list.add(o);
     }
         
     /**
      * {@inheritDoc}
-     * <p><b><u>Note</u>:</b> This will take time linear to <tt>c.size()</tt> as each 
-     * element is validated to be acceptable.
+     * <p><b><u>Note</u>:</b> This will take time linear to <tt>c.size()</tt> as
+     * each element is validated to be acceptable.
+     * @throws IllegalArgumentException if any object in '<tt>c</tt>' does not 
+     * implement a known Syntax
      */
-    @Override
     public boolean addAll(Collection<? extends Object> c) {
         for (Object o : c)
             valivateSyntax(o);
         return list.addAll(c);
     }
     
-//<editor-fold defaultstate="collapsed" desc="List unsupported methods">
     /**
-     * Unsupported operation
+     * @throws IllegalArgumentException if '<tt>element</tt>' does not implement
+     * a known Syntax
      */
-    @Override
     public void add(int index, Object element) {
-        throw new UnsupportedOperationException();
+        valivateSyntax(element);
+        list.add(index, element);
     }
     
     /**
-     * Unsupported operation
+     * {@inheritDoc}
+     * <p><b><u>Note</u>:</b> This will take time linear to <tt>c.size()</tt> as
+     * each element is validated to be acceptable.
+     * @throws IllegalArgumentException if any object in '<tt>c</tt>' does not 
+     * implement a known Syntax
      */
-    @Override
     public boolean addAll(int index, Collection<? extends Object> c) {
-        throw new UnsupportedOperationException();
+        for (Object o : c)
+            valivateSyntax(o);
+        return list.addAll(index, c);
     }
     
     /**
-     * Unsupported operation
+     * @throws IllegalArgumentException if '<tt>element</tt>' does not implement
+     * a known Syntax
      */
-    @Override
     public Object set(int index, Object element) {
-        throw new UnsupportedOperationException();
+        valivateSyntax(element);
+        return list.set(index, element);
     }
-//</editor-fold>
     
 //<editor-fold defaultstate="collapsed" desc="unmodList delegated methods">
     /**
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> The iterator returned does not allow mutating operations.
      */
-    @Override
     public ListIterator<Object> listIterator() {
         return unmodList.listIterator();
     }
@@ -170,99 +182,84 @@ public class GenericAttribute implements Attribute, List<Object> {
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> The iterator returned does not allow mutating operations.
      */
-    @Override
     public ListIterator<Object> listIterator(int index) {
         return unmodList.listIterator(index);
     }
 //</editor-fold>
     
 //<editor-fold defaultstate="collapsed" desc="List delegated methods">
-    @Override
     public int size() {
         return list.size();
     }
     
-    @Override
     public boolean isEmpty() {
         return list.isEmpty();
     }
     
-    @Override
     public boolean contains(Object o) {
         return list.contains(o);
     }
     
-    @Override
     public Iterator<Object> iterator() {
         return list.iterator();
     }
     
-    @Override
     public Object[] toArray() {
         return list.toArray();
     }
     
-    @Override
+    /**
+     * @throws ArrayStoreException {@inheritDoc}
+     * @throws NullPointerException {@inheritDoc}
+     */
     public <T> T[] toArray(T[] a) {
         return list.toArray(a);
     }
     
-    @Override
     public boolean remove(Object o) {
         return list.remove(o);
     }
     
-    @Override
     public boolean containsAll(Collection<?> c) {
         return list.containsAll(c);
     }
     
-    @Override
     public boolean removeAll(Collection<?> c) {
         return list.removeAll(c);
     }
     
-    @Override
     public boolean retainAll(Collection<?> c) {
         return list.retainAll(c);
     }
     
-    @Override
     public void clear() {
         list.clear();
     }
     
-    @Override
     public boolean equals(Object o) {
         return list.equals(o);
     }
     
-    @Override
     public int hashCode() {
         return list.hashCode();
     }
     
-    @Override
     public Object get(int index) {
         return list.get(index);
     }
     
-    @Override
     public Object remove(int index) {
         return list.remove(index);
     }
     
-    @Override
     public int indexOf(Object o) {
         return list.indexOf(o);
     }
     
-    @Override
     public int lastIndexOf(Object o) {
         return list.lastIndexOf(o);
     }
     
-    @Override
     public List<Object> subList(int fromIndex, int toIndex) {
         return list.subList(fromIndex, toIndex);
     }
