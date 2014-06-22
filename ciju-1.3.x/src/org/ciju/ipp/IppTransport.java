@@ -210,7 +210,7 @@ public class IppTransport {
     }
 
     private void writeIppMultiValue(ValueTag vt, Object o, Iterator iter) throws IOException {
-        while (true) {            
+        while (true) {
             if (o instanceof SetOfIntegerSyntax)
                 writeIppMultiValue(vt, (SetOfIntegerSyntax) o);
             else
@@ -229,7 +229,7 @@ public class IppTransport {
     private void writeIppMultiValue(ValueTag vt, PrinterStateReasons psr) throws IOException {
         Iterator<Entry<PrinterStateReason, Severity>> iter = psr.entrySet().iterator();
         Entry<PrinterStateReason, Severity> o;
-        do {            
+        do {
             o = iter.next();            
             writeIppValue(vt, o.getKey().toString() + "-" + o.getValue().toString());
             // Attribute value print loop
@@ -242,7 +242,7 @@ public class IppTransport {
 
     private void writeIppMultiValue(ValueTag vt, SetOfIntegerSyntax sois) throws IOException {
         Iterator<int[]> iter = Arrays.asList(sois.getMembers()).iterator();
-        do {            
+        do {
             writeIppValue(vt, iter.next());
             // Attribute value print loop
             if (iter.hasNext()) {
