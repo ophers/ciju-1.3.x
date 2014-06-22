@@ -49,6 +49,8 @@ public class GenericAttribute implements Attribute, List<Object> {
     }
 
     public GenericAttribute(String name, int initCapacity) {
+        if (name == null)
+            throw new NullPointerException("name");
         this.name = name;
         this.list = new ArrayList<Object>(initCapacity);
         this.unmodList = Collections.unmodifiableList(list);
@@ -63,6 +65,9 @@ public class GenericAttribute implements Attribute, List<Object> {
     }
 
     private void valivateSyntax(Object o) {
+        if (o == null)
+            throw new NullPointerException("element");
+        
         if (o instanceof DateTimeSyntax ||
             o instanceof EnumSyntax ||
             o instanceof IntegerSyntax ||
@@ -70,46 +75,124 @@ public class GenericAttribute implements Attribute, List<Object> {
             o instanceof SetOfIntegerSyntax ||
             o instanceof Size2DSyntax ||
             o instanceof TextSyntax ||
-            o instanceof URISyntax ||
-            o instanceof int[])
+            o instanceof URISyntax)
             return;
+        if (o instanceof int[])
+            if (((int[]) o).length == 2)
+                return;
+            else
+                throw new IllegalArgumentException("array must hold exactly two elements.");
 
-        throw new IllegalArgumentException("Argument does not implement a known Syntax.");
+        throw new ClassCastException("Argument does not implement a known Syntax.");
     }
 
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(DateTimeSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
 
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(EnumSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(IntegerSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(ResolutionSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(SetOfIntegerSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(Size2DSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(TextSyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(URISyntax o) {
+        if (o == null)
+            throw new NullPointerException("element");
         return list.add(o);
     }
     
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o a two element int array to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
     public boolean add(int[] o) {
+        if (o == null)
+            throw new NullPointerException("element");
+        else if (o.length != 2)
+            throw new IllegalArgumentException("array must hold exactly two elements.");
         return list.add(o);
     }
     
@@ -117,8 +200,10 @@ public class GenericAttribute implements Attribute, List<Object> {
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> This will be slower than the overloaded methods as
      * the object is validated to be acceptable.
-     * @throws IllegalArgumentException if '<tt>o</tt>' does not implement a 
-     * known Syntax
+     * @throws ClassCastException if '<tt>o</tt>' does not implement a known Syntax.
+     * @throws NullPointerException if the specified element is null.
+     * @throws IllegalArgumentException if argument type is int[] and its elements
+     *           count is not two.
      */
     public boolean add(Object o) {
         valivateSyntax(o);
@@ -129,8 +214,11 @@ public class GenericAttribute implements Attribute, List<Object> {
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> This will take time linear to <tt>c.size()</tt> as
      * each element is validated to be acceptable.
-     * @throws IllegalArgumentException if any object in '<tt>c</tt>' does not 
-     * implement a known Syntax
+     * @throws ClassCastException if any element in '<tt>c</tt>' does not implement a
+     *           known Syntax.
+     * @throws NullPointerException if '<tt>c</tt>' or any of its elements is null.
+     * @throws IllegalArgumentException if any element in '<tt>c</tt>' is of type
+     *           int[] and its length is not two.
      */
     public boolean addAll(Collection<? extends Object> c) {
         for (Object o : c)
@@ -139,8 +227,12 @@ public class GenericAttribute implements Attribute, List<Object> {
     }
     
     /**
-     * @throws IllegalArgumentException if '<tt>element</tt>' does not implement
-     * a known Syntax
+     * @throws ClassCastException if '<tt>element</tt>' does not implement a known
+     *           Syntax.
+     * @throws NullPointerException if the specified element is null.
+     * @throws IllegalArgumentException if argument type is int[] and its elements
+     *           count is not two.
+     * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public void add(int index, Object element) {
         valivateSyntax(element);
@@ -151,8 +243,12 @@ public class GenericAttribute implements Attribute, List<Object> {
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> This will take time linear to <tt>c.size()</tt> as
      * each element is validated to be acceptable.
-     * @throws IllegalArgumentException if any object in '<tt>c</tt>' does not 
-     * implement a known Syntax
+     * @throws ClassCastException if any element in '<tt>c</tt>' does not implement a
+     *           known Syntax.
+     * @throws NullPointerException if '<tt>c</tt>' or any of its elements is null.
+     * @throws IllegalArgumentException if any element in '<tt>c</tt>' is of type
+     *           int[] and its length is not two.
+     * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public boolean addAll(int index, Collection<? extends Object> c) {
         for (Object o : c)
@@ -161,12 +257,28 @@ public class GenericAttribute implements Attribute, List<Object> {
     }
     
     /**
-     * @throws IllegalArgumentException if '<tt>element</tt>' does not implement
-     * a known Syntax
+     * @throws ClassCastException if '<tt>element</tt>' does not implement a known
+     *           Syntax.
+     * @throws NullPointerException if the specified element is null.
+     * @throws IllegalArgumentException if argument type is int[] and its elements
+     *           count is not two.
+     * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public Object set(int index, Object element) {
         valivateSyntax(element);
         return list.set(index, element);
+    }
+    
+    @Override
+    public boolean equals(Object o) {
+        return (o instanceof GenericAttribute) && 
+                this.name.equals(((GenericAttribute) o).name) &&
+                list.equals(o);
+    }
+    
+    @Override
+    public int hashCode() {
+        return 31*list.hashCode() + name.hashCode();
     }
     
 //<editor-fold defaultstate="collapsed" desc="unmodList delegated methods">
@@ -234,14 +346,6 @@ public class GenericAttribute implements Attribute, List<Object> {
     
     public void clear() {
         list.clear();
-    }
-    
-    public boolean equals(Object o) {
-        return list.equals(o);
-    }
-    
-    public int hashCode() {
-        return list.hashCode();
     }
     
     public Object get(int index) {
