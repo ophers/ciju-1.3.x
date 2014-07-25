@@ -40,27 +40,37 @@ import javax.print.attribute.URISyntax;
 public class GenericAttribute implements Attribute, List<Object> {
 
     private final String name;
+    private final Class<? extends Attribute> category;
 
     private final List<Object> list;
     private final List<Object> unmodList;
 
     public GenericAttribute(String name) {
-        this(name, 1);
+        this(name, GenericAttribute.class, 1);
     }
 
     public GenericAttribute(String name, int initCapacity) {
-        if (name == null)
-            throw new NullPointerException("name");
+        this(name, GenericAttribute.class, initCapacity);
+    }
+
+    public GenericAttribute(String name, Class<? extends Attribute> category) {
+        this(name, category, 1);
+    }
+
+    public GenericAttribute(String name, Class<? extends Attribute> category, int initCapacity) {
+        if (name == null || category == null)
+            throw new NullPointerException();
         this.name = name;
+        this.category = category;
         this.list = new ArrayList<Object>(initCapacity);
         this.unmodList = Collections.unmodifiableList(list);
     }
     
-    public Class<? extends Attribute> getCategory() {
-        return GenericAttribute.class;
+    public final Class<? extends Attribute> getCategory() {
+        return category;
     }
 
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
@@ -197,6 +207,27 @@ public class GenericAttribute implements Attribute, List<Object> {
     }
     
     /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param lb the lower bound of the integer range
+     * @param ub the upper bound of the integer range
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
+    public boolean add(int lb, int ub) {
+        return add(new int[] {lb, ub});
+    }
+    
+    /**
+     * View description for {@link #add(Object) add(Object)}.
+     * @param o element to be appended to this list.
+     * @return <tt>true</tt> (as per the general contract of the
+     *            <tt>Collection.add</tt> method).
+     */
+    public boolean add(int o) {
+        return list.add(o);
+    }
+    
+    /**
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> This will be slower than the overloaded methods as
      * the object is validated to be acceptable.
@@ -271,14 +302,19 @@ public class GenericAttribute implements Attribute, List<Object> {
     
     @Override
     public boolean equals(Object o) {
-        return (o instanceof GenericAttribute) && 
-                this.name.equals(((GenericAttribute) o).name) &&
-                list.equals(o);
+        if (o == null || !(o instanceof GenericAttribute))
+            return false;
+        GenericAttribute other = (GenericAttribute) o;
+        return name.equals(other.name) &&
+                list.equals(other.list);
     }
-    
+
     @Override
     public int hashCode() {
-        return 31*list.hashCode() + name.hashCode();
+        int hash = 7;
+        hash = 19 * hash + name.hashCode();
+        hash = 19 * hash + list.hashCode();
+        return hash;
     }
     
 //<editor-fold defaultstate="collapsed" desc="unmodList delegated methods">
@@ -320,10 +356,6 @@ public class GenericAttribute implements Attribute, List<Object> {
         return list.toArray();
     }
     
-    /**
-     * @throws ArrayStoreException {@inheritDoc}
-     * @throws NullPointerException {@inheritDoc}
-     */
     public <T> T[] toArray(T[] a) {
         return list.toArray(a);
     }

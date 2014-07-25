@@ -18,6 +18,15 @@
 package org.ciju.client;
 
 import javax.print.Doc;
+import javax.print.MultiDoc;
+import javax.print.PrintException;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.JobHoldUntil;
+import javax.print.attribute.standard.MediaSize;
+import org.ciju.client.impl.ipp.attribute.CupsJobHoldUntil;
+import org.ciju.client.impl.ipp.attribute.CupsMediaSize;
+import org.ciju.ipp.attribute.GenericAttributeSet;
 
 /**
  *
@@ -27,6 +36,40 @@ public class CupsJob extends IppJob {
 
     protected CupsJob(CupsPrinter printer) {
         super(printer);
+    }
+
+    @Override
+    public void print(MultiDoc multiDoc, GenericAttributeSet attributes) throws PrintException {
+        super.print(multiDoc, substitute(attributes));
+    }
+
+    @Override
+    public void print(Doc doc, GenericAttributeSet attributes) throws PrintException {
+        super.print(doc, substitute(attributes));
+    }
+
+    /* package */ static GenericAttributeSet substitute(GenericAttributeSet attributes) {
+        Attribute attr;
+        // Substitute JobHoldUntil attribute
+        attr = attributes.get("job-hold-until");
+        if (attr != null && attr instanceof JobHoldUntil)
+            attributes.add(new CupsJobHoldUntil((JobHoldUntil) attr));
+        // Substitute MediaSize attribute
+        attr = attributes.get("media-size");
+        if (attr != null && attr instanceof MediaSize) {
+            attributes.remove(attr);
+            attributes.add(new CupsMediaSize((MediaSize) attr));
+        }
+        return attributes;
+    }
+
+    /* package */ static PrintRequestAttributeSet substitute(PrintRequestAttributeSet attributes) {
+        Attribute attr;
+        // Substitute JobHoldUntil attribute
+        attr = attributes.get(JobHoldUntil.class);
+        if (attr != null)
+            attributes.add(new CupsJobHoldUntil((JobHoldUntil) attr));
+        return attributes;
     }
 
     // Stub for some unique CUPS Job methods...
