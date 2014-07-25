@@ -28,6 +28,7 @@ import javax.print.MultiDocPrintJob;
 import javax.print.PrintException;
 import javax.print.PrintService;
 import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 import javax.print.attribute.PrintJobAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.event.PrintJobAttributeEvent;
@@ -35,6 +36,7 @@ import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
 import org.ciju.ipp.IppObject;
+import org.ciju.ipp.attribute.GenericAttributeSet;
 
 /**
  *
@@ -99,9 +101,7 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
                     pjl.printJobNoMoreEvents(pje);
                 break;
             default:
-                // As a library cannot throw AssertionError directly
-                throw new IllegalArgumentException(new AssertionError(
-                        "This PrintEventType " + pje.getPrintEventType() + " is unknown!"));
+                assert false : "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
         }
     }
     
@@ -157,10 +157,18 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
     }
 
     public void print(Doc doc, PrintRequestAttributeSet attributes) throws PrintException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        print(doc, new GenericAttributeSet(attributes));
     }
 
     public void print(MultiDoc multiDoc, PrintRequestAttributeSet attributes) throws PrintException {
+        print(multiDoc, new GenericAttributeSet(attributes));
+    }
+
+    public void print(Doc doc, GenericAttributeSet attributes) throws PrintException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public void print(MultiDoc multiDoc, GenericAttributeSet attributes) throws PrintException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -196,17 +204,12 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null) {
+            if (obj == null)
                 return false;
-            }
-            if (getClass() != obj.getClass()) {
+            if (getClass() != obj.getClass())
                 return false;
-            }
             final PrintJobAttributeListenerEntry other = (PrintJobAttributeListenerEntry) obj;
-            if (this.listner != other.listner && (this.listner == null || !this.listner.equals(other.listner))) {
-                return false;
-            }
-            return true;
+            return this.listner == other.listner || (this.listner != null && this.listner.equals(other.listner));
         }
 
     }

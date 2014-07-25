@@ -23,7 +23,7 @@ import org.ciju.ipp.IppEncoding.ValueTag;
  *
  * @author Opher Shachar
  */
-public class AttributesImpl {
+public class CijuAttributeUtils {
     
     public static ValueTag deduceEnumIPPSyntax(EnumSyntax o) {
         int i = o.getOffset();

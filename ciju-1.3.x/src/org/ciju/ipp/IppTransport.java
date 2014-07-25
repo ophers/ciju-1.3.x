@@ -38,7 +38,7 @@ import java.util.Locale;
 import static java.util.Map.Entry;
 import java.util.TimeZone;
 import javax.print.attribute.Attribute;
-import javax.print.attribute.AttributesImpl;
+import javax.print.attribute.CijuAttributeUtils;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
@@ -257,26 +257,18 @@ public class IppTransport {
      * So, for example, JobHoldUntil needs a special consideration.
      */
     private ValueTag deduceValueTag(Object o) throws IOException {
-        if (o instanceof JobHoldUntil)
-            // writeIppValue() will handle this specially
-            // TODO: Switch this attribute in IppRequest
-            return ValueTag.NAME_WITHOUT_LANGUAGE;
-        else if (o instanceof PrinterStateReasons)
+        if (o instanceof PrinterStateReasons)
             return ValueTag.KEYWORD;
         else if (o instanceof DateTimeSyntax)
             return ValueTag.DATE_TIME;
         else if (o instanceof EnumSyntax)
-            return AttributesImpl.deduceEnumIPPSyntax((EnumSyntax) o);
+            return CijuAttributeUtils.deduceEnumIPPSyntax((EnumSyntax) o);
         else if (o instanceof IntegerSyntax)
             return ValueTag.INTEGER;
         else if (o instanceof ResolutionSyntax)
             return ValueTag.RESOLUTION;
         else if (o instanceof SetOfIntegerSyntax)
             return ValueTag.RANGE_OF_INTEGER;
-        else if (o instanceof Size2DSyntax)
-            // writeIppValue() will handle this specially
-            // TODO: Switch this attribute in IppRequest
-            return ValueTag.NAME_WITHOUT_LANGUAGE;
         else if (o instanceof TextSyntax)
             return deduceTextIPPSyntax((TextSyntax) o);
         else if (o instanceof URISyntax)
@@ -373,23 +365,6 @@ public class IppTransport {
             case TEXT_WITHOUT_LANGUAGE:
             case NAME_WITHOUT_LANGUAGE:
             case URI:
-                if (o instanceof JobHoldUntil) {
-                    // TODO: Switch this attribute in IppRequest
-                    date = ((JobHoldUntil) o).getValue();
-                    long diff = date.getTime() - System.currentTimeMillis();
-                    if (diff < 0 || diff > 24*60*60*1000)
-                        throw new IllegalArgumentException("JobHoldUntil either in the past or more than a day away.");
-                    cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
-                    cal.setTime(date);
-                    o = String.format("%TT", cal);
-                } else if (o instanceof Size2DSyntax) {
-                    // TODO: Switch this attribute in IppRequest
-                    Size2DSyntax ss = (Size2DSyntax) o;
-                    o = String.format("Custom.%.2fx%.2f%s", 
-                            ss.getX(Size2DSyntax.MM),
-                            ss.getY(Size2DSyntax.MM),
-                            "mm");
-                }
                 if (n < 0)
                     n = encodeStringUTF8(o.toString(), bb, deduceValueLimit(o.getClass(), vt.MAX));
                 out.writeShort(n);
@@ -408,9 +383,7 @@ public class IppTransport {
                 out.writeBytes(str);                // these syntaxes are always US-ASCII
                 break;
             default:
-                // As a library cannot throw AssertionError directly
-                throw new IllegalArgumentException(new AssertionError(
-                        "This ValueTag " + vt + " is unknown!"));
+                assert false : "This ValueTag " + vt + " is unknown!";
         }
     }
 
