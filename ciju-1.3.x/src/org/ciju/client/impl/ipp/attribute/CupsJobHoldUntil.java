@@ -23,14 +23,13 @@ import java.util.GregorianCalendar;
 import java.util.TimeZone;
 import javax.print.attribute.PrintRequestAttribute;
 import javax.print.attribute.standard.JobHoldUntil;
-import org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.attribute.GenericAttribute;
 
 
 public class CupsJobHoldUntil extends GenericAttribute implements PrintRequestAttribute {
 
     public CupsJobHoldUntil(JobHoldUntil o) {
-        super(o.getName(), o.getCategory(), ValueTag.NAME_WITHOUT_LANGUAGE);
+        super(o.getName(), o.getCategory());
         Date date = o.getValue();
         long diff = date.getTime() - System.currentTimeMillis();
         if (diff < 0 || diff > 24*60*60*1000)
