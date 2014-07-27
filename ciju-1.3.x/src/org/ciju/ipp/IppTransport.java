@@ -53,6 +53,7 @@ import javax.print.attribute.standard.PrinterStateReasons;
 import javax.print.attribute.standard.Severity;
 import static org.ciju.ipp.IppEncoding.GroupTag;
 import static org.ciju.ipp.IppEncoding.ValueTag;
+import org.ciju.ipp.attribute.GenericValue;
 
 /**
  *
@@ -254,10 +255,16 @@ public class IppTransport {
 
     /**
      * The JPS Object Model has its quirks (mostly documented).
-     * So, for example, JobHoldUntil needs a special consideration.
+     * So, for example, PrinterStateReasons needs a special consideration.
      */
     private ValueTag deduceValueTag(Object o) throws IOException {
-        if (o instanceof PrinterStateReasons)
+        // First are generic objects used by CIJU
+        if (o instanceof GenericValue)
+            return ((GenericValue) o).getValueTag();
+        else if (o instanceof String)
+            return ValueTag.NAME_WITHOUT_LANGUAGE;
+        // Below are the JPS standard syntaxes
+        else if (o instanceof PrinterStateReasons)
             return ValueTag.KEYWORD;
         else if (o instanceof DateTimeSyntax)
             return ValueTag.DATE_TIME;
@@ -364,13 +371,13 @@ public class IppTransport {
                 // fall through to the string cases
             case TEXT_WITHOUT_LANGUAGE:
             case NAME_WITHOUT_LANGUAGE:
-            case URI:
                 if (n < 0)
                     n = encodeStringUTF8(o.toString(), bb, deduceValueLimit(o.getClass(), vt.MAX));
                 out.writeShort(n);
                 out.write(bb.array(), 0, n);
                 break;
             case KEYWORD:
+            case URI:
             case URI_SCHEME:
             case CHARSET:
             case NATURAL_LANGUAGE:

@@ -32,6 +32,7 @@ import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
+import org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
  *
@@ -65,6 +66,43 @@ public class GenericAttribute implements Attribute, List<Object> {
         this.list = new ArrayList<Object>(initCapacity);
         this.unmodList = Collections.unmodifiableList(list);
     }
+
+    public GenericAttribute(String name, Object value) {
+        this(name, GenericAttribute.class, 1, value);
+    }
+
+    public GenericAttribute(String name, int initCapacity, Object value) {
+        this(name, GenericAttribute.class, initCapacity, value);
+    }
+
+    public GenericAttribute(String name, Class<? extends Attribute> category, Object value) {
+        this(name, category, 1, value);
+    }
+
+    public GenericAttribute(String name, Class<? extends Attribute> category, int initCapacity,
+            Object value) {
+        this(name, category, initCapacity);
+        GenericValue.validateSyntax(value);
+        list.add(value);
+    }
+
+    public GenericAttribute(String name, Object value, ValueTag vt) {
+        this(name, GenericAttribute.class, 1, value, vt);
+    }
+
+    public GenericAttribute(String name, int initCapacity, Object value, ValueTag vt) {
+        this(name, GenericAttribute.class, initCapacity, value, vt);
+    }
+
+    public GenericAttribute(String name, Class<? extends Attribute> category, Object value, ValueTag vt) {
+        this(name, category, 1, value, vt);
+    }
+
+    public GenericAttribute(String name, Class<? extends Attribute> category, int initCapacity,
+            Object value, ValueTag vt) {
+        this(name, category, initCapacity);
+        list.add(new GenericValue(vt, value));
+    }
     
     public final Class<? extends Attribute> getCategory() {
         return category;
@@ -72,28 +110,6 @@ public class GenericAttribute implements Attribute, List<Object> {
 
     public final String getName() {
         return name;
-    }
-
-    private void valivateSyntax(Object o) {
-        if (o == null)
-            throw new NullPointerException("element");
-        
-        if (o instanceof DateTimeSyntax ||
-            o instanceof EnumSyntax ||
-            o instanceof IntegerSyntax ||
-            o instanceof ResolutionSyntax ||
-            o instanceof SetOfIntegerSyntax ||
-            o instanceof Size2DSyntax ||
-            o instanceof TextSyntax ||
-            o instanceof URISyntax)
-            return;
-        if (o instanceof int[])
-            if (((int[]) o).length == 2)
-                return;
-            else
-                throw new IllegalArgumentException("array must hold exactly two elements.");
-
-        throw new ClassCastException("Argument does not implement a known Syntax.");
     }
 
     /**
@@ -237,7 +253,7 @@ public class GenericAttribute implements Attribute, List<Object> {
      *           count is not two.
      */
     public boolean add(Object o) {
-        valivateSyntax(o);
+        GenericValue.validateSyntax(o);
         return list.add(o);
     }
         
@@ -253,7 +269,7 @@ public class GenericAttribute implements Attribute, List<Object> {
      */
     public boolean addAll(Collection<? extends Object> c) {
         for (Object o : c)
-            valivateSyntax(o);
+            GenericValue.validateSyntax(o);
         return list.addAll(c);
     }
     
@@ -266,7 +282,7 @@ public class GenericAttribute implements Attribute, List<Object> {
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public void add(int index, Object element) {
-        valivateSyntax(element);
+        GenericValue.validateSyntax(element);
         list.add(index, element);
     }
     
@@ -283,7 +299,7 @@ public class GenericAttribute implements Attribute, List<Object> {
      */
     public boolean addAll(int index, Collection<? extends Object> c) {
         for (Object o : c)
-            valivateSyntax(o);
+            GenericValue.validateSyntax(o);
         return list.addAll(index, c);
     }
     
@@ -296,7 +312,7 @@ public class GenericAttribute implements Attribute, List<Object> {
      * @throws IndexOutOfBoundsException {@inheritDoc}
      */
     public Object set(int index, Object element) {
-        valivateSyntax(element);
+        GenericValue.validateSyntax(element);
         return list.set(index, element);
     }
     

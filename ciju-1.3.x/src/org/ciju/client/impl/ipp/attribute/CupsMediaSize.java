@@ -21,7 +21,6 @@ import javax.print.attribute.PrintRequestAttribute;
 import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.MediaSize;
-import org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
@@ -31,7 +30,7 @@ import org.ciju.ipp.attribute.GenericAttribute;
 public class CupsMediaSize extends GenericAttribute implements PrintRequestAttribute {
 
     public CupsMediaSize(MediaSize o) {
-        super("media", Media.class, ValueTag.NAME_WITHOUT_LANGUAGE);
+        super("media", Media.class);
         add(String.format("Custom.%.2fx%.2f%s",
                 o.getX(Size2DSyntax.MM),
                 o.getY(Size2DSyntax.MM),
