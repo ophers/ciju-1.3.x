@@ -29,14 +29,16 @@ import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map.Entry;
 import static java.util.Map.Entry;
-import java.util.TimeZone;
+import java.util.ResourceBundle;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.CijuAttributeUtils;
 import javax.print.attribute.DateTimeSyntax;
@@ -44,14 +46,14 @@ import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
 import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.SetOfIntegerSyntax;
-import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
-import javax.print.attribute.standard.JobHoldUntil;
 import javax.print.attribute.standard.PrinterStateReason;
 import javax.print.attribute.standard.PrinterStateReasons;
 import javax.print.attribute.standard.Severity;
+import org.ciju.ipp.IppEncoding.GroupTag;
 import static org.ciju.ipp.IppEncoding.GroupTag;
+import org.ciju.ipp.IppEncoding.ValueTag;
 import static org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.attribute.GenericValue;
 
@@ -60,6 +62,8 @@ import org.ciju.ipp.attribute.GenericValue;
  * @author Opher Shachar
  */
 public class IppTransport {
+
+    /* package */ static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
 
     /**
      * 
@@ -283,7 +287,7 @@ public class IppTransport {
         else if (o instanceof int[])
             return ValueTag.RANGE_OF_INTEGER;
 
-        throw new IllegalArgumentException("Attribute does not implement a known Syntax.");
+        throw new IllegalArgumentException(resourceStrings.getString("ATTRIBUTE DOES NOT IMPLEMENT A KNOWN SYNTAX."));
     }
 
     /**
@@ -296,6 +300,7 @@ public class IppTransport {
      */
     private void writeIppValue(ValueTag vt, Object o) throws IOException {
         int n = -1;                                 // used for TEXT/NAME_WITH*_LANGUAGE
+        int i;                                      // used for ENUM
         Date date;
         Calendar cal;
         switch (vt) {
@@ -311,15 +316,29 @@ public class IppTransport {
                 break;
             case INTEGER:
                 out.writeShort(4);
-                out.writeInt(((IntegerSyntax) o).getValue());
+                if (o instanceof IntegerSyntax)
+                    i = ((IntegerSyntax) o).getValue();
+                else
+                    i = (Integer) o;
+                out.writeInt(i);
                 break;
             case BOOLEAN:
                 out.writeShort(1);
-                out.write(((EnumSyntax) o).getValue());
+                if (o instanceof EnumSyntax)
+                    i = ((EnumSyntax) o).getValue();
+                else if ((Boolean) o) 
+                    i = 1;
+                else
+                    i = 0;
+                out.write(i);
                 break;
             case ENUM:
                 out.writeShort(4);
-                out.writeInt(((EnumSyntax) o).getValue());
+                if (o instanceof EnumSyntax)
+                    i = ((EnumSyntax) o).getValue();
+                else
+                    i = (Integer) o;
+                out.writeInt(i);
                 break;
             case OCTET_STRING:
                 // there is no standard attribute using this syntax ...
@@ -385,7 +404,7 @@ public class IppTransport {
             case MEMBER_ATTR_NAME:
                 String str = o.toString();
                 if (str.length() > vt.MAX)
-                    throw new ProtocolException("Attribute string is longer than " + vt.MAX + ".");
+                    throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LONGER THAN {0}."), vt.MAX));
                 out.writeShort(str.length());
                 out.writeBytes(str);                // these syntaxes are always US-ASCII
                 break;
@@ -403,7 +422,7 @@ public class IppTransport {
         if (cr.isUnderflow())
             cr = utf8enc.flush(bb);
         if (cr.isOverflow())
-            throw new ProtocolException("Attribute string is larger than " + bb.limit() + " bytes encoded as utf-8.");
+            throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LARGER THAN {0} BYTES ENCODED AS UTF-8."), bb.limit()));
         else if (!cr.isUnderflow())
             cr.throwException();
         return bb.position();
@@ -419,7 +438,7 @@ public class IppTransport {
         String lang = locale.getLanguage();
         String country = locale.getCountry().toLowerCase();
         if (lang.length() == 0)
-            throw new IllegalArgumentException("Locale cannot have an empty language field.");
+            throw new IllegalArgumentException(resourceStrings.getString("LOCALE CANNOT HAVE AN EMPTY LANGUAGE FIELD."));
         if (lang.equals("iw"))
             lang = "he";                            // new code for Hebrew
         else if (lang.equals("ji"))

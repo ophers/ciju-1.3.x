@@ -25,6 +25,8 @@ import java.util.Map;
  * @author Opher Shachar
  */
 public class CupsEncoding extends org.ciju.ipp.IppEncoding {
+    
+    private static final String BADENUM = IppTransport.resourceStrings.getString("NO ENUM CONST HAS VALUE 0X%02X");
 
     /**
      * gggg
@@ -132,7 +134,7 @@ public class CupsEncoding extends org.ciju.ipp.IppEncoding {
                 return e;
             if (i == null)
                 throw new NullPointerException("Integer is null");
-            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
+            throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
 }

@@ -20,6 +20,7 @@ package org.ciju.client.impl.ipp.attribute;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.ResourceBundle;
 import java.util.TimeZone;
 import javax.print.attribute.PrintRequestAttribute;
 import javax.print.attribute.standard.JobHoldUntil;
@@ -28,12 +29,14 @@ import org.ciju.ipp.attribute.GenericAttribute;
 
 public class CupsJobHoldUntil extends GenericAttribute implements PrintRequestAttribute {
 
+    private static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
+
     public CupsJobHoldUntil(JobHoldUntil o) {
         super(o.getName(), o.getCategory());
         Date date = o.getValue();
         long diff = date.getTime() - System.currentTimeMillis();
         if (diff < 0 || diff > 24*60*60*1000)
-            throw new IllegalArgumentException("JobHoldUntil either in the past or more than a day away.");
+            throw new IllegalArgumentException(resourceStrings.getString("JOBHOLDUNTIL EITHER IN THE PAST OR MORE THAN A DAY AWAY."));
         Calendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT"));
         cal.setTime(date);
         add(String.format("%TT", cal));

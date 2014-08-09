@@ -25,6 +25,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
+import java.util.ResourceBundle;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppEncoding;
 
@@ -33,6 +34,8 @@ import org.ciju.ipp.IppEncoding;
  * @author Opher
  */
 public class Handler extends URLStreamHandler {
+
+    /*package */ static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
     
     /**
      * Instantiate an {@link IppURLConnectionImpl} using an IPP/S <b>{@linkplain URI}</b>
@@ -66,7 +69,7 @@ public class Handler extends URLStreamHandler {
             handler = new org.ciju.client.impl.ipps.Handler();
         }
         else
-            throw new IllegalArgumentException("The scheme may only be ipp or ipps.");
+            throw new IllegalArgumentException(resourceStrings.getString("THE SCHEME MAY ONLY BE IPP OR IPPS."));
         int port = u.getPort() == -1 ? IppEncoding.PORT : u.getPort();
 
         URL url;

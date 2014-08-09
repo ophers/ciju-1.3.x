@@ -19,6 +19,7 @@ package org.ciju.ipp;
 
 import java.util.Locale;
 import javax.print.attribute.Attribute;
+import static org.ciju.ipp.IppTransport.resourceStrings;
 
 /**
  *
@@ -63,7 +64,7 @@ public class IppRequest extends IppObject {
         if (locale == null) {
             throw new NullPointerException("locale");
         } else if (locale.getLanguage().length() == 0) {
-            throw new IllegalArgumentException("Locale cannot have an empty language field.");
+            throw new IllegalArgumentException(resourceStrings.getString("LOCALE CANNOT HAVE AN EMPTY LANGUAGE FIELD."));
         }
         return locale;
     }

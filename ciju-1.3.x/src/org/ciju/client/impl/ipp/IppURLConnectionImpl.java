@@ -25,11 +25,12 @@ import java.security.Permission;
 import java.util.List;
 import java.util.Map;
 import javax.print.attribute.Attribute;
-import org.ciju.ipp.IppObjectFactory;
+import static org.ciju.client.impl.ipp.Handler.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppTransport;
-import org.ciju.ipp.IppObject;
 
 
 /**
@@ -125,7 +126,7 @@ import org.ciju.ipp.IppObject;
     @Override
     public void setRequestProperty(String key, String value) {
         if (key.equalsIgnoreCase("Content-Type") && !value.equalsIgnoreCase("application/ipp"))
-            throw new IllegalArgumentException("Content-Type may only be 'application/ipp'!");
+            throw new IllegalArgumentException(resourceStrings.getString("CONTENT-TYPE MAY ONLY BE 'APPLICATION/IPP'!"));
         huc.setRequestProperty(key, value);
     }
 
@@ -140,7 +141,7 @@ import org.ciju.ipp.IppObject;
     @Override
     public void addRequestProperty(String key, String value) {
         if (key.equalsIgnoreCase("Content-Type"))
-            throw new IllegalArgumentException("Content-Type may only be 'application/ipp'!");
+            throw new IllegalArgumentException(resourceStrings.getString("CONTENT-TYPE MAY ONLY BE 'APPLICATION/IPP'!"));
         huc.addRequestProperty(key, value);
     }
 
@@ -154,7 +155,7 @@ import org.ciju.ipp.IppObject;
     @Override
     public void setRequestMethod(String method) throws ProtocolException {
         if (!method.equalsIgnoreCase("POST"))
-            throw new IllegalArgumentException("Request method must be POST!");
+            throw new IllegalArgumentException(resourceStrings.getString("REQUEST METHOD MUST BE POST!"));
         huc.setRequestMethod(method);
     }
 
@@ -168,20 +169,20 @@ import org.ciju.ipp.IppObject;
     @Override
     public void setDoOutput(boolean dooutput) {
         if (!dooutput)
-            throw new IllegalArgumentException("Empty requests are not valid!");
+            throw new IllegalArgumentException(resourceStrings.getString("EMPTY REQUESTS ARE NOT VALID!"));
         huc.setDoOutput(dooutput);
     }
 
     private void sendIppRequest() throws IOException {
         if (ipp == null)
-            throw new IllegalStateException("IPP request was not set.");
+            throw new IllegalStateException(resourceStrings.getString("IPP REQUEST WAS NOT SET."));
         OutputStream os = huc.getOutputStream();
         IppTransport.writeRequest(os, ipp);
     }
 
     public IppConnection setIppRequest(IppRequest request) {
         if (connected)
-            throw new IllegalStateException("Already connected");
+            throw new IllegalStateException(resourceStrings.getString("ALREADY CONNECTED"));
         if (request == null) 
 	    throw new NullPointerException("IPP request is null");
         ipp = request;
@@ -198,7 +199,7 @@ import org.ciju.ipp.IppObject;
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        throw new UnsupportedOperationException("Use setIppRequest(...) to send IPP request.");
+        throw new UnsupportedOperationException(resourceStrings.getString("USE SETIPPREQUEST(...) TO SEND IPP REQUEST."));
     }
 
     @Override
