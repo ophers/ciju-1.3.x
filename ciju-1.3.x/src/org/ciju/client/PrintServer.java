@@ -22,7 +22,9 @@ import java.net.Proxy;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.print.DocFlavor;
@@ -52,8 +54,9 @@ public class PrintServer extends PrintServiceLookup {
     static {
         String name = PrintServer.class.getName();
         packageName = name.substring(0, name.lastIndexOf('.'));
-        logger = Logger.getLogger(packageName);
+        logger = Logger.getLogger(packageName, "org/ciju/ResourceStrings");
     }
+    /* package */ static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
 
     // Register the IPP ContentHandler and URLStreamHandler
     private static final String REGISTER_HANDLERS = packageName + ".RegisterHandlers";
@@ -86,7 +89,7 @@ public class PrintServer extends PrintServiceLookup {
                 return true;
             }
         } catch (SecurityException ex) {
-            logger.log(Level.SEVERE, "Failed to register IPP ContentHandler and/or URLStreamHandler!", ex);
+            logger.log(Level.SEVERE, "FAILED TO REGISTER IPP CONTENTHANDLER AND/OR URLSTREAMHANDLER!", ex);
         }
         return false;
     }
@@ -102,7 +105,7 @@ public class PrintServer extends PrintServiceLookup {
      */
     private static synchronized void startEventDispatchThreadIfNecessary() {
         if (eventDispatchThread == null) {
-            logger.log(Level.INFO, "Starting event dispatch thread.");
+            logger.log(Level.INFO, "STARTING EVENT DISPATCH THREAD.");
             eventDispatcher = new EventDispatcher();
             eventDispatchThread = new Thread(eventDispatcher);
             eventDispatchThread.setDaemon(true);
@@ -124,7 +127,7 @@ public class PrintServer extends PrintServiceLookup {
     protected PrintServer(URI uri, Proxy proxy) {
         if (!uri.getScheme().equalsIgnoreCase("ipp") && 
             !uri.getScheme().equalsIgnoreCase("ipps"))
-            throw new IllegalArgumentException("Only 'ipp' and 'ipps' URIs are supported.");
+            throw new IllegalArgumentException(resourceStrings.getString("ONLY 'IPP' AND 'IPPS' URIS ARE SUPPORTED."));
         sm = System.getSecurityManager();
         this.uri = uri;
         this.proxy = proxy;
@@ -145,7 +148,7 @@ public class PrintServer extends PrintServiceLookup {
             default:
                 // As a library cannot throw AssertionError directly
                 throw new RuntimeException(new AssertionError(
-                        "The server represented by " + uri + " is unsupported!"));
+                        MessageFormat.format(resourceStrings.getString("THE SERVER REPRESENTED BY {0} IS UNSUPPORTED!"), uri)));
         }
     }
 
@@ -160,7 +163,7 @@ public class PrintServer extends PrintServiceLookup {
 
     protected IppConnection getConnection() throws IOException {
         if (uri == null)
-            throw new IllegalStateException("This default instance has no URI to a Print-Server.");
+            throw new IllegalStateException(resourceStrings.getString("THIS DEFAULT INSTANCE HAS NO URI TO A PRINT-SERVER."));
         
         return getConnection(uri, proxy);
     }
@@ -193,7 +196,7 @@ public class PrintServer extends PrintServiceLookup {
             default:
                 // As a library cannot throw AssertionError directly
                 throw new RuntimeException(new AssertionError(
-                        "Unexpeted connection library configured!"));
+                        resourceStrings.getString("UNEXPETED CONNECTION LIBRARY CONFIGURED!")));
         }
     }
 

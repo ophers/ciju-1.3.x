@@ -35,8 +35,8 @@ import javax.print.attribute.standard.PrinterName;
 public class IppEncoding {
 
     public static final int PORT = 631;
-    
     public static final short DEF_VERSION = 0x0101;
+    private static final String BADENUM = IppTransport.resourceStrings.getString("NO ENUM CONST HAS VALUE 0X%02X");
     
     public enum GroupTag {
         // 0x00 is reserved for future IETF standard track document
@@ -89,7 +89,7 @@ public class IppEncoding {
                 return e;
             if (i == null)
                 throw new NullPointerException("Integer is null");
-            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
+            throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
     
@@ -194,7 +194,7 @@ public class IppEncoding {
                 return e;
             if (i == null)
                 throw new NullPointerException("Integer is null");
-            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
+            throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
     
@@ -298,7 +298,7 @@ public class IppEncoding {
                 return e;
             if (i == null)
                 throw new NullPointerException("Integer is null");
-            throw new IllegalArgumentException(String.format("No enum const has value 0x%02X", i));
+            throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
     

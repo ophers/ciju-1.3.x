@@ -17,7 +17,9 @@
 
 package org.ciju.client.event;
 
+import java.text.MessageFormat;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
@@ -39,7 +41,8 @@ public class EventDispatcher implements Runnable {
     private final DispatchPrintEvent dispatchOther;
 
     // Logging facilities
-    private static final Logger logger = Logger.getLogger(EventDispatcher.class.getName());
+    private static final Logger logger = Logger.getLogger(EventDispatcher.class.getName(), "org/ciju/ResourceStrings");
+    private static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
 
     public EventDispatcher(DispatchPrintEvent dispatchOther) {
         this.eventQueue = new LinkedBlockingQueue<PrintEventEntry>();
@@ -56,9 +59,9 @@ public class EventDispatcher implements Runnable {
                 final PrintEventEntry pee = eventQueue.take();
                 dispatchPrintEvent(pee);
             } catch (RuntimeException re) {
-                logger.log(Level.INFO, "An event listener threw an exception. Some listeners may not have been invoked.", re);
+                logger.log(Level.INFO, "AN EVENT LISTENER THREW AN EXCEPTION. SOME LISTENERS MAY NOT HAVE BEEN INVOKED.", re);
             } catch (InterruptedException ie) {
-                logger.log(Level.WARNING, "Event dispatcher thread interrupted. Exiting.", ie);
+                logger.log(Level.WARNING, "EVENT DISPATCHER THREAD INTERRUPTED. EXITING.", ie);
                 return;
             }
         }
@@ -81,9 +84,9 @@ public class EventDispatcher implements Runnable {
             dispatchPrintJobEvent(pje, pjll);
         } else {
             if (dispatchOther == null || !dispatchOther.dispatchPrintEvent(pe, pee.listeners)) {
-                final String message = "This PrintEvent " + pe + " is unknown!";
-                logger.log(Level.SEVERE, message);
+                logger.log(Level.SEVERE, "THIS PRINTEVENT {0} IS UNKNOWN!", pe);
                 // As a library cannot throw AssertionError directly
+                final String message = MessageFormat.format(resourceStrings.getString("THIS PRINTEVENT {0} IS UNKNOWN!"), pe);
                 throw new IllegalArgumentException(new AssertionError(message));
             }
         }
@@ -123,9 +126,9 @@ public class EventDispatcher implements Runnable {
                 break;
             default:
                 if (dispatchOther == null || !dispatchOther.dispatchPrintJobEvent(pje, pjll)) {
-                    final String message = "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
-                    logger.log(Level.SEVERE, message);
+                    logger.log(Level.SEVERE, "THIS PRINTEVENTTYPE {0} IS UNKNOWN!", pje.getPrintEventType());
                     // As a library cannot throw AssertionError directly
+                    final String message = MessageFormat.format(resourceStrings.getString("THIS PRINTEVENTTYPE {0} IS UNKNOWN!"), pje.getPrintEventType());
                     throw new IllegalArgumentException(new AssertionError(message));
                 }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Opher Shachar
+ * Copyright (C) 2012-2014 Opher Shachar
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,22 +17,17 @@
 
 package org.ciju.ipp.attribute;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Locale;
+import javax.print.attribute.TextSyntax;
 
 /**
  *
  * @author Opher Shachar
  */
-public abstract class SetOfSyntax<T> extends ArrayList<T> {
+public class TextValue extends TextSyntax {
 
-    protected SetOfSyntax(Collection<? extends T> attrs) {
-        super(attrs);
+    public TextValue(String value, Locale locale) {
+        super(value, locale);
     }
     
-    protected SetOfSyntax(T attr) {
-        super(1);
-        add(attr);
-    }
-
 }

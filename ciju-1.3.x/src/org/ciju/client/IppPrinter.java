@@ -58,7 +58,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
 
     protected IppPrinter(URI uri, Proxy proxy) {
         if (uri == null)
-            throw new IllegalArgumentException("Uri cannot be null!");
+            throw new NullPointerException("Uri cannot be null!");
         this.uri = uri;
         this.proxy = proxy;
         psall = new CopyOnWriteArrayList<PrintServiceAttributeListener>();
