@@ -30,33 +30,23 @@ public class IppRequest extends IppObject {
     private final IppHeader header;
     private final Locale    locale;
 
-    public IppRequest() {
-        this.header = new IppHeader();
-        this.locale = Locale.getDefault();
-    }
-
     public IppRequest(IppEncoding.OpCode opCode) {
-        this.header = new IppHeader(opCode);
+        this.header = new IppHeader((short) opCode.getValue());
         this.locale = Locale.getDefault();
     }
 
     public IppRequest(IppEncoding.OpCode opCode, int requestId) {
-        this.header = new IppHeader(opCode, requestId);
+        this.header = new IppHeader((short) opCode.getValue(), requestId);
         this.locale = Locale.getDefault();
     }
 
-    public IppRequest(Locale locale) {
-        this.header = new IppHeader();
-        this.locale = validate(locale);
-    }
-
     public IppRequest(IppEncoding.OpCode opCode, Locale locale) {
-        this.header = new IppHeader(opCode);
+        this.header = new IppHeader((short) opCode.getValue());
         this.locale = validate(locale);
     }
 
     public IppRequest(IppEncoding.OpCode opCode, int requestId, Locale locale) {
-        this.header = new IppHeader(opCode, requestId);
+        this.header = new IppHeader((short) opCode.getValue(), requestId);
         this.locale = validate(locale);
     }
 
@@ -74,19 +64,11 @@ public class IppRequest extends IppObject {
     }
 
     public IppEncoding.OpCode getOpCode() {
-        return IppEncoding.OpCode.valueOf(Integer.valueOf(header.getCode()));
-    }
-
-    public void setOpCode(IppEncoding.OpCode opCode) {
-        header.setCode((short) opCode.getValue());
+        return IppEncoding.OpCode.valueOf(header.getCode());
     }
 
     public int getRequestId() {
         return header.getRequestId();
-    }
-
-    public void setRequestId(int requestId) {
-        header.setRequestId(requestId);
     }
 
     public Locale getLocale() {
