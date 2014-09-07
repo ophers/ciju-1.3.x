@@ -83,12 +83,10 @@ public class IppEncoding {
          * @return the enum constant with the specified value
          * @throws IllegalArgumentException if this enum type has no constant with the specified value
          */
-        public static GroupTag valueOf(Integer i) {
+        public static GroupTag valueOf(int i) {
             GroupTag e = vmap.get(i);
             if (e != null)
                 return e;
-            if (i == null)
-                throw new NullPointerException("Integer is null");
             throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
@@ -188,12 +186,10 @@ public class IppEncoding {
          * @return the enum constant with the specified value
          * @throws IllegalArgumentException if this enum type has no constant with the specified value
          */
-        public static ValueTag valueOf(Integer i) {
+        public static ValueTag valueOf(int i) {
             ValueTag e = vmap.get(i);
             if (e != null)
                 return e;
-            if (i == null)
-                throw new NullPointerException("Integer is null");
             throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
@@ -292,12 +288,10 @@ public class IppEncoding {
          * @return the enum constant with the specified value
          * @throws IllegalArgumentException if this enum type has no constant with the specified value
          */
-        public static OpCode valueOf(Integer i) {
-            OpCode e = vmap.get(i);
+        public static OpCode valueOf(int i) {
+            OpCode e = vmap.get(i & 0xffff);
             if (e != null)
                 return e;
-            if (i == null)
-                throw new NullPointerException("Integer is null");
             throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
