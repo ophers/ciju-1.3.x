@@ -27,18 +27,18 @@ public class IppResponse<T extends IppObject> extends IppObject {
     private final T obj;
     private final IppHeader header;
 
-    public IppResponse(short version) {
-        this(version, null);
+    public IppResponse(short version, short status, int requestId) {
+        this(version, status, requestId, null);
     }
     
     @SuppressWarnings("unchecked")
-    public IppResponse(short version, T obj) {
+    public IppResponse(short version, short status, int requestId, T obj) {
         if (obj != null)
             this.obj = obj;
         else
             this.obj = (T) this;
             
-        this.header = new IppHeader(version);
+        this.header = new IppHeader(version, status, requestId);
     }
 
     public short getVersion() {
@@ -49,16 +49,8 @@ public class IppResponse<T extends IppObject> extends IppObject {
         return header.getCode();
     }
 
-    public void setResponseCode(short responseCode) {
-        header.setCode(responseCode);
-    }
-
     public int getRequestId() {
         return header.getRequestId();
-    }
-
-    public void setRequestId(int requestId) {
-        header.setRequestId(requestId);
     }
 
     public T getObject() {

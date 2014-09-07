@@ -24,8 +24,8 @@ package org.ciju.ipp;
 /* package */ class IppHeader {
     
     private final short version;
-    private short code;
-    private int requestId;
+    private final short code;
+    private final int requestId;
 
     public short getVersion() {
         return version;
@@ -35,35 +35,25 @@ package org.ciju.ipp;
         return code;
     }
 
-    public void setCode(short code) {
-        this.code = code;
-    }
-
     public int getRequestId() {
         return requestId;
     }
-
-    public void setRequestId(int requestId) {
-        this.requestId = requestId;
-    }
     
-    public IppHeader() {
-        this.version = IppEncoding.DEF_VERSION;
-    }
-
-    public IppHeader(short version) {
+    public IppHeader(short version, short code, int requestId) {
         this.version = version;
-    }
-
-    public IppHeader(IppEncoding.OpCode code, int requestId) {
-        this();
-        this.code = (short) code.getValue();
+        this.code = code;
         this.requestId = requestId;
     }
 
-    public IppHeader(IppEncoding.OpCode code) {
-        this();
-        this.code = (short) code.getValue();
+    public IppHeader(short code, int requestId) {
+        this.version = IppEncoding.DEF_VERSION;
+        this.code = code;
+        this.requestId = requestId;
+    }
+
+    public IppHeader(short code) {
+        this.version = IppEncoding.DEF_VERSION;
+        this.code = code;
         this.requestId = 1;
     }
 
