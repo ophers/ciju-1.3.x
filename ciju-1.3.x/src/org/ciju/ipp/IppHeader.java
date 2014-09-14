@@ -50,11 +50,4 @@ package org.ciju.ipp;
         this.code = code;
         this.requestId = requestId;
     }
-
-    public IppHeader(short code) {
-        this.version = IppEncoding.DEF_VERSION;
-        this.code = code;
-        this.requestId = 1;
-    }
-
 }

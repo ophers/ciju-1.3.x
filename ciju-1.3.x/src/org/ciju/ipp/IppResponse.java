@@ -17,40 +17,34 @@
 
 package org.ciju.ipp;
 
+import java.util.Locale;
+import javax.print.attribute.Attribute;
+
 /**
  *
  * @author Opher Shachar
  * @param <T>
  */
-public class IppResponse<T extends IppObject> extends IppObject {
+public class IppResponse<T extends IppObject> extends BaseIppObject {
     
     private final T obj;
-    private final IppHeader header;
-
+    private Locale locale;
+    
     public IppResponse(short version, short status, int requestId) {
         this(version, status, requestId, null);
     }
     
     @SuppressWarnings("unchecked")
     public IppResponse(short version, short status, int requestId, T obj) {
+        super(version, status, requestId);
         if (obj != null)
             this.obj = obj;
         else
             this.obj = (T) this;
-            
-        this.header = new IppHeader(version, status, requestId);
-    }
-
-    public short getVersion() {
-        return header.getVersion();
     }
 
     public short getResponseCode() {
-        return header.getCode();
-    }
-
-    public int getRequestId() {
-        return header.getRequestId();
+        return getCode();
     }
 
     public T getObject() {
@@ -61,4 +55,22 @@ public class IppResponse<T extends IppObject> extends IppObject {
     }
     
     // TODO: Delegate relevant methods to 'obj'
+
+    public Locale getLocale() {
+        if (locale == null) {
+            Attribute nl = getAttributesNaturalLanguage();
+            if (nl != null) {
+                String[] loc = nl.toString().split("-");
+                if (loc.length > 1)
+                    locale = new Locale(loc[0], loc[1].toUpperCase());
+                else if (loc.length == 1)
+                    locale = new Locale(loc[0]);
+            }
+        }
+        return locale;
+    }
+
+    private Attribute getAttributesNaturalLanguage() {
+        return getAttribute("attributes-natural-language", IppEncoding.GroupTag.OPERATION, IppEncoding.ValueTag.NATURAL_LANGUAGE);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Opher Shachar
+ * Copyright (C) 2012-2014 Opher Shachar
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,18 +15,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.ipp;
+package org.ciju.ipp.attribute;
 
-import javax.print.attribute.Attribute;
-import org.ciju.ipp.IppEncoding.GroupTag;
+import javax.print.attribute.AttributeSet;
+import static org.ciju.ipp.IppEncoding.GroupTag;
 
 /**
  *
  * @author Opher Shachar
  */
-public abstract class IppObject {
+public class AttributeGroup extends GenericAttributeSet {
+    private final GroupTag gt;
 
-    protected abstract boolean addAttribute(Attribute a);
-    
-    protected abstract boolean newAttributeGroup(GroupTag gt);
+    /**
+     *
+     * @param gt
+     */
+    public AttributeGroup(GroupTag gt) {
+        this.gt = gt;
+    }
+
+    /**
+     *
+     * @param gt
+     * @param attrs
+     */
+    public AttributeGroup(GroupTag gt, AttributeSet attrs) {
+        super(attrs);
+        this.gt = gt;
+    }
+
+    public GroupTag groupTag() {
+        return gt;
+    }
 }

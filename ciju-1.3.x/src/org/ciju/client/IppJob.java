@@ -28,13 +28,13 @@ import javax.print.MultiDocPrintJob;
 import javax.print.PrintException;
 import javax.print.PrintService;
 import javax.print.attribute.Attribute;
-import javax.print.attribute.AttributeSet;
 import javax.print.attribute.PrintJobAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
+import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.attribute.GenericAttributeSet;
 
@@ -173,6 +173,14 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
     }
 
     public void cancel() throws PrintException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    protected boolean addAttribute(Attribute a) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
