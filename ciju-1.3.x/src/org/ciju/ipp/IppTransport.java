@@ -35,27 +35,23 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map.Entry;
-import static java.util.Map.Entry;
+import java.util.Map;
 import java.util.ResourceBundle;
 import javax.print.attribute.Attribute;
-import javax.print.attribute.CijuAttributeUtils;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
 import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.TextSyntax;
-import javax.print.attribute.URISyntax;
 import javax.print.attribute.standard.PrinterStateReason;
 import javax.print.attribute.standard.PrinterStateReasons;
 import javax.print.attribute.standard.Severity;
 import org.ciju.ipp.IppEncoding.GroupTag;
-import static org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.ValueTag;
-import static org.ciju.ipp.IppEncoding.ValueTag;
-import org.ciju.ipp.attribute.GenericValue;
+import org.ciju.ipp.attribute.AttributeGroup;
+import static org.ciju.ipp.attribute.GenericValue.deduceValueTag;
+import static org.ciju.ipp.attribute.GenericValue.getNaturalLanguage;
 
 /**
  *
@@ -74,7 +70,6 @@ public class IppTransport {
     public static void writeRequest(OutputStream os, IppRequest ipp) throws IOException {
         IppTransport t = new IppTransport(new DataOutputStream(os), ipp);
         t.writeRequest();
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
@@ -138,11 +133,25 @@ public class IppTransport {
         out.writeShort(request.getVersion());
         out.writeShort(request.getOpCode().getValue());
         out.writeShort(request.getRequestId());
-        writeOperAttrs(getNaturalLanguage(request.getLocale()));
+        // write operation attributes
+        writeOperationHead();
+        Iterator<AttributeGroup> it = request.ags.iterator();
+        AttributeGroup ag = it.next();      // first is operation attributes
+        for (Attribute attr : ag)
+            writeIppAttribute(attr);
+        // write all other attributes
+        while (it.hasNext()) {
+            ag = it.next();
+            out.write(ag.groupTag().getValue());
+            for (Attribute attr : ag)
+                writeIppAttribute(attr);
+        }
+        // write end attributes group tag
+        out.write(GroupTag.END.getValue());
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    private void writeOperAttrs(String anl) throws IOException {
+    private void writeOperationHead() throws IOException {
         // write operational attributes group tag
         out.write(GroupTag.OPERATION.getValue());
         // write charset attribute. Always utf-8.
@@ -152,14 +161,12 @@ public class IppTransport {
         out.writeShort(5);
         out.writeBytes("utf-8");
         // write natural language attribute
+        String anl = getNaturalLanguage(request.getLocale());
         out.write(ValueTag.NATURAL_LANGUAGE.getValue());
         out.writeShort(27);
         out.writeBytes("attributes-natural-language");
         out.writeShort(anl.length());
         out.writeBytes(anl);
-        // write request operational attributes
-        for (Attribute attr : request.getOperAttrs())
-            writeIppAttribute(attr);
     }
 
     /**
@@ -199,7 +206,7 @@ public class IppTransport {
         }
 
         // get the value-tag
-        ValueTag vt = deduceValueTag(o);
+        ValueTag vt = deduceValueTag(o, request.getLocale());
         // write the attribute
         out.write(vt.getValue());
         out.writeShort(a.getName().length());
@@ -222,8 +229,8 @@ public class IppTransport {
                 writeIppValue(vt, o);
             // Attribute value print loop
             if (iter.hasNext()) {
-                o = iter.next();                    // the standard allows for each value to have
-                vt = deduceValueTag(o);             // a diffrent syntax
+                o = iter.next();                             // the standard allows for each
+                vt = deduceValueTag(o, request.getLocale()); // value to have a diffrent syntax
                 out.write(vt.getValue());
                 out.writeShort(0);                  // nameless attribute indicates a multi-value
             }
@@ -232,8 +239,8 @@ public class IppTransport {
     }
 
     private void writeIppMultiValue(ValueTag vt, PrinterStateReasons psr) throws IOException {
-        Iterator<Entry<PrinterStateReason, Severity>> iter = psr.entrySet().iterator();
-        Entry<PrinterStateReason, Severity> o;
+        Iterator<Map.Entry<PrinterStateReason, Severity>> iter = psr.entrySet().iterator();
+        Map.Entry<PrinterStateReason, Severity> o;
         do {
             o = iter.next();            
             writeIppValue(vt, o.getKey().toString() + "-" + o.getValue().toString());
@@ -255,39 +262,6 @@ public class IppTransport {
                 out.writeShort(0);                  // nameless attribute indicates a multi-value
             }
         } while (iter.hasNext());
-    }
-
-    /**
-     * The JPS Object Model has its quirks (mostly documented).
-     * So, for example, PrinterStateReasons needs a special consideration.
-     */
-    private ValueTag deduceValueTag(Object o) throws IOException {
-        // First are generic objects used by CIJU
-        if (o instanceof GenericValue)
-            return ((GenericValue) o).getValueTag();
-        else if (o instanceof String)
-            return ValueTag.NAME_WITHOUT_LANGUAGE;
-        // Below are the JPS standard syntaxes
-        else if (o instanceof PrinterStateReasons)
-            return ValueTag.KEYWORD;
-        else if (o instanceof DateTimeSyntax)
-            return ValueTag.DATE_TIME;
-        else if (o instanceof EnumSyntax)
-            return CijuAttributeUtils.deduceEnumIPPSyntax((EnumSyntax) o);
-        else if (o instanceof IntegerSyntax)
-            return ValueTag.INTEGER;
-        else if (o instanceof ResolutionSyntax)
-            return ValueTag.RESOLUTION;
-        else if (o instanceof SetOfIntegerSyntax)
-            return ValueTag.RANGE_OF_INTEGER;
-        else if (o instanceof TextSyntax)
-            return deduceTextIPPSyntax((TextSyntax) o);
-        else if (o instanceof URISyntax)
-            return ValueTag.URI;
-        else if (o instanceof int[])
-            return ValueTag.RANGE_OF_INTEGER;
-
-        throw new IllegalArgumentException(resourceStrings.getString("ATTRIBUTE DOES NOT IMPLEMENT A KNOWN SYNTAX."));
     }
 
     /**
@@ -432,30 +406,5 @@ public class IppTransport {
         return IppEncoding.LengthLimits.containsKey(o) ?
                 IppEncoding.LengthLimits.get(o) :
                 MAX;
-    }
-
-    private String getNaturalLanguage(Locale locale) {
-        String lang = locale.getLanguage();
-        String country = locale.getCountry().toLowerCase();
-        if (lang.length() == 0)
-            throw new IllegalArgumentException(resourceStrings.getString("LOCALE CANNOT HAVE AN EMPTY LANGUAGE FIELD."));
-        if (lang.equals("iw"))
-            lang = "he";                            // new code for Hebrew
-        else if (lang.equals("ji"))
-            lang = "yi";                            // new code for Yiddish
-        else if (lang.equals("in"))
-            lang = "id";                            // new code for Indonesian
-        return country.length() == 0 ? lang : lang + "-" + country;
-    }
-
-    private ValueTag deduceTextIPPSyntax(TextSyntax o) {
-        boolean wol = o.getLocale().equals(request.getLocale());
-        Attribute a = (Attribute) o;
-        if (a.getName().endsWith("-name") ||
-            a.getName().equals("output-device-assigned"))
-            return wol ? ValueTag.NAME_WITHOUT_LANGUAGE :
-                         ValueTag.NAME_WITH_LANGUAGE;
-        return wol ? ValueTag.TEXT_WITHOUT_LANGUAGE :
-                     ValueTag.TEXT_WITH_LANGUAGE;
     }
 }

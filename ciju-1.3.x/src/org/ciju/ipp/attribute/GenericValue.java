@@ -20,7 +20,10 @@ package org.ciju.ipp.attribute;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.ResourceBundle;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.CijuAttributeUtils;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
 import javax.print.attribute.IntegerSyntax;
@@ -28,6 +31,7 @@ import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
+import javax.print.attribute.standard.PrinterStateReasons;
 import org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
@@ -134,6 +138,67 @@ public class GenericValue {
                 assert false : "This ValueTag " + vt + " is unknown!";
                 throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("THIS VALUETAG {0} IS UNKNOWN!"), vt));
         }
+    }
+
+    /**
+     * The JPS Object Model has its quirks (mostly documented).
+     * So, for example, PrinterStateReasons needs a special consideration.
+     * @param o
+     * @param loc
+     * @return 
+     */
+    public static ValueTag deduceValueTag(Object o, Locale loc) {
+        // First are generic objects used by CIJU
+        if (o instanceof GenericValue)
+            return ((GenericValue) o).getValueTag();
+        else if (o instanceof String)
+            return ValueTag.NAME_WITHOUT_LANGUAGE;
+        // Below are the JPS standard syntaxes
+        else if (o instanceof PrinterStateReasons)
+            return ValueTag.KEYWORD;
+        else if (o instanceof DateTimeSyntax)
+            return ValueTag.DATE_TIME;
+        else if (o instanceof EnumSyntax)
+            return CijuAttributeUtils.deduceEnumIPPSyntax((EnumSyntax) o);
+        else if (o instanceof IntegerSyntax)
+            return ValueTag.INTEGER;
+        else if (o instanceof ResolutionSyntax)
+            return ValueTag.RESOLUTION;
+        else if (o instanceof SetOfIntegerSyntax)
+            return ValueTag.RANGE_OF_INTEGER;
+        else if (o instanceof TextSyntax)
+            return deduceTextIPPSyntax((TextSyntax) o, loc);
+        else if (o instanceof URISyntax)
+            return ValueTag.URI;
+        else if (o instanceof int[])
+            return ValueTag.RANGE_OF_INTEGER;
+
+        throw new IllegalArgumentException(resourceStrings.getString("ATTRIBUTE DOES NOT IMPLEMENT A KNOWN SYNTAX."));
+    }
+
+    private static ValueTag deduceTextIPPSyntax(TextSyntax o, Locale loc) {
+        boolean wol = o.getLocale().equals(loc);
+        Attribute a = (Attribute) o;
+        if (a.getName().endsWith("-name") ||
+            a.getName().equals("output-device-assigned"))
+            return wol ? ValueTag.NAME_WITHOUT_LANGUAGE :
+                         ValueTag.NAME_WITH_LANGUAGE;
+        return wol ? ValueTag.TEXT_WITHOUT_LANGUAGE :
+                     ValueTag.TEXT_WITH_LANGUAGE;
+    }
+    
+    public static String getNaturalLanguage(Locale locale) {
+        String lang = locale.getLanguage();
+        String country = locale.getCountry().toLowerCase();
+        if (lang.length() == 0)
+            throw new IllegalArgumentException(resourceStrings.getString("LOCALE CANNOT HAVE AN EMPTY LANGUAGE FIELD."));
+        if (lang.equals("iw"))
+            lang = "he";                            // new code for Hebrew
+        else if (lang.equals("ji"))
+            lang = "yi";                            // new code for Yiddish
+        else if (lang.equals("in"))
+            lang = "id";                            // new code for Indonesian
+        return country.length() == 0 ? lang : lang + "-" + country;
     }
 
     @Override

@@ -24,13 +24,13 @@ import java.net.*;
 import java.security.Permission;
 import java.util.List;
 import java.util.Map;
-import javax.print.attribute.Attribute;
 import static org.ciju.client.impl.ipp.Handler.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppTransport;
+import org.ciju.ipp.attribute.GenericValue;
 
 
 /**
@@ -187,8 +187,8 @@ import org.ciju.ipp.IppTransport;
 	    throw new NullPointerException("IPP request is null");
         ipp = request;
 //        String al = getRequestProperty("Accept-Language");
-        Attribute attr = ipp.getAttributesNaturalLanguage();
-        setRequestProperty("Accept-Language", attr.toString());
+        String lang = GenericValue.getNaturalLanguage(ipp.getLocale());
+        setRequestProperty("Accept-Language", lang);
 //        if (al != null) addRequestProperty("Accept-Language", al);
         return this;
     }

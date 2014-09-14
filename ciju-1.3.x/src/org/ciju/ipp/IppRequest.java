@@ -18,35 +18,31 @@
 package org.ciju.ipp;
 
 import java.util.Locale;
-import javax.print.attribute.Attribute;
+import org.ciju.ipp.IppEncoding.OpCode;
 import static org.ciju.ipp.IppTransport.resourceStrings;
 
 /**
  *
  * @author Opher Shachar
  */
-public class IppRequest extends IppObject {
+public class IppRequest extends BaseIppObject {
     
-    private final IppHeader header;
-    private final Locale    locale;
-
-    public IppRequest(IppEncoding.OpCode opCode) {
-        this.header = new IppHeader((short) opCode.getValue());
-        this.locale = Locale.getDefault();
+    private final Locale locale;
+    
+    public IppRequest(OpCode opCode) {
+        this(opCode, 1, Locale.getDefault());
     }
 
-    public IppRequest(IppEncoding.OpCode opCode, int requestId) {
-        this.header = new IppHeader((short) opCode.getValue(), requestId);
-        this.locale = Locale.getDefault();
+    public IppRequest(OpCode opCode, int requestId) {
+        this(opCode, requestId, Locale.getDefault());
     }
 
-    public IppRequest(IppEncoding.OpCode opCode, Locale locale) {
-        this.header = new IppHeader((short) opCode.getValue());
-        this.locale = validate(locale);
+    public IppRequest(OpCode opCode, Locale locale) {
+        this(opCode, 1, locale);
     }
 
-    public IppRequest(IppEncoding.OpCode opCode, int requestId, Locale locale) {
-        this.header = new IppHeader((short) opCode.getValue(), requestId);
+    public IppRequest(OpCode opCode, int requestId, Locale locale) {
+        super((short) opCode.getValue(), requestId);
         this.locale = validate(locale);
     }
 
@@ -59,23 +55,11 @@ public class IppRequest extends IppObject {
         return locale;
     }
 
-    public short getVersion() {
-        return header.getVersion();
-    }
-
-    public IppEncoding.OpCode getOpCode() {
-        return IppEncoding.OpCode.valueOf(header.getCode());
-    }
-
-    public int getRequestId() {
-        return header.getRequestId();
+    public OpCode getOpCode() {
+        return OpCode.valueOf(getCode());
     }
 
     public Locale getLocale() {
         return locale;
-    }
-    
-    public Iterable<Attribute> getOperAttrs() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
  }

@@ -41,6 +41,7 @@ import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
 
@@ -186,4 +187,11 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         return null;
     }
 
+    protected boolean addAttribute(Attribute a) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

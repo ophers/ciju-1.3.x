@@ -148,7 +148,7 @@ public class IppEncoding {
         // 0x00000000-0x3FFFFFFF are reserved for IETF standard track documents
         // 0x40000000-0x7FFFFFFF are reserved for vendor extensions
         
-        // The following are special markers. do we need them?
+        // The following are special markers for lookup purposes
         TEXT(0),
         NAME(0)
         ;

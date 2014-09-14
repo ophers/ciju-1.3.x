@@ -19,6 +19,8 @@ package org.ciju.client;
 
 import java.util.Collection;
 import java.util.ListIterator;
+import javax.print.attribute.Attribute;
+import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
 
@@ -49,5 +51,13 @@ import org.ciju.ipp.IppObjectFactory;
     private void add() {
         // Do something with currObj ...
         currObj = fact.create();
+    }
+
+    protected boolean addAttribute(Attribute a) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
