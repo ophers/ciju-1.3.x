@@ -25,9 +25,27 @@ import javax.print.attribute.TextSyntax;
  * @author Opher Shachar
  */
 public class TextValue extends TextSyntax {
+    private static final long serialVersionUID = -93227186360522961L;
 
+    private final byte[] ba;
+    
     public TextValue(String value, Locale locale) {
         super(value, locale);
+        ba = null;
     }
-    
+
+    public TextValue(byte[] ba, Locale locale) {
+        super("", locale);
+        this.ba = ba.clone();
+    }
+
+    @Override
+    public String toString() {
+        return super.toString(); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public String getValue() {
+        return super.getValue(); //To change body of generated methods, choose Tools | Templates.
+    }
 }

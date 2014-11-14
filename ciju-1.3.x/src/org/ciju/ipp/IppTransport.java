@@ -17,18 +17,22 @@
 
 package org.ciju.ipp;
 
-import java.io.DataOutput;
+import java.io.Closeable;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
 import java.net.ProtocolException;
+import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -37,6 +41,8 @@ import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
@@ -49,6 +55,7 @@ import javax.print.attribute.standard.PrinterStateReasons;
 import javax.print.attribute.standard.Severity;
 import org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.ValueTag;
+import org.ciju.ipp.IppObject.Conformity;
 import org.ciju.ipp.attribute.AttributeGroup;
 import static org.ciju.ipp.attribute.GenericValue.deduceValueTag;
 import static org.ciju.ipp.attribute.GenericValue.getNaturalLanguage;
@@ -59,17 +66,46 @@ import static org.ciju.ipp.attribute.GenericValue.getNaturalLanguage;
  */
 public class IppTransport {
 
+    // Logging facilities
     /* package */ static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
+    /* package */ static final Logger logger;
+    static {
+        String name = IppTransport.class.getName();
+        String packageName = name.substring(0, name.lastIndexOf('.'));
+        logger = Logger.getLogger(packageName, "org/ciju/ResourceStrings");
+    }
 
     /**
+     * Writes an IPP request to the given {@link OutputStream}.
      * 
-     * @param os
-     * @param ipp
-     * @throws java.io.IOException
+     * @param os the <tt>OutputStream</tt> to write the request to.
+     * @param ipp the IPP request
+     * @throws IOException
      */
     public static void writeRequest(OutputStream os, IppRequest ipp) throws IOException {
-        IppTransport t = new IppTransport(new DataOutputStream(os), ipp);
-        t.writeRequest();
+        IppTransport t = new IppTransport(os, ipp);
+        // this would be substituted by Java7 try-with-resources
+        IOException ioex = null;
+        try {
+            t.writeRequest();
+        } catch (IOException ex) {
+            ioex = ex;
+        } finally {
+            for (Closeable io : t.ios) {
+                try {
+                    if (io != null)
+                        io.close();
+                } catch (IOException ex) {
+                    if (ioex == null)
+                        ioex = ex;
+                    else
+                        // otherwise supress exception
+                        logger.logp(Level.FINE, io.getClass().getName(), "close()", "SUPRESSING EXCEPTION", ex);
+                }
+            }
+            if (ioex != null)
+                throw ioex;
+        }
     }
 
     /**
@@ -97,16 +133,20 @@ public class IppTransport {
     }
 
 
-    private final DataOutput out;
+    private final DataOutputStream out;
+    private final Closeable[] ios = new Closeable[2];
     private final IppRequest request;
     private final CharsetEncoder utf8enc;
-    private final ByteBuffer bb;
+    private ByteBuffer bb;
 
-    private IppTransport(DataOutput out, IppRequest request) {
-        this.out = out;
+    private IppTransport(OutputStream out, IppRequest request) {
+        ios[0] = this.out = new DataOutputStream(out);
         this.request = request;
-        this.utf8enc = Charset.forName("UTF-8").newEncoder();
-        this.bb = ByteBuffer.allocate(1023);
+        bb = ByteBuffer.allocate(1023);
+        utf8enc = Charset.forName("UTF-8").newEncoder();
+        if (request.conformity != Conformity.STRICT)
+            utf8enc.onMalformedInput(CodingErrorAction.REPLACE)
+                   .onUnmappableCharacter(CodingErrorAction.REPLACE);
     }
 
     /**
@@ -135,7 +175,7 @@ public class IppTransport {
         out.writeShort(request.getRequestId());
         // write operation attributes
         writeOperationHead();
-        Iterator<AttributeGroup> it = request.ags.iterator();
+        Iterator<AttributeGroup> it = request.getAttributeGroups().iterator();
         AttributeGroup ag = it.next();      // first is operation attributes
         for (Attribute attr : ag)
             writeIppAttribute(attr);
@@ -148,7 +188,28 @@ public class IppTransport {
         }
         // write end attributes group tag
         out.write(GroupTag.END.getValue());
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // write request data if provided
+        int n;
+        switch (request.getDocDataFlavor()) {
+            case STREAM:
+                InputStream in = request.getDoc().getStreamForBytes();
+                ios[1] = in;
+                while ((n = in.read(bb.array())) > 0)
+                    out.write(bb.array(), 0, n);
+                break;
+            case READER:
+                Reader rdr = request.getDoc().getReaderForText();
+                ios[1] = rdr;
+                char[] ca = new char[1024];
+                String cstr = request.getDoc().getDocFlavor().getParameter("charset");
+                if (cstr == null)
+                    cstr = "utf-16";
+                OutputStreamWriter osw = new OutputStreamWriter(out, cstr);
+                ios[0] = osw;
+                while ((n = rdr.read(ca)) > 0)
+                    osw.write(ca, 0, n);
+                break;
+        }
     }
 
     private void writeOperationHead() throws IOException {
@@ -197,6 +258,11 @@ public class IppTransport {
      * </pre>
      */
     private void writeIppAttribute(Attribute a) throws IOException {
+        validateConformity(a);
+        
+        // get the length-limit for the attribute's value(s)
+        Integer ll = IppEncoding.LengthLimits.get(a.getClass());
+        
         Iterator iter = null;
         Object o = a;
         // determine if the attribute is multi-valued
@@ -212,21 +278,33 @@ public class IppTransport {
         out.writeShort(a.getName().length());
         out.writeBytes(a.getName());                // the standard mandates Name to be US-ASCII
         if (iter != null)
-            writeIppMultiValue(vt, o, iter);
+            writeIppMultiValue(vt, o, ll, iter);
         else if (a instanceof PrinterStateReasons)
             writeIppMultiValue(vt, (PrinterStateReasons) a);
         else if (a instanceof SetOfIntegerSyntax)
             writeIppMultiValue(vt, (SetOfIntegerSyntax) a);
         else
-            writeIppValue(vt, a);
+            writeIppValue(vt, a, ll);
     }
 
-    private void writeIppMultiValue(ValueTag vt, Object o, Iterator iter) throws IOException {
+    private void validateConformity(Attribute a) throws ProtocolException {
+        // Validate attribute name
+        if (a.getName().length() > Short.MAX_VALUE) {
+            throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE NAME IS LONGER THAN {0}."), Short.MAX_VALUE, a.getName()));
+        }
+        else if (a.getName().length() > ValueTag.KEYWORD.MAX) {
+            if (request.conformity != IppObject.Conformity.NONE)
+                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE NAME IS LONGER THAN {0}."), ValueTag.KEYWORD.MAX, a.getName()));
+        }
+    }
+
+    private void writeIppMultiValue(ValueTag vt, Object o, Integer ll, Iterator iter)
+            throws IOException {
         while (true) {
             if (o instanceof SetOfIntegerSyntax)
                 writeIppMultiValue(vt, (SetOfIntegerSyntax) o);
             else
-                writeIppValue(vt, o);
+                writeIppValue(vt, o, ll);
             // Attribute value print loop
             if (iter.hasNext()) {
                 o = iter.next();                             // the standard allows for each
@@ -243,7 +321,7 @@ public class IppTransport {
         Map.Entry<PrinterStateReason, Severity> o;
         do {
             o = iter.next();            
-            writeIppValue(vt, o.getKey().toString() + "-" + o.getValue().toString());
+            writeIppValue(vt, o.getKey().toString() + "-" + o.getValue().toString(), null);
             // Attribute value print loop
             if (iter.hasNext()) {
                 out.write(vt.getValue());
@@ -255,7 +333,7 @@ public class IppTransport {
     private void writeIppMultiValue(ValueTag vt, SetOfIntegerSyntax sois) throws IOException {
         Iterator<int[]> iter = Arrays.asList(sois.getMembers()).iterator();
         do {
-            writeIppValue(vt, iter.next());
+            writeIppValue(vt, iter.next(), null);
             // Attribute value print loop
             if (iter.hasNext()) {
                 out.write(vt.getValue());
@@ -272,11 +350,15 @@ public class IppTransport {
      * |          value    |   v bytes
      * ---------------------
      */
-    private void writeIppValue(ValueTag vt, Object o) throws IOException {
+    private void writeIppValue(ValueTag vt, Object o, Integer ll)
+            throws IOException {
         int n = -1;                                 // used for TEXT/NAME_WITH*_LANGUAGE
         int i;                                      // used for ENUM
         Date date;
         Calendar cal;
+        // the following would not throw ClassCastException as GenericValue allows
+        // just those types for those value-tag.
+        o = validateAndTransform(vt, o, ll);
         switch (vt) {
             case UNSUPPORTED:
             case UNKNOWN:
@@ -300,10 +382,8 @@ public class IppTransport {
                 out.writeShort(1);
                 if (o instanceof EnumSyntax)
                     i = ((EnumSyntax) o).getValue();
-                else if ((Boolean) o) 
-                    i = 1;
                 else
-                    i = 0;
+                    i = (Boolean) o ? 1 : 0;
                 out.write(i);
                 break;
             case ENUM:
@@ -320,11 +400,19 @@ public class IppTransport {
                 out.write((byte[]) o);
                 break;
             case DATE_TIME:
-                // setup calendar object
-                date = ((DateTimeSyntax) o).getValue();
-                cal = new GregorianCalendar();
-                cal.setTime(date);
-                // write value
+                // DateAndTime 11 octets syntax in RFC1903
+                if (o instanceof Calendar)
+                    cal = (Calendar) o;
+                else {
+                    if (o instanceof DateTimeSyntax)
+                        date = ((DateTimeSyntax) o).getValue();
+                    else
+                        date = (Date) o;
+                    // setup calendar object
+                    cal = new GregorianCalendar();
+                    cal.setTime(date);
+                }
+                // write local time
                 out.writeShort(11);
                 out.writeShort(cal.get(Calendar.YEAR));
                 out.write(cal.get(Calendar.MONTH));
@@ -333,7 +421,7 @@ public class IppTransport {
                 out.write(cal.get(Calendar.MINUTE));
                 out.write(cal.get(Calendar.SECOND));
                 out.write(cal.get(Calendar.MILLISECOND) / 100);
-                // timezone offset
+                // ... and timezone offset
                 int minoff = cal.get(Calendar.ZONE_OFFSET) / 60000;
                 if (minoff < 0) {
                     out.write('-');
@@ -357,15 +445,15 @@ public class IppTransport {
             case TEXT_WITH_LANGUAGE:
             case NAME_WITH_LANGUAGE:
                 String nl = getNaturalLanguage(((TextSyntax) o).getLocale());
-                n = encodeStringUTF8(o.toString(), bb, deduceValueLimit(o.getClass(), vt.MAX));
+                n = bb.limit();
                 out.writeShort(4 + nl.length() + n);
                 out.writeShort(nl.length());
-                out.writeBytes(nl);                 // locale-country is always US-ASCII
+                out.writeBytes(nl);                 // natural-language is always US-ASCII
                 // fall through to the string cases
             case TEXT_WITHOUT_LANGUAGE:
             case NAME_WITHOUT_LANGUAGE:
                 if (n < 0)
-                    n = encodeStringUTF8(o.toString(), bb, deduceValueLimit(o.getClass(), vt.MAX));
+                    n = bb.limit();
                 out.writeShort(n);
                 out.write(bb.array(), 0, n);
                 break;
@@ -377,34 +465,106 @@ public class IppTransport {
             case MIME_MEDIA_TYPE:
             case MEMBER_ATTR_NAME:
                 String str = o.toString();
-                if (str.length() > vt.MAX)
-                    throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LONGER THAN {0}."), vt.MAX));
                 out.writeShort(str.length());
                 out.writeBytes(str);                // these syntaxes are always US-ASCII
                 break;
             default:
-                assert false : "This ValueTag " + vt + " is unknown!";
+                logger.logp(Level.SEVERE, this.getClass().getName(), "writeIppValue",
+                        "PLEASE REPORT TO THE DEVELOPER: This ValueTag {0} has been overlooked!", o);
+                assert false : "This ValueTag " + vt + " has been overlooked!";
         }
     }
 
-    private int encodeStringUTF8(String str, ByteBuffer bb, int limit)
-            throws ProtocolException, CharacterCodingException {
-        bb.clear();
-        bb.limit(limit);
-        utf8enc.reset();
-        CoderResult cr = utf8enc.encode(CharBuffer.wrap(str), bb, true);
-        if (cr.isUnderflow())
-            cr = utf8enc.flush(bb);
-        if (cr.isOverflow())
-            throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LARGER THAN {0} BYTES ENCODED AS UTF-8."), bb.limit()));
-        else if (!cr.isUnderflow())
-            cr.throwException();
-        return bb.position();
+    private Object validateAndTransform(ValueTag vt, Object o, Integer ll)
+            throws ProtocolException {
+        // decide limit for string length
+        int limit;
+        if (request.conformity == IppObject.Conformity.NONE)
+            limit = Short.MAX_VALUE;
+        else
+            limit = ll != null ? ll : vt.MAX;
+        
+        switch (vt) {
+            case OCTET_STRING:
+                if (((byte[]) o).length > limit)
+                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LONGER THAN {0}."), limit));
+                break;
+                
+            case TEXT_WITH_LANGUAGE:
+            case NAME_WITH_LANGUAGE:
+                if (request.conformity == IppObject.Conformity.NONE)
+                    limit -= 9;                     // 2x2 length bytes + 5 natural-language length
+            case TEXT_WITHOUT_LANGUAGE:
+            case NAME_WITHOUT_LANGUAGE:
+                try {
+                    encodeStringUTF8(o.toString(), limit);
+                } catch (BufferOverflowException ex) {
+                    if (request.conformity == IppObject.Conformity.STRICT)
+                        throw new IllegalArgumentException(
+                                MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LARGER THAN {0} BYTES ENCODED AS UTF-8."), limit),
+                                ex);
+                    else {
+                        bb.flip();
+                        logger.log(Level.INFO, "ATTRIBUTE STRING IS LARGER THAN {0} BYTES ENCODED AS UTF-8. TRUNCATED!", limit);
+                    }
+                } catch (CharacterCodingException ex) {
+                    throw new IllegalArgumentException(ex);
+                }
+                break;
+                
+            case KEYWORD:
+            case URI:
+            case URI_SCHEME:
+            case CHARSET:
+            case NATURAL_LANGUAGE:
+            case MIME_MEDIA_TYPE:
+            case MEMBER_ATTR_NAME:
+                String str;
+                o = str = o.toString();
+                if (str.length() > limit) {
+                    if (request.conformity == IppObject.Conformity.STRICT)
+                        throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE STRING IS LONGER THAN {0}."), limit));
+                    o = str.substring(0, limit);
+                    logger.log(Level.INFO, "ATTRIBUTE STRING IS LONGER THAN {0}. TRUNCATED!", limit);
+                }
+                break;
+        }
+        return o;
     }
 
-    private int deduceValueLimit(Class<?> o, int MAX) {
-        return IppEncoding.LengthLimits.containsKey(o) ?
-                IppEncoding.LengthLimits.get(o) :
-                MAX;
+    /** Encodes string into this.bb */
+    private ByteBuffer encodeStringUTF8(String str, int max)
+            throws CharacterCodingException {
+        // setup in, out and encoder
+        CharBuffer in = CharBuffer.wrap(str);
+        bb.clear();
+        if (max < bb.capacity())
+            bb.limit(max);
+        utf8enc.reset();
+        
+        // do encoding loop
+        while (true) {
+            CoderResult cr = in.hasRemaining() ?
+                    utf8enc.encode(in, bb, true) : CoderResult.UNDERFLOW;
+            if (cr.isUnderflow())
+                cr = utf8enc.flush(bb);
+            if (cr.isUnderflow())
+                // we're done
+                break;
+            if (!cr.isOverflow() || bb.capacity() >= max)
+                // either malformed or unmappable or maxed-out and overflowed
+                cr.throwException();
+            
+            // Allocate a new buffer and copy over last encoding run
+            ByteBuffer old = bb;
+            int n = old.capacity() + (int)((in.remaining()+1) * utf8enc.averageBytesPerChar());
+            if (n > max)
+                n = max;
+            bb = ByteBuffer.allocate(n);
+            System.arraycopy(old.array(), old.arrayOffset(), bb.array(), 0, old.position());
+            bb.position(old.position());
+        }
+        bb.flip();
+        return bb;
     }
 }

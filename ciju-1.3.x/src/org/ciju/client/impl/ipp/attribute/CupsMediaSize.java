@@ -28,6 +28,7 @@ import org.ciju.ipp.attribute.GenericAttribute;
  * @author Opher Shachar
  */
 public class CupsMediaSize extends GenericAttribute implements PrintRequestAttribute {
+    private static final long serialVersionUID = -1890225517384313627L;
 
     public CupsMediaSize(MediaSize o) {
         super("media", Media.class);
@@ -36,5 +37,4 @@ public class CupsMediaSize extends GenericAttribute implements PrintRequestAttri
                 o.getY(Size2DSyntax.MM),
                 "mm"));
     }
-   
 }

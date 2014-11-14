@@ -191,6 +191,10 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    protected boolean addAllAttributes(AttributeSet as) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
     protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

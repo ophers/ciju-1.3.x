@@ -26,7 +26,7 @@ import javax.print.attribute.ResolutionSyntax;
  * @author Opher Shachar
  */
 public class ResolutionValue extends ResolutionSyntax {
-
+    private static final long serialVersionUID = 2909562989539601822L;
     private static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
 
     public ResolutionValue(int crossFeedResolution, int feedResolution, int units) {
@@ -45,5 +45,4 @@ public class ResolutionValue extends ResolutionSyntax {
         else
             throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("UNITS MAY BE EITHER 3 OR 4; GOT {0}"), units));
     }
-    
 }

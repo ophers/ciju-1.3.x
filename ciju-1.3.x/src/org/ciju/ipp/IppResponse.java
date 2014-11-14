@@ -26,7 +26,13 @@ import javax.print.attribute.Attribute;
  * @param <T>
  */
 public class IppResponse<T extends IppObject> extends BaseIppObject {
+
+    private static Conformity defaultConformity = Conformity.LENIENT;
+    public static void setDefaultConformity(Conformity defaultConformity) {
+        IppResponse.defaultConformity = defaultConformity;
+    }
     
+    private final Conformity conformity = defaultConformity;
     private final T obj;
     private Locale locale;
     
