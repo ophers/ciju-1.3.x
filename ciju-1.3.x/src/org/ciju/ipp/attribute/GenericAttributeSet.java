@@ -29,9 +29,8 @@ import javax.print.attribute.AttributeSet;
  * @author Opher Shachar
  */
 public class GenericAttributeSet extends AbstractSet<Attribute> implements AttributeSet, Serializable {
+    private static final long serialVersionUID = -5744845131975323409L;
     
-    private static final long serialVersionUID = 1L;
-
     /**
      * A HashMap used by the implementation.
      * The serialised form doesn't include this instance variable.
@@ -39,7 +38,7 @@ public class GenericAttributeSet extends AbstractSet<Attribute> implements Attri
     private transient HashMap<String, Attribute> map;
 
     /**
-     * Save the state of this <GenericAttributeSetSet</tt> instance to a stream
+     * Save the state of this <tt>GenericAttributeSetSet</tt> instance to a stream
      * (that is, serialize this set).
      *
      * @serialData The size of the set (the number of elements it contains) is
@@ -60,8 +59,8 @@ public class GenericAttributeSet extends AbstractSet<Attribute> implements Attri
     }
 
     /**
-     * Reconstitute thGenericAttributeSetuteSet</tt> instance from a stream (that is,
-     * deserialize it).
+     * Reconstitute this <tt>GenericAttributeSetuteSet</tt> instance from a stream
+     * (that is, deserialize it).
      */
     private void readObject(java.io.ObjectInputStream s)
         throws java.io.IOException, ClassNotFoundException {
@@ -123,8 +122,7 @@ public class GenericAttributeSet extends AbstractSet<Attribute> implements Attri
     public boolean addAll(AttributeSet attributes) {
 	boolean modified = false;
         for (Attribute a : attributes.toArray())
-	    if (add(a))
-		modified = true;
+	    modified |= add(a);
 	return modified;
     }
 

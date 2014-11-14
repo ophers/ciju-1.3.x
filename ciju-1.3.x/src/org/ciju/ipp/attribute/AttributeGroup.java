@@ -25,6 +25,8 @@ import static org.ciju.ipp.IppEncoding.GroupTag;
  * @author Opher Shachar
  */
 public class AttributeGroup extends GenericAttributeSet {
+    private static final long serialVersionUID = -8805114795791154621L;
+    
     private final GroupTag gt;
 
     /**

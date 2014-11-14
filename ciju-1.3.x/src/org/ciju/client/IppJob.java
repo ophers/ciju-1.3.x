@@ -20,6 +20,7 @@ package org.ciju.client;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 import javax.print.CancelablePrintJob;
 import javax.print.Doc;
 import javax.print.DocPrintJob;
@@ -28,14 +29,17 @@ import javax.print.MultiDocPrintJob;
 import javax.print.PrintException;
 import javax.print.PrintService;
 import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 import javax.print.attribute.PrintJobAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.event.PrintJobAttributeEvent;
 import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
+import static org.ciju.client.PrintServer.logger;
 import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.attribute.GenericAttributeSet;
 
 /**
@@ -101,6 +105,9 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
                     pjl.printJobNoMoreEvents(pje);
                 break;
             default:
+                logger.logp(Level.SEVERE, this.getClass().getName(), "raisePrintJobEvent",
+                        "PLEASE REPORT TO THE DEVELOPER: THIS PRINTEVENTTYPE {0} IS UNKNOWN!",
+                        pje.getPrintEventType());
                 assert false : "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
         }
     }
@@ -117,9 +124,14 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
     }
 
     public void removePrintJobAttributeListener(PrintJobAttributeListener listener) {
-        if (listener != null) {
-            pjall.remove(new PrintJobAttributeListenerEntry(listener, null));
-        }
+        if (listener != null)
+            for (int i = 0; i < pjall.size(); i++) {
+                PrintJobAttributeListenerEntry pjale = pjall.get(i);
+                if (listener.equals(pjale.listner)) {
+                    pjall.remove(i);
+                    break;
+                }
+            }
     }
 
     private List<PrintJobAttributeListener> getListeners(PrintJobAttributeEvent pjae) {
@@ -173,10 +185,16 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
     }
 
     public void cancel() throws PrintException {
+        IppRequest ipp = new IppRequest(IppEncoding.OpCode.CANCEL_JOB);
+        
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     protected boolean addAttribute(Attribute a) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    protected boolean addAllAttributes(AttributeSet as) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -197,7 +215,12 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
             return attributes;
         }
 
+        /**
+         * @param listner musn't be null
+         */
         public PrintJobAttributeListenerEntry(PrintJobAttributeListener listner, PrintJobAttributeSet attributes) {
+            if (listner == null)
+                throw new NullPointerException("listner");
             this.listner = listner;
             this.attributes = attributes;
         }
@@ -205,7 +228,7 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
         @Override
         public int hashCode() {
             int hash = 7;
-            hash = 59 * hash + (this.listner != null ? this.listner.hashCode() : 0);
+            hash = 59 * hash + this.listner.hashCode();
             hash = 59 * hash + (this.attributes != null ? this.attributes.hashCode() : 0);
             return hash;
         }
@@ -217,7 +240,9 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
             if (getClass() != obj.getClass())
                 return false;
             final PrintJobAttributeListenerEntry other = (PrintJobAttributeListenerEntry) obj;
-            return this.listner == other.listner || (this.listner != null && this.listner.equals(other.listner));
+            if (!this.listner.equals(other.listner))
+                return false;
+            return this.attributes == other.attributes || (this.attributes != null && this.attributes.equals(other.attributes));
         }
 
     }

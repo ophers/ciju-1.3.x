@@ -17,17 +17,40 @@
 
 package org.ciju.ipp;
 
+import java.io.IOException;
 import java.util.Locale;
+import javax.print.Doc;
+import javax.print.DocFlavor;
+import javax.print.FlavorException;
+import javax.print.PrintException;
 import org.ciju.ipp.IppEncoding.OpCode;
+import org.ciju.ipp.IppEncoding.ValueTag;
 import static org.ciju.ipp.IppTransport.resourceStrings;
+import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
  *
  * @author Opher Shachar
  */
 public class IppRequest extends BaseIppObject {
+    private static Conformity defaultConformity = Conformity.LENIENT;
+
+    /**
+     * Sets the default {@link IppObject.Conformity Conformity} for subsequent IPP
+     * requests.
+     * 
+     * @param defaultConformity the {@linkplain IppObject.Conformity Conformity} to
+     *      use as the new default.
+     */
+    public static void setDefaultConformity(Conformity defaultConformity) {
+        IppRequest.defaultConformity = defaultConformity;
+    }
     
+    final Conformity conformity = defaultConformity;
     private final Locale locale;
+    protected enum DocDataFlavor { READER, STREAM };
+    private DocDataFlavor ddf;
+    private Doc doc;
     
     public IppRequest(OpCode opCode) {
         this(opCode, 1, Locale.getDefault());
@@ -47,11 +70,10 @@ public class IppRequest extends BaseIppObject {
     }
 
     private Locale validate(Locale locale) throws NullPointerException, IllegalArgumentException {
-        if (locale == null) {
+        if (locale == null)
             throw new NullPointerException("locale");
-        } else if (locale.getLanguage().length() == 0) {
+        else if (locale.getLanguage().length() == 0)
             throw new IllegalArgumentException(resourceStrings.getString("LOCALE CANNOT HAVE AN EMPTY LANGUAGE FIELD."));
-        }
         return locale;
     }
 
@@ -62,4 +84,42 @@ public class IppRequest extends BaseIppObject {
     public Locale getLocale() {
         return locale;
     }
+    
+    public Doc getDoc() {
+        return doc;
+    }
+
+    public void setDoc(Doc doc) throws PrintException, IOException {
+        String rep = doc.getDocFlavor().getRepresentationClassName().intern();
+        if (rep == "[C" || rep == "java.io.Reader" || rep == "java.lang.String")
+            ddf = DocDataFlavor.READER;
+        else if (rep == "[B" || rep == "java.io.InputStream")
+            ddf = DocDataFlavor.STREAM;
+        else
+            // TODO: Add support for DocFlavor.URI
+            throw new DocFlavorException(doc.getDocFlavor());
+        
+        addOperationAttribute(new GenericAttribute("document-format",
+                doc.getDocFlavor().getMimeType(), ValueTag.MIME_MEDIA_TYPE));
+        addAllAttributes(doc.getAttributes());
+        this.doc = doc;
+    }
+
+    public DocDataFlavor getDocDataFlavor() {
+        return ddf;
+    }
  }
+
+class DocFlavorException extends PrintException implements FlavorException {
+    private static final long serialVersionUID = -4729680667157678227L;
+    private final DocFlavor df;
+
+    public DocFlavorException(DocFlavor df) {
+        super("Unsupported document represetation class: " + df.getRepresentationClassName());
+        this.df = df;
+    }
+
+    public DocFlavor[] getUnsupportedFlavors() {
+        return new DocFlavor[] { df };
+    }
+}

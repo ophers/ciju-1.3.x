@@ -18,6 +18,7 @@
 package org.ciju.ipp;
 
 import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding.GroupTag;
 
 /**
@@ -26,7 +27,42 @@ import org.ciju.ipp.IppEncoding.GroupTag;
  */
 public abstract class IppObject {
 
+    /**
+     * Adds the given {@link Attribute} to the current attribute group.
+     * 
+     * @param a an attribute to add to the current attribute group.
+     * @return <tt>true</tt> if the current attribute group changed as a result of
+     *          the call, i.e., the given attribute value was not already a member 
+     *          of the current attribute group.
+     */
     protected abstract boolean addAttribute(Attribute a);
     
+    /**
+     * Adds the {@link Attribute}s from the given {@link AttributeSet} to the current
+     * attribute group.
+     * 
+     * @param as a {@link AttributeSet Set of Attributes} to add to the current 
+     *      attribute group.
+     * @return <tt>true</tt> if the current attribute group changed as a result of
+     *          the call, i.e., any attribute value in the given AttributeSet was not
+     *          already a member of the current attribute group.
+     */
+    protected abstract boolean addAllAttributes(AttributeSet as);
+    
+    /**
+     * Adds a new attribute group to this object's attributes list.
+     * 
+     * @param gt the {@link GroupTag GroupTag} for the new attribute group to add.
+     * @return true.
+     */
     protected abstract boolean newAttributeGroup(GroupTag gt);
+
+    public enum Conformity {
+        /** Raise an exception in face of a non-conformant situation */
+        STRICT,
+        /** Fix non-conformant issues (e.g. by truncation, sensible default etc.) */
+        LENIENT,
+        /** Let IPP Server or calling code deal with non-conformant situations */
+        NONE
+    }
 }

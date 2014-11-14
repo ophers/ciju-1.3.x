@@ -26,9 +26,12 @@ import javax.print.attribute.PrintRequestAttribute;
 import javax.print.attribute.standard.JobHoldUntil;
 import org.ciju.ipp.attribute.GenericAttribute;
 
-
+/**
+ *
+ * @author Opher
+ */
 public class CupsJobHoldUntil extends GenericAttribute implements PrintRequestAttribute {
-
+    private static final long serialVersionUID = 7858038079695163322L;
     private static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
 
     public CupsJobHoldUntil(JobHoldUntil o) {
@@ -41,5 +44,4 @@ public class CupsJobHoldUntil extends GenericAttribute implements PrintRequestAt
         cal.setTime(date);
         add(String.format("%TT", cal));
     }
-
 }

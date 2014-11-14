@@ -20,6 +20,7 @@ package org.ciju.client;
 import java.util.Collection;
 import java.util.ListIterator;
 import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
@@ -54,6 +55,10 @@ import org.ciju.ipp.IppObjectFactory;
     }
 
     protected boolean addAttribute(Attribute a) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    protected boolean addAllAttributes(AttributeSet as) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

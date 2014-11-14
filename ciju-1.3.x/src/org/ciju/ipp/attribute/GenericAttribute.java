@@ -17,6 +17,7 @@
 
 package org.ciju.ipp.attribute;
 
+import java.net.ProtocolException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.ResourceBundle;
+import java.util.logging.Logger;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.DateTimeSyntax;
 import javax.print.attribute.EnumSyntax;
@@ -42,12 +44,21 @@ import org.ciju.ipp.IppEncoding.ValueTag;
  * @author Opher Shachar
  */
 public class GenericAttribute implements Attribute, List<Object> {
-    private static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
+    private static final long serialVersionUID = 4440999212703310846L;
+
+    // Logging facilities
+    /* package */ static final ResourceBundle resourceStrings = ResourceBundle.getBundle("org/ciju/ResourceStrings");
+    /* package */ static final Logger logger;
+    static {
+        String name = GenericAttribute.class.getName();
+        String packageName = name.substring(0, name.lastIndexOf('.'));
+        logger = Logger.getLogger(packageName, "org/ciju/ResourceStrings");
+    }
 
     private final String name;
     private final Class<? extends Attribute> category;
 
-    private final List<Object> list;
+    private final ArrayList<Object> list;
     private final List<Object> unmodList;
 
     public GenericAttribute(String name) {
@@ -94,11 +105,11 @@ public class GenericAttribute implements Attribute, List<Object> {
         this(name, GenericAttribute.class, 1, value, vt);
     }
 
-    public GenericAttribute(String name, int initCapacity, Object value, ValueTag vt) {
+    public GenericAttribute(String name, int initCapacity, Object value, ValueTag vt) throws ProtocolException {
         this(name, GenericAttribute.class, initCapacity, value, vt);
     }
 
-    public GenericAttribute(String name, Class<? extends Attribute> category, Object value, ValueTag vt) {
+    public GenericAttribute(String name, Class<? extends Attribute> category, Object value, ValueTag vt) throws ProtocolException {
         this(name, category, 1, value, vt);
     }
 
@@ -107,10 +118,21 @@ public class GenericAttribute implements Attribute, List<Object> {
         this(name, category, initCapacity);
         list.add(new GenericValue(vt, value));
     }
-    
+
+    /**
+     * Validate and make sure we support the type of the value given.
+     * 
+     * @param o a value for this attribute
+     * @throws NullPointerException if <tt>o</tt> is null.
+     * @throws IllegalArgumentException if <tt>o</tt> is of a type we don't handle.
+     */
     private void validateSyntax(Object o) {
         if (o == null)
             throw new NullPointerException("element");
+        
+        // CIJU generic value
+        if (o instanceof GenericValue)
+            return;
         
         // JPS standard syntaxes
         if (o instanceof DateTimeSyntax ||
@@ -122,11 +144,6 @@ public class GenericAttribute implements Attribute, List<Object> {
             o instanceof TextSyntax ||
             o instanceof URISyntax)
             return;
-        if (o instanceof int[])
-            if (((int[]) o).length == 2)
-                return;
-            else
-                throw new IllegalArgumentException(resourceStrings.getString("ARRAY MUST HOLD EXACTLY TWO ELEMENTS."));
 
         // Other standard objects
         if (o instanceof Integer /* used for syntaxes: enum/integer */ ||
@@ -138,8 +155,13 @@ public class GenericAttribute implements Attribute, List<Object> {
             o instanceof Date    /* used for 'dateTime' syntax */ ||
             o instanceof byte[]  /* used for 'octetString' syntax */)
             return;
+        if (o instanceof int[]) /* used for 'rangeOfInteger' syntax */
+            if (((int[]) o).length == 2)
+                return;
+            else
+                throw new IllegalArgumentException(resourceStrings.getString("ARRAY MUST HOLD EXACTLY TWO ELEMENTS."));
         
-        throw new ClassCastException(resourceStrings.getString("ARGUMENT DOES NOT IMPLEMENT A KNOWN SYNTAX."));
+        throw new IllegalArgumentException(resourceStrings.getString("ARGUMENT DOES NOT IMPLEMENT A KNOWN SYNTAX."));
     }
     
     public final Class<? extends Attribute> getCategory() {
@@ -354,6 +376,19 @@ public class GenericAttribute implements Attribute, List<Object> {
         return list.set(index, element);
     }
     
+    @Override
+    public String toString() {
+        if (list.isEmpty())
+            return "";
+        
+        Iterator<Object> it = list.iterator();
+        StringBuilder sb = new StringBuilder(it.next().toString());
+        while (it.hasNext()) {
+            sb.append(", ").append(it.next().toString());
+        }
+        return sb.toString();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || !(o instanceof GenericAttribute))

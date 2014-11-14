@@ -20,6 +20,7 @@ package org.ciju.ipp;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.print.attribute.Attribute;
 import javax.print.attribute.standard.JobMessageFromOperator;
 import javax.print.attribute.standard.OutputDeviceAssigned;
 import javax.print.attribute.standard.PrinterInfo;
@@ -118,8 +119,8 @@ public class IppEncoding {
         RESOLUTION(0x32),
         RANGE_OF_INTEGER(0x33),
         // 0x34 - see below
-        TEXT_WITH_LANGUAGE(0x35, 1090),
-        NAME_WITH_LANGUAGE(0x36, 322),
+        TEXT_WITH_LANGUAGE(0x35, 1023) /* limit w/o the 'natural-language' part */,
+        NAME_WITH_LANGUAGE(0x36, 255) /* limit w/o the 'natural-language' part */,
         // 0x37 - see below
         // 0x38-0x3F are reserved
         
@@ -296,9 +297,11 @@ public class IppEncoding {
         }
     }
     
-    public static final Map<Class<?>, Integer> LengthLimits;
+    public static final Map<Class<? extends Attribute>, Integer> LengthLimits;
     static {
-        Map<Class<?>, Integer> ll = new HashMap<Class<?>, Integer>();
+        HashMap<Class<? extends Attribute>, Integer> ll =
+                // in the argument the first number is the elements count
+                new HashMap<Class<? extends Attribute>, Integer>(7 * 4/3 + 1);
 //        ll.put(StatusMessage.class, 255);                 // TODO: Define StatusMessage Attribute class
 //        ll.put(Message.class, 127);                       // TODO: Define Message Attribute class
         ll.put(OutputDeviceAssigned.class, 127);

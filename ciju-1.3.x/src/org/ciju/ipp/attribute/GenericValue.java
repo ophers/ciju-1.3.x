@@ -17,8 +17,11 @@
 
 package org.ciju.ipp.attribute;
 
+import java.net.ProtocolException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.text.MessageFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -32,6 +35,7 @@ import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
 import javax.print.attribute.standard.PrinterStateReasons;
+import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
@@ -122,6 +126,7 @@ public class GenericValue {
             case KEYWORD:
                 if (o instanceof EnumSyntax)
                     break;
+                // otherwise fall through
             case URI_SCHEME:
             case CHARSET:
             case NATURAL_LANGUAGE:
@@ -143,19 +148,20 @@ public class GenericValue {
     /**
      * The JPS Object Model has its quirks (mostly documented).
      * So, for example, PrinterStateReasons needs a special consideration.
-     * @param o
-     * @param loc
-     * @return 
+     * @param o the value to decide on its <tt>ValueTag</tt>.
+     * @param loc the locale for the the request, used in case <tt>o</tt> is of type
+     *      <tt>TextSyntax</tt>. May be null.
+     * @return the <tt>ValueTag</tt> of <tt>o</tt>.
+     * @throws IllegalArgumentException if <tt>o</tt> is of a type we don't handle.
      */
     public static ValueTag deduceValueTag(Object o, Locale loc) {
-        // First are generic objects used by CIJU
+        // First is the generic object used by CIJU
         if (o instanceof GenericValue)
             return ((GenericValue) o).getValueTag();
-        else if (o instanceof String)
-            return ValueTag.NAME_WITHOUT_LANGUAGE;
-        // Below are the JPS standard syntaxes
+        // Below are the JPS standard attributes needing special consideration
         else if (o instanceof PrinterStateReasons)
             return ValueTag.KEYWORD;
+        // Below are the JPS standard syntaxes
         else if (o instanceof DateTimeSyntax)
             return ValueTag.DATE_TIME;
         else if (o instanceof EnumSyntax)
@@ -170,21 +176,56 @@ public class GenericValue {
             return deduceTextIPPSyntax((TextSyntax) o, loc);
         else if (o instanceof URISyntax)
             return ValueTag.URI;
+        // Below are Java standard objects
         else if (o instanceof int[])
             return ValueTag.RANGE_OF_INTEGER;
-
+        else if (o instanceof byte[])
+            return ValueTag.OCTET_STRING;
+        else if (o instanceof String)
+            return ValueTag.NAME_WITHOUT_LANGUAGE;
+        else if (o instanceof Integer)
+            return ValueTag.INTEGER;
+        else if (o instanceof Boolean)
+            return ValueTag.BOOLEAN;
+        else if (o instanceof Date || o instanceof Calendar)
+            return ValueTag.DATE_TIME;
+        else if (o instanceof URI)
+            return ValueTag.URI;
+        
         throw new IllegalArgumentException(resourceStrings.getString("ATTRIBUTE DOES NOT IMPLEMENT A KNOWN SYNTAX."));
     }
 
     private static ValueTag deduceTextIPPSyntax(TextSyntax o, Locale loc) {
         boolean wol = o.getLocale().equals(loc);
-        Attribute a = (Attribute) o;
-        if (a.getName().endsWith("-name") ||
-            a.getName().equals("output-device-assigned"))
-            return wol ? ValueTag.NAME_WITHOUT_LANGUAGE :
-                         ValueTag.NAME_WITH_LANGUAGE;
+        if (o instanceof Attribute) {
+            Attribute a = (Attribute) o;
+            if (a.getName().endsWith("-name") ||
+                a.getName().equals("output-device-assigned"))
+                return wol ? ValueTag.NAME_WITHOUT_LANGUAGE :
+                             ValueTag.NAME_WITH_LANGUAGE;
+        }
         return wol ? ValueTag.TEXT_WITHOUT_LANGUAGE :
                      ValueTag.TEXT_WITH_LANGUAGE;
+    }
+
+    /**
+     * Determines the maximum length for the attribute's value.
+     * 
+     * @param o the attribute's value
+     * @param MAX the maximum for the value type
+     * @return the maximum for the attribute's value or MAX if unspecified
+     */
+    public static int deduceValueLimit(Object o, int MAX) {
+        if (o instanceof Attribute) {
+            Class<? extends Attribute> ca = ((Attribute) o).getClass();
+            Integer ll = IppEncoding.LengthLimits.get(ca);
+            return ll != null ? ll : MAX;
+        }
+        return MAX;
+    }
+
+    private static int lengthAsUTF8(String str) {
+        return Charset.forName("UTF-8").encode(str).limit();
     }
     
     public static String getNaturalLanguage(Locale locale) {

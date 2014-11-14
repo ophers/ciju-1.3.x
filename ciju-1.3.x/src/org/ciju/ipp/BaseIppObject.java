@@ -18,8 +18,11 @@
 package org.ciju.ipp;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.attribute.AttributeGroup;
@@ -32,11 +35,7 @@ import static org.ciju.ipp.attribute.GenericValue.deduceValueTag;
  */
 abstract class BaseIppObject extends IppObject {
     private final IppHeader header;
-    protected final ArrayList<AttributeGroup> ags;
-    {
-        ags = new ArrayList<AttributeGroup>(2);
-        ags.add(new AttributeGroup(GroupTag.OPERATION));
-    }
+    private final ArrayList<AttributeGroup> ags;
 
     protected BaseIppObject(short version, short code, int requestId) {
         this.header = new IppHeader(version, code, requestId);
@@ -46,8 +45,18 @@ abstract class BaseIppObject extends IppObject {
         this.header = new IppHeader(code, requestId);
     }
 
+    // Instance initializer for 'ags'
+    {
+        ags = new ArrayList<AttributeGroup>(2);
+        ags.add(new AttributeGroup(GroupTag.OPERATION));
+    }
+
+    protected List<AttributeGroup> getAttributeGroups() {
+        return Collections.unmodifiableList(ags);
+    }
+
     public Attribute getAttribute(String name, GroupTag groupTag, ValueTag valueTag) {
-        for (AttributeGroup attributeGroup : ags) {
+        for (AttributeGroup attributeGroup : ags)
             if (attributeGroup.groupTag() == groupTag) {
                 Attribute attribute = attributeGroup.get(name);
                 if (attribute != null) {
@@ -62,12 +71,19 @@ abstract class BaseIppObject extends IppObject {
                         return attribute;
                 }
             }
-        }
         return null;
     }
     
-    public boolean addAttribute(Attribute a) {
+    protected boolean addOperationAttribute(Attribute a) {
+        return ags.get(0).add(a);
+    }
+    
+    protected boolean addAttribute(Attribute a) {
         return ags.get(ags.size()-1).add(a);
+    }
+
+    protected boolean addAllAttributes(AttributeSet as) {
+        return ags.get(ags.size()-1).addAll(as);
     }
 
     protected boolean newAttributeGroup(GroupTag gt) {
