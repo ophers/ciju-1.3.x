@@ -641,7 +641,8 @@ public abstract class IppTransport {
                         response.addAttribute(curr);
                         curr = null;
                     }
-                    lastTag = GroupTag.valueOf(b);
+                    // record new group-tag
+                    lastTag = validateGroupTag(b);
                     response.newAttributeGroup(lastTag);
                 }
                 switch (state) {
@@ -700,6 +701,10 @@ public abstract class IppTransport {
             byte[] ba = new byte[len];
             in.readFully(ba);
             return csd.decode(ByteBuffer.wrap(ba)).toString();
+        }
+
+        private GroupTag validateGroupTag(int b) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
     }
