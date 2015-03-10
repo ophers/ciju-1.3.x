@@ -51,11 +51,11 @@ public class IppEncoding {
         /** subscription-attributes-tag */          SUBSCRIPTION(0x06),
         /** event-notification-attributes-tag */    EVENT(0x07),
         
-        // 0x08 is reserved
-        
         // From PWG5100.5: IPP/2.2 - Document Object
-        /** document-attributes-tag */              DOCUMENT(0x09)
-        // 0x0A-0x0F are reserved
+        /** document-attributes-tag */              DOCUMENT(0x09),
+        
+        // 0x08, 0x0A-0x0F are reserved
+        RESERVED(-1)
         ;
         
         private final int value;
@@ -148,7 +148,8 @@ public class IppEncoding {
         // 0x80-0xFF are reserved
         // 0x00000000-0x3FFFFFFF are reserved for IETF standard track documents
         // 0x40000000-0x7FFFFFFF are reserved for vendor extensions
-        
+        RESERVED(-1),
+
         // The following are special markers for lookup purposes
         TEXT(0),
         NAME(0)
@@ -261,6 +262,9 @@ public class IppEncoding {
         // From PWG5100.13: IPP/2.1 - Job and Printer Extensions – Set 3
         IDENTIFY_PRINTER(0x003C),
         VALIDATE_DOCUMENT(0x003D),
+        
+        // Repreaents all opcodes we do not currently process
+        RESERVED(-1)
         ;
         
         private final int value;
