@@ -17,7 +17,6 @@
 
 package org.ciju.ipp.attribute;
 
-import java.net.ProtocolException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;

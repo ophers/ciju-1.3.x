@@ -25,6 +25,7 @@ import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.ValueTag;
+import static org.ciju.ipp.IppTransport.resourceStrings;
 import org.ciju.ipp.attribute.AttributeGroup;
 import static org.ciju.ipp.attribute.GenericValue.deduceValueTag;
 
@@ -74,6 +75,13 @@ abstract class BaseIppObject extends IppObject {
         return null;
     }
     
+    /**
+     * Add an Operational Attribute to this request or response object.
+     * 
+     * @param a the Operational Attribute to add
+     * @return true if the given operational attribute value was not already added,
+     *         false otherwise.
+     */
     protected boolean addOperationAttribute(Attribute a) {
         return ags.get(0).add(a);
     }
@@ -88,8 +96,12 @@ abstract class BaseIppObject extends IppObject {
 
     protected boolean newAttributeGroup(GroupTag gt) {
         if (gt == GroupTag.OPERATION)
-            throw new IllegalStateException("Operation group tag already present.");
-        return ags.add(new AttributeGroup(gt));
+            throw new IllegalStateException(resourceStrings.getString("OPERATION GROUP TAG ALREADY PRESENT."));
+        else if (gt == GroupTag.END)
+            // ignore, this is just an end marker.
+            return true;
+        else
+            return ags.add(new AttributeGroup(gt));
     }
 
     public int getRequestId() {

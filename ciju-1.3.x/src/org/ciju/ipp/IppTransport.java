@@ -60,6 +60,7 @@ import org.ciju.ipp.IppEncoding.ValueTag;
 import org.ciju.ipp.IppObject.Conformity;
 import org.ciju.ipp.attribute.AttributeGroup;
 import org.ciju.ipp.attribute.GenericAttribute;
+import org.ciju.ipp.attribute.GenericValue;
 import static org.ciju.ipp.attribute.GenericValue.deduceValueTag;
 import static org.ciju.ipp.attribute.GenericValue.getNaturalLanguage;
 
@@ -162,13 +163,14 @@ public abstract class IppTransport {
 
     // Instance common members
     final Closeable[] ios = new Closeable[2];
-    ByteBuffer bb = ByteBuffer.allocate(1023);
 
-    
+
+    /** IppTransportEncoder - Encodes / sends an IPP request */
     private static class IppTransportEncoder extends IppTransport {
         private final DataOutputStream out;
         private final CharsetEncoder utf8enc;
         private final IppRequest request;
+        private       ByteBuffer bb = ByteBuffer.allocate(ValueTag.TEXT_WITHOUT_LANGUAGE.MAX);
 
         private IppTransportEncoder(OutputStream out, IppRequest request) {
             ios[0] = this.out = new DataOutputStream(out);
@@ -598,12 +600,16 @@ public abstract class IppTransport {
             return bb;
         }
     }
-    
+
+
+    /** IppTransportDecoder - Decodes / reads an IPP response */
     private static class IppTransportDecoder<T extends IppObject> extends IppTransport {
         private final DataInputStream in;
         private final long contentLength;
         private final CharsetDecoder usa;
         private CharsetDecoder csd;
+        private final ByteBuffer bb = ByteBuffer.allocate(ValueTag.TEXT_WITHOUT_LANGUAGE.MAX);
+        private CharBuffer cb = CharBuffer.allocate(ValueTag.TEXT_WITHOUT_LANGUAGE.MAX);
         private IppResponse<T> response;
         private enum ParsingState {
             /** Expect group-tag, value-tag, end-tag */ NEXT,
@@ -629,11 +635,17 @@ public abstract class IppTransport {
                                           in.readInt() /* request id */, obj);
             // read operational attribures
             readOperationHead();
+            
             // parse the remainder of the response
+            int b,
+                len;
+            String str;
+            Object value;
             curr = null;
             lastTag = GroupTag.OPERATION;
             while (lastTag != GroupTag.END) {
-                int b = in.read();
+                // On each iteration read either a group-tag or an attribute (name+value)
+                b = in.read();
                 if (b < ValueTag.UNSUPPORTED.getValue()) {
                     // seen a group tag
                     if (curr != null) {
@@ -645,18 +657,32 @@ public abstract class IppTransport {
                     lastTag = validateGroupTag(b);
                     response.newAttributeGroup(lastTag);
                 }
-                switch (state) {
-                    case NEXT:
-                    case MULTI:
-                        
-                        break;
-                    default:
-                        throw new AssertionError();
-                }
-                
+                else { // attribute up ahead
+                    len = in.readShort();
+                    if (len > 0) {
+                        // new attibute ahead
+                        if (curr != null)
+                            // so add current
+                            response.addAttribute(curr);
+                        // read new attribute's name and create it
+                        validateConformity(len);
+                        str = readString(len, usa);
+                        curr = new GenericAttribute(str);
+                    }
+                    else if (len < 0)
+                        throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE HAS NEGATIVE-LENGTH NAME!"));
+                    else if (curr == null)
+                        throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
+                    
+                    // read attribute's value
+                    len = in.readShort();
+                    ValueTag vt = validateConformity(b, len);
+                    value = readIppValue(vt, len);
+                    curr.add(new GenericValue(vt, value));
+                }                
             }
             
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return response;
         }
 
         private void readOperationHead() throws IOException, ProtocolException {
@@ -696,14 +722,127 @@ public abstract class IppTransport {
         }
         
         // Read string from a DataInputStream using readFully()
-        private String readString (int len, CharsetDecoder csd)
-                throws IOException {
-            byte[] ba = new byte[len];
-            in.readFully(ba);
-            return csd.decode(ByteBuffer.wrap(ba)).toString();
+        private String readString (int len, CharsetDecoder csd) throws IOException {
+            csd.reset();
+            cb.clear();
+            bb.limit(0);    // + next loop calls compact() := clear()
+            
+            // do read input and decode loop
+            while (len > 0) {
+                bb.compact();
+                if (len < bb.remaining()) {
+                    bb.limit(bb.position() + len);
+                    in.readFully(bb.array(), bb.position(), len);
+                    len = 0;
+                }
+                else {
+                    in.readFully(bb.array(), bb.position(), bb.remaining());
+                    len -= bb.remaining();
+                }
+                bb.rewind();    // not flip() as readFully doesn't advance position
+                estimateCapacity(0, csd);
+                CoderResult cr = csd.decode(bb, cb, len == 0);
+                if (cr.isError())
+                    cr.throwException();
+            }
+            
+            // do final part decoding loop
+            if (bb.hasRemaining())
+                estimateCapacity(0, csd);
+            while (true) {
+                CoderResult cr = bb.hasRemaining() ?
+                        csd.decode(bb, cb, true) : CoderResult.UNDERFLOW;
+                if (cr.isUnderflow())
+                    cr = csd.flush(cb);
+                if (cr.isUnderflow())
+                    // we're done
+                    break;
+                if (cr.isError())
+                    cr.throwException();
+                estimateCapacity(1, csd);
+            }
+            cb.flip();
+            return cb.toString();
         }
 
-        private GroupTag validateGroupTag(int b) {
+        /** Estimate cb's capacity to be large enough to hold the input string */
+        private void estimateCapacity(int min, CharsetDecoder csd) {
+            int n = (int)(bb.remaining() * csd.averageCharsPerByte() + 1) - cb.remaining();
+            n = Math.max(n, min);   // ensure minimum growth
+            if (n > 0) {
+                // Allocate a new buffer and copy over last decoding run
+                CharBuffer old = cb;
+                cb = CharBuffer.allocate(old.limit() + n);
+                System.arraycopy(old.array(), old.arrayOffset(), cb.array(), 0, old.position());
+                cb.position(old.position());
+            }
+        }
+        
+        private GroupTag validateGroupTag(int b) throws ProtocolException {
+            try {
+                return GroupTag.valueOf(b);
+            }
+            catch (IllegalArgumentException e) {
+                if (response.conformity == Conformity.NONE)
+                    return GroupTag.RESERVED;
+            }
+            throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: GROUP TAG IS RESERVED."));
+        }
+
+        /** check the attribute name length against the Conformity level */
+        private void validateConformity(int len) throws ProtocolException {
+            assert len >= 0 && len <= Short.MAX_VALUE;
+            if (response.conformity == Conformity.STRICT &&
+                    len > ValueTag.KEYWORD.MAX)
+                throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: ATTRIBUTE NAME TOO LOMG."));
+        }
+
+        /** check the value-tag and length against the Conformity level */
+        private ValueTag validateConformity(int b, int len) {
+            assert len >= 0 && len <= Short.MAX_VALUE;
+            final ValueTag vt;
+            try {
+                vt = ValueTag.valueOf(b);
+            }
+            catch (IllegalArgumentException ignore) {
+                return null;
+            }
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        /**
+         * The picture of the encoding of a value is:
+         * ---------------------
+         * |   value-length    |   2 bytes
+         * ---------------------
+         * |          value    |   v bytes
+         * ---------------------
+         */
+        private Object readIppValue(ValueTag vt, int len) throws ProtocolException {
+            switch (vt) {
+                case UNSUPPORTED:
+                case UNKNOWN:
+                case NO_VALUE:
+                case NOT_SETTABLE:
+                case DELETE_ATTRIBUTE:
+                case ADMIN_DEFINE:                      // the above out-of-band values
+                case BEGIN_COLLECTION:
+                case END_COLLECTION:                    // and begin/end-collection
+                    if (len != 0)                       // have zero-length
+                        throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
+                    break;
+                case INTEGER:
+                    if (len != 4)
+                        throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
+                    if (o instanceof IntegerSyntax)
+                        i = ((IntegerSyntax) o).getValue();
+                    else
+                        i = (Integer) o;
+                    out.writeInt(i);
+                    break;
+                default:
+                    throw new AssertionError();
+            }
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 

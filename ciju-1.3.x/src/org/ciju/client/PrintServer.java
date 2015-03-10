@@ -139,6 +139,14 @@ public class PrintServer extends PrintServiceLookup {
         return Type.CUPS;
     }
 
+    /**
+     * Create an instance of a {@link PrintServer} given its {@link URI uri} and
+     * a {@link Proxy}.
+     * 
+     * @param uri the URI of the Print Server
+     * @param proxy the proxy to use. May be null.
+     * @return
+     */
     public static PrintServer create(URI uri, Proxy proxy) {
         switch (checkServerType(uri, proxy)) {
             case CUPS:
@@ -146,9 +154,9 @@ public class PrintServer extends PrintServiceLookup {
             case DEFAULT:
                 return new PrintServer(uri, proxy);
             default:
-                // As a library cannot throw AssertionError directly
-                throw new RuntimeException(new AssertionError(
-                        MessageFormat.format(resourceStrings.getString("THE SERVER REPRESENTED BY {0} IS UNSUPPORTED!"), uri)));
+                logger.logp(Level.SEVERE, PrintServer.class.getName(), "create",
+                        "THE SERVER REPRESENTED BY {0} IS UNSUPPORTED!", uri);
+                throw new AssertionError("The server represented by " + uri + " is unsupported!");
         }
     }
 
