@@ -85,9 +85,7 @@ public class EventDispatcher implements Runnable {
         } else {
             if (dispatchOther == null || !dispatchOther.dispatchPrintEvent(pe, pee.listeners)) {
                 logger.log(Level.SEVERE, "THIS PRINTEVENT {0} IS UNKNOWN!", pe);
-                // As a library cannot throw AssertionError directly
-                final String message = MessageFormat.format(resourceStrings.getString("THIS PRINTEVENT {0} IS UNKNOWN!"), pe);
-                throw new IllegalArgumentException(new AssertionError(message));
+                assert false : MessageFormat.format(resourceStrings.getString("THIS PRINTEVENT {0} IS UNKNOWN!"), pe);
             }
         }
     }
@@ -127,9 +125,7 @@ public class EventDispatcher implements Runnable {
             default:
                 if (dispatchOther == null || !dispatchOther.dispatchPrintJobEvent(pje, pjll)) {
                     logger.log(Level.SEVERE, "THIS PRINTEVENTTYPE {0} IS UNKNOWN!", pje.getPrintEventType());
-                    // As a library cannot throw AssertionError directly
-                    final String message = MessageFormat.format(resourceStrings.getString("THIS PRINTEVENTTYPE {0} IS UNKNOWN!"), pje.getPrintEventType());
-                    throw new IllegalArgumentException(new AssertionError(message));
+                    assert false : MessageFormat.format(resourceStrings.getString("THIS PRINTEVENTTYPE {0} IS UNKNOWN!"), pje.getPrintEventType());
                 }
         }
     }

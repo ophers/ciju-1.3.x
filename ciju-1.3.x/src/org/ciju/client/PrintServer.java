@@ -22,7 +22,6 @@ import java.net.Proxy;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -182,9 +181,8 @@ public class PrintServer extends PrintServiceLookup {
         if (connLib == null) {
             // This is the first connection to be requested. Decide on a connection library.
             synchronized (PrintServer.class) {
+                /* FWIW: The Double-checked locking pattern here is safe as connLib is an enum. */
                 if (connLib == null) {
-                    /* FYI: The Double-checked locking pattern here is safe wihtout using
-                       'volotile' as connLib is an enum. */
                     try {
                         IppConnection conn = new ApacheConnection(uri, proxy);
                         connLib = ConnLib.APACHE;
@@ -202,9 +200,9 @@ public class PrintServer extends PrintServiceLookup {
             case URLC:
                 return Handler.openConnection(uri, proxy);
             default:
-                // As a library cannot throw AssertionError directly
-                throw new RuntimeException(new AssertionError(
-                        resourceStrings.getString("UNEXPETED CONNECTION LIBRARY CONFIGURED!")));
+                // We should never get here
+                throw new AssertionError(
+                        resourceStrings.getString("UNEXPETED CONNECTION LIBRARY CONFIGURED!"));
         }
     }
 

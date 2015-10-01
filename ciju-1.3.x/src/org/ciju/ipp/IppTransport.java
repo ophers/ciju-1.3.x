@@ -611,6 +611,7 @@ public abstract class IppTransport {
         private final ByteBuffer bb = ByteBuffer.allocate(ValueTag.TEXT_WITHOUT_LANGUAGE.MAX);
         private CharBuffer cb = CharBuffer.allocate(ValueTag.TEXT_WITHOUT_LANGUAGE.MAX);
         private IppResponse<T> response;
+
         private enum ParsingState {
             /** Expect group-tag, value-tag, end-tag */ NEXT,
             /** Expect NEXT, multi-value-tag */ MULTI
@@ -670,11 +671,11 @@ public abstract class IppTransport {
                         curr = new GenericAttribute(str);
                     }
                     else if (len < 0)
-                        throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE HAS NEGATIVE-LENGTH NAME!"));
+                        throw new ProtocolException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) NAME!"), len));
                     else if (curr == null)
-                        throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
+                        throw new ProtocolException(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
                     
-                    // read attribute's value
+                    // read attribute's value length
                     len = in.readShort();
                     ValueTag vt = validateConformity(b, len);
                     value = readIppValue(vt, len);
@@ -791,21 +792,94 @@ public abstract class IppTransport {
 
         /** check the attribute name length against the Conformity level */
         private void validateConformity(int len) throws ProtocolException {
-            assert len >= 0 && len <= Short.MAX_VALUE;
+            assert len >= 0 && len <= Short.MAX_VALUE; // len is short
             if (response.conformity == Conformity.STRICT &&
                     len > ValueTag.KEYWORD.MAX)
-                throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: ATTRIBUTE NAME TOO LOMG."));
+                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE NAME LENGTH IS {0}!"), len));
         }
 
         /** check the value-tag and length against the Conformity level */
-        private ValueTag validateConformity(int b, int len) {
-            assert len >= 0 && len <= Short.MAX_VALUE;
+        private ValueTag validateConformity(int b, int len) throws ProtocolException {
+            assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE; // len is short
             final ValueTag vt;
+            if (len < 0)
+                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) VALUE!"), len));
             try {
                 vt = ValueTag.valueOf(b);
+                validateConformity(vt, len);
             }
             catch (IllegalArgumentException ignore) {
-                return null;
+                if (response.conformity == Conformity.NONE)
+                    return ValueTag.RESERVED;
+                throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: VALUE TAG IS RESERVED."));
+            }
+            return vt;
+        }
+
+        private void validateConformity(ValueTag vt, int len) throws ProtocolException {
+            switch (vt) {
+                case UNSUPPORTED:
+                case UNKNOWN:
+                case NO_VALUE:
+                case NOT_SETTABLE:
+                case DELETE_ATTRIBUTE:
+                case ADMIN_DEFINE:                      // the above out-of-band values
+                case BEGIN_COLLECTION:
+                case END_COLLECTION:                    // and begin/end-collection
+                    if (len != 0)                       // have zero-length
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
+                    break;
+                case INTEGER:
+                case ENUM:
+                    if (len != 4)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 4, len));
+                    break;
+                case BOOLEAN:
+                    if (len != 1)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 1, len));
+                    break;
+                case OCTET_STRING:
+                case TEXT_WITHOUT_LANGUAGE:
+                case NAME_WITHOUT_LANGUAGE:
+                    if (response.conformity == Conformity.STRICT &&
+                            len > vt.MAX)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
+                                vt, vt.MAX, len));
+                    break;
+                case DATE_TIME:
+                    if (len != 11)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 11, len));
+                    break;
+                case RESOLUTION:
+                    if (len != 9)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 9, len));
+                    break;
+                case RANGE_OF_INTEGER:
+                    if (len != 8)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 8, len));
+                    break;
+                case TEXT_WITH_LANGUAGE:
+                case NAME_WITH_LANGUAGE:
+                    if (response.conformity == Conformity.STRICT &&
+                            len > vt.MAX + 9) // 9 = 2x length fields + 5 char locale
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
+                                vt, vt.MAX + 9, len));
+                    break;
+                default:
+                    throw new AssertionError();
             }
             throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
@@ -818,7 +892,7 @@ public abstract class IppTransport {
          * |          value    |   v bytes
          * ---------------------
          */
-        private Object readIppValue(ValueTag vt, int len) throws ProtocolException {
+        private Object readIppValue(ValueTag vt, int len) throws ProtocolException, IOException {
             switch (vt) {
                 case UNSUPPORTED:
                 case UNKNOWN:
@@ -829,16 +903,33 @@ public abstract class IppTransport {
                 case BEGIN_COLLECTION:
                 case END_COLLECTION:                    // and begin/end-collection
                     if (len != 0)                       // have zero-length
-                        throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
                     break;
                 case INTEGER:
+                case ENUM:
                     if (len != 4)
-                        throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
-                    if (o instanceof IntegerSyntax)
-                        i = ((IntegerSyntax) o).getValue();
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 4, len));
                     else
-                        i = (Integer) o;
-                    out.writeInt(i);
+                        return in.readInt();
+                case BOOLEAN:
+                    if (len != 4)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 4, len));
+                    else
+                        return in.readBoolean();
+                case OCTET_STRING:
+                    if (len < 0 || 
+                        (response.conformity == Conformity.STRICT && len > ValueTag.OCTET_STRING.MAX))
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
+                                vt, 4, len));
+                    // there is no standard attribute using this syntax ...
+                    out.writeShort(((byte[]) o).length);
+                    out.write((byte[]) o);
                     break;
                 default:
                     throw new AssertionError();
