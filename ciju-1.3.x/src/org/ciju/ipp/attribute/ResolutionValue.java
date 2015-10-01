@@ -43,6 +43,6 @@ public class ResolutionValue extends ResolutionSyntax {
         else if (units == 4)
             return ResolutionSyntax.DPCM;
         else
-            throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("UNITS MAY BE EITHER 3 OR 4; GOT {0}"), units));
+            throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("UNITS MAY BE EITHER 3 OR 4 NOT {0}"), units));
     }
 }
