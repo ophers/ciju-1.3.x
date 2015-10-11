@@ -72,17 +72,20 @@ public class GenericValue {
             throw new NullPointerException("value-tag");
         
         switch (vt) {
+            case BEGIN_COLLECTION:                  // begin/end-collection may
+            case END_COLLECTION:                    // or may not have a value
+                if (o instanceof String)
+                    break;
+                // otherwise fall through
             case UNSUPPORTED:
             case UNKNOWN:
             case NO_VALUE:
             case NOT_SETTABLE:
             case DELETE_ATTRIBUTE:
             case ADMIN_DEFINE:                      // the above out-of-band values
-            case BEGIN_COLLECTION:                  // and begin/end-collection
-            case END_COLLECTION:                    // have no value
                 if (o != null)
                     throw new IllegalArgumentException(resourceStrings.getString("THIS VALUE-TAG MUST HAVE NO VALUE."));
-                return;
+                break;
             case INTEGER:
                 if (!(o instanceof IntegerSyntax || o instanceof Integer))
                     throw new IllegalArgumentException(BADVALUE);
@@ -95,6 +98,7 @@ public class GenericValue {
                 if (!(o instanceof EnumSyntax || o instanceof Boolean))
                     throw new IllegalArgumentException(BADVALUE);
                 break;
+            case RESERVED:
             case OCTET_STRING:
                 if (!(o instanceof byte[]))
                     throw new IllegalArgumentException(BADVALUE);
@@ -117,6 +121,7 @@ public class GenericValue {
             case NAME_WITHOUT_LANGUAGE:
                 if (o instanceof String)
                     break;
+                // otherwise fall through
             case TEXT_WITH_LANGUAGE:
             case NAME_WITH_LANGUAGE:
                 if (!(o instanceof TextSyntax))
@@ -138,9 +143,11 @@ public class GenericValue {
                 if (!(o instanceof URISyntax || o instanceof URI))
                     throw new IllegalArgumentException(BADVALUE);
                 break;
+            case TEXT:
+            case NAME:
+                throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("THIS VALUETAG {0} IS FOR INTERNAL USE ONLY!"), vt));
             default:
-                assert false : "This ValueTag " + vt + " is unknown!";
-                throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("THIS VALUETAG {0} IS UNKNOWN!"), vt));
+                throw new AssertionError(MessageFormat.format(resourceStrings.getString("THIS VALUETAG {0} IS UNKNOWN!"), vt));
         }
     }
 
