@@ -26,6 +26,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.net.ProtocolException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -41,6 +43,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
@@ -63,6 +66,8 @@ import org.ciju.ipp.attribute.GenericAttribute;
 import org.ciju.ipp.attribute.GenericValue;
 import static org.ciju.ipp.attribute.GenericValue.deduceValueTag;
 import static org.ciju.ipp.attribute.GenericValue.getNaturalLanguage;
+import org.ciju.ipp.attribute.ResolutionValue;
+import org.ciju.ipp.attribute.TextValue;
 
 /**
  *
@@ -477,7 +482,7 @@ public abstract class IppTransport {
                 case TEXT_WITH_LANGUAGE:
                 case NAME_WITH_LANGUAGE:
                     String nl = getNaturalLanguage(((TextSyntax) o).getLocale());
-                    n = bb.limit();
+                    n = bb.limit();     // bb was set by validateAndTransform()
                     out.writeShort(4 + nl.length() + n);
                     out.writeShort(nl.length());
                     out.writeBytes(nl);                 // natural-language is always US-ASCII
@@ -500,9 +505,12 @@ public abstract class IppTransport {
                     out.writeShort(str.length());
                     out.writeBytes(str);                // these syntaxes are always US-ASCII
                     break;
+                case RESERVED:
+                case TEXT:
+                case NAME:      // RESERVED, TEXT, NAME could never be (here for completeness)
                 default:
                     logger.logp(Level.SEVERE, this.getClass().getName(), "writeIppValue",
-                            "PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!", o);
+                            "PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!", vt);
                     assert false : "This ValueTag " + vt + " has been overlooked!";
             }
         }
@@ -719,7 +727,7 @@ public abstract class IppTransport {
             len = in.readShort();
             str = readString(len, usa);
             response.addOperationAttribute(new GenericAttribute("attributes-natural-language", str, ValueTag.NATURAL_LANGUAGE));
-            // response.locale is set on first call to getLocale()
+            response.setLocale(parseNaturalLanguage(str));
         }
         
         // Read string from a DataInputStream using readFully()
@@ -778,7 +786,29 @@ public abstract class IppTransport {
                 cb.position(old.position());
             }
         }
-        
+
+        private Locale parseNaturalLanguage(String nl) throws ProtocolException {
+            assert nl != null;
+            String[] loc = nl.split("-", 3);
+            if (loc[0].length() > 0)
+                switch (loc.length) {
+                    case 3:
+                        return new Locale(loc[0], loc[1], loc[2]);
+                    case 2:
+                        return new Locale(loc[0], loc[1]);
+                    case 1:
+                    default:    // loc[] will always have at leat one element
+                        return new Locale(loc[0]);
+                }
+            Locale locale = response.getLocale();
+            if (locale == null /* this is attributes-natural-language operational attribute */ ||
+                    response.conformity == Conformity.STRICT)
+                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. IT MUST SPECIFY A LANGUAGE."), nl));
+            else if (response.conformity == Conformity.LENIENT)
+                logger.log(Level.INFO, "MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. USING RESPONSE DEFAULT.", nl);
+            return locale;
+        }
+
         private GroupTag validateGroupTag(int b) throws ProtocolException {
             try {
                 return GroupTag.valueOf(b);
@@ -792,15 +822,15 @@ public abstract class IppTransport {
 
         /** check the attribute name length against the Conformity level */
         private void validateConformity(int len) throws ProtocolException {
-            assert len >= 0 && len <= Short.MAX_VALUE; // len is short
+            assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             if (response.conformity == Conformity.STRICT &&
                     len > ValueTag.KEYWORD.MAX)
                 throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE NAME LENGTH IS {0}!"), len));
         }
 
-        /** check the value-tag and length against the Conformity level */
+        /** check the value-tag and value-length against the Conformity level */
         private ValueTag validateConformity(int b, int len) throws ProtocolException {
-            assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE; // len is short
+            assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             final ValueTag vt;
             if (len < 0)
                 throw new ProtocolException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) VALUE!"), len));
@@ -824,8 +854,6 @@ public abstract class IppTransport {
                 case NOT_SETTABLE:
                 case DELETE_ATTRIBUTE:
                 case ADMIN_DEFINE:                      // the above out-of-band values
-                case BEGIN_COLLECTION:
-                case END_COLLECTION:                    // and begin/end-collection
                     if (len != 0)                       // have zero-length
                         throw new ProtocolException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
@@ -842,15 +870,6 @@ public abstract class IppTransport {
                         throw new ProtocolException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
                                 vt, 1, len));
-                    break;
-                case OCTET_STRING:
-                case TEXT_WITHOUT_LANGUAGE:
-                case NAME_WITHOUT_LANGUAGE:
-                    if (response.conformity == Conformity.STRICT &&
-                            len > vt.MAX)
-                        throw new ProtocolException(MessageFormat.format(
-                                resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
-                                vt, vt.MAX, len));
                     break;
                 case DATE_TIME:
                     if (len != 11)
@@ -873,15 +892,38 @@ public abstract class IppTransport {
                 case TEXT_WITH_LANGUAGE:
                 case NAME_WITH_LANGUAGE:
                     if (response.conformity == Conformity.STRICT &&
-                            len > vt.MAX + 9) // 9 = 2x length fields + 5 char locale
+                            len > vt.MAX + ValueTag.NATURAL_LANGUAGE.MAX + 4) // 4 = 2x length fields
                         throw new ProtocolException(MessageFormat.format(
                                 resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
-                                vt, vt.MAX + 9, len));
+                                vt, vt.MAX + ValueTag.NATURAL_LANGUAGE.MAX + 4, len));
                     break;
+                case OCTET_STRING:
+                case TEXT_WITHOUT_LANGUAGE:
+                case NAME_WITHOUT_LANGUAGE:
+                case KEYWORD:
+                case URI:
+                case URI_SCHEME:
+                case CHARSET:
+                case NATURAL_LANGUAGE:
+                case MIME_MEDIA_TYPE:
+                case MEMBER_ATTR_NAME:
+                    if (response.conformity == Conformity.STRICT &&
+                            len > vt.MAX)
+                        throw new ProtocolException(MessageFormat.format(
+                                resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
+                                vt, vt.MAX, len));
+                    break;
+                case BEGIN_COLLECTION:
+                case END_COLLECTION:
+                case RESERVED:
+                    break;
+                case TEXT:
+                case NAME:  // TEXT, NAME could never be (here for completeness)
                 default:
-                    throw new AssertionError();
+                    logger.logp(Level.SEVERE, this.getClass().getName(), "validateConformity(int,int)",
+                        "PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!", vt);
+                    assert false : "This ValueTag " + vt + " has been overlooked!";
             }
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         }
 
         /**
@@ -893,48 +935,88 @@ public abstract class IppTransport {
          * ---------------------
          */
         private Object readIppValue(ValueTag vt, int len) throws ProtocolException, IOException {
+            assert true : "validateConformity(int,imt) must be called prior to this.";
+            Locale loc = response.getLocale();  // to be used for NAME/TEXT_WITH_LANGUAGE
             switch (vt) {
                 case UNSUPPORTED:
                 case UNKNOWN:
                 case NO_VALUE:
                 case NOT_SETTABLE:
                 case DELETE_ATTRIBUTE:
-                case ADMIN_DEFINE:                      // the above out-of-band values
-                case BEGIN_COLLECTION:
-                case END_COLLECTION:                    // and begin/end-collection
-                    if (len != 0)                       // have zero-length
-                        throw new ProtocolException(MessageFormat.format(
-                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
-                    break;
+                case ADMIN_DEFINE:          // the above out-of-band values
+                    break;                  // have zero-length
                 case INTEGER:
                 case ENUM:
-                    if (len != 4)
-                        throw new ProtocolException(MessageFormat.format(
-                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 4, len));
-                    else
-                        return in.readInt();
+                    return in.readInt();
                 case BOOLEAN:
-                    if (len != 4)
-                        throw new ProtocolException(MessageFormat.format(
-                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 4, len));
-                    else
-                        return in.readBoolean();
+                    return in.readBoolean();
                 case OCTET_STRING:
-                    if (len < 0 || 
-                        (response.conformity == Conformity.STRICT && len > ValueTag.OCTET_STRING.MAX))
+                case RESERVED:              // treat value as opaque data
+                    byte[] ba = new byte[len];
+                    in.readFully(ba);
+                    return ba;
+                case DATE_TIME:
+                    Calendar cal = new GregorianCalendar(response.getLocale());
+                    cal.set(Calendar.YEAR, in.readShort());
+                    cal.set(Calendar.MONTH, in.read());
+                    cal.set(Calendar.DAY_OF_MONTH, in.read());
+                    cal.set(Calendar.HOUR_OF_DAY, in.read());
+                    cal.set(Calendar.MINUTE, in.read());
+                    cal.set(Calendar.SECOND, in.read());
+                    cal.set(Calendar.MILLISECOND, in.read() * 100);
+                    int offset = (char) in.read() == '-' ? -60000 : 60000;
+                    offset *= in.read() * 60 + in.read();
+                    cal.set(Calendar.ZONE_OFFSET, offset);
+                    return cal.getTime();
+                case RESOLUTION:
+                    return new ResolutionValue(in.readInt(), in.readInt(),
+                            in.read() == 3 ? ResolutionSyntax.DPI : ResolutionSyntax.DPCM);
+                case RANGE_OF_INTEGER:
+                    return new int[] { in.readInt(), in.readInt() };
+                case TEXT_WITH_LANGUAGE:
+                case NAME_WITH_LANGUAGE:
+                    int len1 = in.readShort();
+                    validateConformity(ValueTag.NATURAL_LANGUAGE, len1);
+                    loc = parseNaturalLanguage(readString(len1, usa));
+                    int len2 = in.readShort();
+                    if (len != len1 + len2 + 4) // 4 == 2x length fields
                         throw new ProtocolException(MessageFormat.format(
-                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 4, len));
-                    // there is no standard attribute using this syntax ...
-                    out.writeShort(((byte[]) o).length);
-                    out.write((byte[]) o);
-                    break;
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, HAS LENGTH, {1}, THAT DOESN'T CORRESPOND TO THE SUM OF IT'S PARTS, {2}!"),
+                                vt, len, len1 + len2 + 4));
+                    validateConformity(vt == ValueTag.NAME_WITH_LANGUAGE?
+                            ValueTag.NAME_WITHOUT_LANGUAGE : ValueTag.TEXT_WITHOUT_LANGUAGE,
+                            len2);
+                    len = len2;
+                case TEXT_WITHOUT_LANGUAGE:
+                case NAME_WITHOUT_LANGUAGE:
+                    return new TextValue(readString(len, csd), loc);
+                case BEGIN_COLLECTION:
+                case END_COLLECTION:
+                    if (len == 0)
+                        break;
+                case KEYWORD:
+                case URI_SCHEME:
+                case CHARSET:
+                case NATURAL_LANGUAGE:
+                case MIME_MEDIA_TYPE:
+                case MEMBER_ATTR_NAME:
+                    return readString(len, usa);
+                case URI:
+                    try {
+                        return new URI(readString(len, usa));
+                    }
+                    catch (URISyntaxException ex) {
+                        ProtocolException pe = new ProtocolException();
+                        pe.initCause(ex);
+                        throw pe;
+                    }
+                case TEXT:
+                case NAME:  // TEXT, NAME could never be (here for completeness)
                 default:
-                    throw new AssertionError();
+                    throw new AssertionError(MessageFormat.format(
+                            resourceStrings.getString("PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!"), vt));
             }
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            return null;
         }
 
     }

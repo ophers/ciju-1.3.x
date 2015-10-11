@@ -18,10 +18,6 @@
 package org.ciju.ipp;
 
 import java.util.Locale;
-import javax.print.attribute.Attribute;
-import org.ciju.ipp.IppEncoding.ValueTag;
-import org.ciju.ipp.attribute.GenericAttribute;
-import org.ciju.ipp.attribute.GenericValue;
 
 /**
  *
@@ -72,22 +68,15 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
     
     // TODO: Delegate relevant methods to 'obj'
 
-    @Override
-    protected boolean addOperationAttribute(Attribute a) {
-        if (locale == null &&
-                a.getName().equals("attributes-natural-language") &&
-                ((GenericValue)((GenericAttribute) a).get(0)).getValueTag() == 
-                    ValueTag.NATURAL_LANGUAGE) {
-            String[] loc = a.toString().split("-");
-            if (loc.length > 1)
-                locale = new Locale(loc[0], loc[1].toUpperCase());
-            else if (loc.length == 1)
-                locale = new Locale(loc[0]);
-        }
-        return super.addOperationAttribute(a);
-    }
-
     public Locale getLocale() {
         return locale;
+    }
+
+    @Override
+    void setLocale(Locale loc) {
+        assert locale == null /* set only once */ &&
+                loc != null && loc.getLanguage().length() > 0 :
+                "this must have been already validated";
+        locale = loc;
     }
 }

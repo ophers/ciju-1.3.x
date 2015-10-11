@@ -74,7 +74,8 @@ public class IppEncoding {
             final GroupTag[] dts = GroupTag.values();
             vmap = new HashMap<Integer, GroupTag>(dts.length * 4/3 + 1);
             for (GroupTag e : dts)
-                vmap.put(e.value, e);
+                if (e.value >= 0)
+                    vmap.put(e.value, e);
         }
         
         /**
@@ -141,7 +142,7 @@ public class IppEncoding {
         // From RFC3382: IPP/1.1 - The 'collection' attribute syntax
         BEGIN_COLLECTION(0x34),        
         END_COLLECTION(0x37),        
-        MEMBER_ATTR_NAME(0x4A),        
+        MEMBER_ATTR_NAME(0x4A, KEYWORD.MAX),        
         
         // 0x60-0x7E are reserved
         // 0x7F is reserved for extending types beyond the 255 values
@@ -151,8 +152,8 @@ public class IppEncoding {
         RESERVED(-1),
 
         // The following are special markers for lookup purposes
-        TEXT(0),
-        NAME(0)
+        TEXT(-1),
+        NAME(-1)
         ;
         
         private final int value;
@@ -165,7 +166,7 @@ public class IppEncoding {
         
         private ValueTag(int value) {
             this.value = value;
-            this.MAX = Integer.MAX_VALUE;
+            this.MAX = Short.MAX_VALUE;
         }
         
         public int getValue() {
@@ -178,7 +179,8 @@ public class IppEncoding {
             final ValueTag[] vts = ValueTag.values();
             vmap = new HashMap<Integer, ValueTag>(vts.length * 4/3 + 1);
             for (ValueTag e : vts)
-                vmap.put(e.value, e);
+                if (e.value >= 0)
+                    vmap.put(e.value, e);
         }
         
         /**
@@ -283,7 +285,8 @@ public class IppEncoding {
             final OpCode[] ocs = OpCode.values();
             vmap = new HashMap<Integer, OpCode>(ocs.length * 4/3 + 1);
             for (OpCode e : ocs)
-                vmap.put(e.value, e);
+                if (e.value >= 0)
+                    vmap.put(e.value, e);
         }
         
         /**

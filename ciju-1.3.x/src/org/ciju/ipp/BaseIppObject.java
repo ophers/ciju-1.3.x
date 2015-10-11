@@ -117,4 +117,10 @@ abstract class BaseIppObject extends IppObject {
     }
 
     public abstract Locale getLocale();
+
+    /**
+     * This default implementation does nothing.
+     * @param loc the {@linkplain Locale} to set for this IPP Object.
+     */
+    void setLocale(Locale loc) { };
 }
