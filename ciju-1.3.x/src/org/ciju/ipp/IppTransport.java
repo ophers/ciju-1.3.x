@@ -240,7 +240,7 @@ public abstract class IppTransport {
                     char[] ca = new char[1024];
                     String cstr = request.getDoc().getDocFlavor().getParameter("charset");
                     if (cstr == null)
-                        cstr = "utf-16";
+                        cstr = utf8enc.charset().name();
                     OutputStreamWriter osw = new OutputStreamWriter(out, cstr);
                     ios[0] = osw;
                     while ((n = rdr.read(ca)) > 0)
@@ -645,7 +645,7 @@ public abstract class IppTransport {
             // read operational attribures
             readOperationHead();
             
-            // parse the remainder of the response
+            // parse the remainder of the response attributes
             int b,
                 len;
             String str;
@@ -689,6 +689,16 @@ public abstract class IppTransport {
                     value = readIppValue(vt, len);
                     curr.add(new GenericValue(vt, value));
                 }                
+            }
+            
+            // get the response document if available
+            len = in.read(bb.array());
+            if (len > 0) {
+                OutputStream out = response.getDocOutputStream();
+                ios[1] = out;
+                do {
+                    out.write(bb.array(), 0, len);
+                } while ((len = in.read(bb.array())) > 0);
             }
             
             return response;

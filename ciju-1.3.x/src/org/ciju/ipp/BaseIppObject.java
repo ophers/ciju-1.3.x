@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import javax.print.Doc;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding.GroupTag;
@@ -95,7 +96,9 @@ abstract class BaseIppObject extends IppObject {
     }
 
     protected boolean newAttributeGroup(GroupTag gt) {
-        if (gt == GroupTag.OPERATION)
+        if (gt == null)
+            throw new NullPointerException("gt");
+        else if (gt == GroupTag.OPERATION)
             throw new IllegalStateException(resourceStrings.getString("OPERATION GROUP TAG ALREADY PRESENT."));
         else if (gt == GroupTag.END)
             // ignore, this is just an end marker.
@@ -123,4 +126,6 @@ abstract class BaseIppObject extends IppObject {
      * @param loc the {@linkplain Locale} to set for this IPP Object.
      */
     void setLocale(Locale loc) { };
+
+    public abstract Doc getDoc();
 }

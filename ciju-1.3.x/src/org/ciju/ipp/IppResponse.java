@@ -17,7 +17,15 @@
 
 package org.ciju.ipp;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Locale;
+import javax.print.Doc;
+import javax.print.DocFlavor;
+import javax.print.SimpleDoc;
 
 /**
  *
@@ -41,6 +49,7 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
     final Conformity conformity = defaultConformity;
     private final T obj;
     private Locale locale;
+    private Doc doc;
     
     public IppResponse(short version, short status, int requestId) {
         this(version, status, requestId, null);
@@ -78,5 +87,26 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
                 loc != null && loc.getLanguage().length() > 0 :
                 "this must have been already validated";
         locale = loc;
+    }
+
+    OutputStream getDocOutputStream() throws IOException {
+        final File file = File.createTempFile("fil", null);
+        return new FileOutputStream(file) {
+            @Override
+            public void close() throws IOException {
+                super.close();
+                doc = new SimpleDoc(new FileInputStream(file) {
+                    @Override
+                    public void close() throws IOException {
+                        super.close();
+                        file.delete();
+                    }
+                }, DocFlavor.INPUT_STREAM.AUTOSENSE, null);
+            }
+        };
+    }
+    
+    public Doc getDoc() {
+        return doc;
     }
 }
