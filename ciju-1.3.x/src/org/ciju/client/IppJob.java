@@ -185,7 +185,7 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
     }
 
     public void cancel() throws PrintException {
-        IppRequest ipp = new IppRequest(IppEncoding.OpCode.CANCEL_JOB);
+        IppRequest ipp = new IppRequest(IppEncoding.OpCode.CANCEL_JOB, IppEncoding.GroupTag.JOB);
         
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

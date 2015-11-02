@@ -184,12 +184,10 @@ import org.ciju.ipp.attribute.GenericValue;
         if (connected)
             throw new IllegalStateException(resourceStrings.getString("ALREADY CONNECTED"));
         if (request == null) 
-	    throw new NullPointerException("IPP request is null");
+	    throw new NullPointerException();
         ipp = request;
-//        String al = getRequestProperty("Accept-Language");
         String lang = GenericValue.getNaturalLanguage(ipp.getLocale());
         setRequestProperty("Accept-Language", lang);
-//        if (al != null) addRequestProperty("Accept-Language", al);
         return this;
     }
 

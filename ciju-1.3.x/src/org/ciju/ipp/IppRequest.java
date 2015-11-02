@@ -23,6 +23,7 @@ import javax.print.Doc;
 import javax.print.DocFlavor;
 import javax.print.FlavorException;
 import javax.print.PrintException;
+import org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.OpCode;
 import org.ciju.ipp.IppEncoding.ValueTag;
 import static org.ciju.ipp.IppTransport.resourceStrings;
@@ -52,21 +53,22 @@ public class IppRequest extends BaseIppObject {
     private DocDataFlavor ddf;
     private Doc doc;
     
-    public IppRequest(OpCode opCode) {
-        this(opCode, 1, Locale.getDefault());
+    public IppRequest(OpCode opCode, GroupTag firstGroupTag) {
+        this(opCode, 1, Locale.getDefault(), firstGroupTag);
     }
 
-    public IppRequest(OpCode opCode, int requestId) {
-        this(opCode, requestId, Locale.getDefault());
+    public IppRequest(OpCode opCode, int requestId, GroupTag firstGroupTag) {
+        this(opCode, requestId, Locale.getDefault(), firstGroupTag);
     }
 
-    public IppRequest(OpCode opCode, Locale locale) {
-        this(opCode, 1, locale);
+    public IppRequest(OpCode opCode, Locale locale, GroupTag firstGroupTag) {
+        this(opCode, 1, locale, firstGroupTag);
     }
 
-    public IppRequest(OpCode opCode, int requestId, Locale locale) {
+    public IppRequest(OpCode opCode, int requestId, Locale locale, GroupTag firstGroupTag) {
         super((short) opCode.getValue(), requestId);
         this.locale = validate(locale);
+        newAttributeGroup(firstGroupTag);
     }
 
     private Locale validate(Locale locale) throws NullPointerException, IllegalArgumentException {
