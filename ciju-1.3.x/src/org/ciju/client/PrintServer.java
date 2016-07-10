@@ -117,12 +117,6 @@ public class PrintServer extends PrintServiceLookup {
         eventDispatcher.enqueuePrintEvent(event, listeners);
     }
 
-    public PrintServer() {
-        sm = System.getSecurityManager();
-        uri = null;
-        proxy = null;
-    }
-    
     protected PrintServer(URI uri, Proxy proxy) {
         if (!uri.getScheme().equalsIgnoreCase("ipp") && 
             !uri.getScheme().equalsIgnoreCase("ipps"))
@@ -169,9 +163,6 @@ public class PrintServer extends PrintServiceLookup {
     }
 
     protected IppConnection getConnection() throws IOException {
-        if (uri == null)
-            throw new IllegalStateException(resourceStrings.getString("THIS DEFAULT INSTANCE HAS NO URI TO A PRINT-SERVER."));
-        
         return getConnection(uri, proxy);
     }
 
@@ -217,8 +208,8 @@ public class PrintServer extends PrintServiceLookup {
     public PrintService[] getPrintServices() {
         if (sm != null)
             sm.checkPrintJobAccess();
-        // This default instance has no clue as to how to interrogate a Print-CupsServer
-        return new PrintService[0];
+        // It is assumed that the IPP URI is of a print device
+        return new PrintService[] { new IppPrinter(uri, proxy) };
     }
 
     @Override
@@ -232,13 +223,8 @@ public class PrintServer extends PrintServiceLookup {
     public PrintService getDefaultPrintService() {
         if (sm != null)
             sm.checkPrintJobAccess();
-        try {
-            IppConnection urlc = getConnection();
-//            urlc.
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // It is assumed that the IPP URI is of a print device
+        return new IppPrinter(uri, proxy);
     }
 
 }
