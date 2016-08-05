@@ -613,6 +613,7 @@ public abstract class IppTransport {
     /** IppTransportDecoder - Decodes / reads an IPP response */
     private static class IppTransportDecoder<T extends IppObject> extends IppTransport {
         private final DataInputStream in;
+        /* contentLength is not used, we assume the InputStream is sized correctly */
         private final long contentLength;
         private final CharsetDecoder usa;
         private CharsetDecoder csd;
@@ -628,13 +629,10 @@ public abstract class IppTransport {
         private GroupTag lastTag;
         private GenericAttribute curr;
 
-        public IppTransportDecoder(InputStream in, long contentLength) throws IOException {
+        private IppTransportDecoder(InputStream in, long contentLength) throws IOException {
             ios[0] = this.in = new DataInputStream(in);
             this.contentLength = contentLength;
             usa = Charset.forName("US-ASCII").newDecoder();
-            if (response.conformity != Conformity.STRICT)
-                usa.onMalformedInput(CodingErrorAction.REPLACE)
-                   .onUnmappableCharacter(CodingErrorAction.REPLACE);
         }
         
         private IppResponse<T> processResponse(T obj) throws IOException {
@@ -642,6 +640,9 @@ public abstract class IppTransport {
             response = new IppResponse<T>(in.readShort() /* version */,
                                           in.readShort() /* status */, 
                                           in.readInt() /* request id */, obj);
+            if (response.conformity != Conformity.STRICT)
+                usa.onMalformedInput(CodingErrorAction.REPLACE)
+                   .onUnmappableCharacter(CodingErrorAction.REPLACE);
             // read operational attribures
             readOperationHead();
             

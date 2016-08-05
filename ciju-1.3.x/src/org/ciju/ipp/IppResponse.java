@@ -26,6 +26,8 @@ import java.util.Locale;
 import javax.print.Doc;
 import javax.print.DocFlavor;
 import javax.print.SimpleDoc;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 
 /**
  *
@@ -55,24 +57,41 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
         this(version, status, requestId, null);
     }
     
-    @SuppressWarnings("unchecked")
     public IppResponse(short version, short status, int requestId, T obj) {
         super(version, status, requestId);
-        if (obj != null)
-            this.obj = obj;
-        else
-            this.obj = (T) this;
+        this.obj = obj;
     }
 
     public short getResponseCode() {
         return getCode();
     }
 
-    public T getObject() {
-        if (obj != this)
-            return obj;
+    @Override
+    protected boolean addAttribute(Attribute a) {
+        if (obj != null)
+            return obj.addAttribute(a);
         else
-            return null;
+            return super.addAttribute(a);
+    }
+
+    @Override
+    protected boolean addAllAttributes(AttributeSet as) {
+        if (obj != null)
+            return obj.addAllAttributes(as);
+        else
+            return super.addAllAttributes(as);
+    }
+
+    @Override
+    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
+        if (obj != null)
+            return obj.newAttributeGroup(gt);
+        else
+            return super.newAttributeGroup(gt);
+    }
+
+    public T getObject() {
+        return obj;
     }
     
     // TODO: Delegate relevant methods to 'obj'

@@ -15,54 +15,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.ciju.client;
+package org.ciju.ipp;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.ListIterator;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
-import org.ciju.ipp.IppEncoding;
-import org.ciju.ipp.IppObject;
-import org.ciju.ipp.IppObjectFactory;
 
 /**
  *
  * @param <T>
  * @author Opher Shachar
  */
-/* package */ class IppMultiObject<T extends IppObject> extends IppObject {
-    private final Collection<T> col;
+public class IppMultiObject<T extends IppObject> extends IppObject {
     private final ListIterator<T> li;
     private final IppObjectFactory<T> fact;
     
-    private T currObj;
+    private T curr;
     
-    /* package */ IppMultiObject(Collection<T> col, IppObjectFactory<T> fact) {
-        this.col = col;
+    public IppMultiObject(List<T> list, IppObjectFactory<T> fact) {
+        this.li = list.listIterator();
         this.fact = fact;
-        this.li = null;
     }
     
-    /* package */ IppMultiObject(ListIterator<T> li, IppObjectFactory<T> fact) {
+    public IppMultiObject(ListIterator<T> li, IppObjectFactory<T> fact) {
         this.li = li;
         this.fact = fact;
-        this.col = null;
     }
     
-    private void add() {
-        // Do something with currObj ...
-        currObj = fact.create();
-    }
-
     protected boolean addAttribute(Attribute a) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return curr.addAttribute(a);
     }
-
+    
     protected boolean addAllAttributes(AttributeSet as) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return curr.addAllAttributes(as);
     }
-
+    
     protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        curr = fact.create();
+        li.add(curr);
+        return true;
     }
 }
