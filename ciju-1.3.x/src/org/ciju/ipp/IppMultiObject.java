@@ -27,20 +27,32 @@ import javax.print.attribute.AttributeSet;
  * @param <T>
  * @author Opher Shachar
  */
-public class IppMultiObject<T extends IppObject> extends IppObject {
+public final class IppMultiObject<T extends IppObject> extends IppObject {
     private final ListIterator<T> li;
     private final IppObjectFactory<T> fact;
     
     private T curr;
     
     public IppMultiObject(List<T> list, IppObjectFactory<T> fact) {
+        if (list == null || fact == null)
+            throw new NullPointerException();
         this.li = list.listIterator();
         this.fact = fact;
     }
     
     public IppMultiObject(ListIterator<T> li, IppObjectFactory<T> fact) {
+        if (li == null || fact == null)
+            throw new NullPointerException();
         this.li = li;
         this.fact = fact;
+    }
+    
+    /* This will be called first before addAttribute or addAllAttributes so
+       curr will not be null when those other methods are called */
+    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
+        curr = fact.create();
+        li.add(curr);
+        return true;
     }
     
     protected boolean addAttribute(Attribute a) {
@@ -49,11 +61,5 @@ public class IppMultiObject<T extends IppObject> extends IppObject {
     
     protected boolean addAllAttributes(AttributeSet as) {
         return curr.addAllAttributes(as);
-    }
-    
-    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
-        curr = fact.create();
-        li.add(curr);
-        return true;
     }
 }
