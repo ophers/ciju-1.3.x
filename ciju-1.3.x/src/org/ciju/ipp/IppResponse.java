@@ -50,6 +50,7 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
     
     final Conformity conformity = defaultConformity;
     private final T obj;
+    private boolean addToObj;
     private Locale locale;
     private Doc doc;
     
@@ -68,7 +69,7 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
 
     @Override
     protected boolean addAttribute(Attribute a) {
-        if (obj != null)
+        if (addToObj)
             return obj.addAttribute(a);
         else
             return super.addAttribute(a);
@@ -76,7 +77,7 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
 
     @Override
     protected boolean addAllAttributes(AttributeSet as) {
-        if (obj != null)
+        if (addToObj)
             return obj.addAllAttributes(as);
         else
             return super.addAllAttributes(as);
@@ -84,10 +85,15 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
 
     @Override
     protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
-        if (obj != null)
-            return obj.newAttributeGroup(gt);
-        else
+        if (obj != null &&
+            obj.newAttributeGroup(gt)) {
+            addToObj = true;
+            return true;
+        }
+        else {
+            addToObj = false;
             return super.newAttributeGroup(gt);
+        }
     }
 
     public T getObject() {

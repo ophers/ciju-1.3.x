@@ -20,6 +20,7 @@ package org.ciju.client;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ListIterator;
@@ -40,6 +41,7 @@ import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
+import static org.ciju.client.PrintServer.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
@@ -76,8 +78,14 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
 
     public Collection<? extends IppJob> getJobs() {
         return getJobs(new ArrayList<IppJob>(), new IppObjectFactory<IppJob>() {
-            public IppJob create() {
+            public IppJob create(IppEncoding.GroupTag gt) {
+                if (!canCreate(gt))
+                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("CANNOT CREATE THIS TYPE OF OBJECT: {0}"), new Object[] {gt}));
                 return new IppJob(IppPrinter.this);
+            }
+
+            public boolean canCreate(IppEncoding.GroupTag gt) {
+                return gt == IppEncoding.GroupTag.JOB;
             }
         });
     }

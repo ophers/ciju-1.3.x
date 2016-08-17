@@ -23,5 +23,6 @@ package org.ciju.ipp;
  * @author Opher Shachar
  */
 public interface IppObjectFactory<T extends IppObject> {
-    T create();
+    boolean canCreate(IppEncoding.GroupTag gt);
+    T create(IppEncoding.GroupTag gt);
 }

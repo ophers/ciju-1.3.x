@@ -621,11 +621,6 @@ public abstract class IppTransport {
         private CharBuffer cb = CharBuffer.allocate(ValueTag.TEXT_WITHOUT_LANGUAGE.MAX);
         private IppResponse<T> response;
 
-        private enum ParsingState {
-            /** Expect group-tag, value-tag, end-tag */ NEXT,
-            /** Expect NEXT, multi-value-tag */ MULTI
-        }
-        private ParsingState state = ParsingState.NEXT;
         private GroupTag lastTag;
         private GenericAttribute curr;
 
@@ -681,7 +676,7 @@ public abstract class IppTransport {
                     }
                     else if (len < 0)
                         throw new ProtocolException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) NAME!"), len));
-                    else if (curr == null)
+                    else /* len == 0 */ if (curr == null)
                         throw new ProtocolException(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
                     
                     // read attribute's value length

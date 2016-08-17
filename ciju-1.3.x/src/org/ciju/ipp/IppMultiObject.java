@@ -50,9 +50,12 @@ public final class IppMultiObject<T extends IppObject> extends IppObject {
     /* This will be called first before addAttribute or addAllAttributes so
        curr will not be null when those other methods are called */
     protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
-        curr = fact.create();
-        li.add(curr);
-        return true;
+        if (fact.canCreate(gt)) {
+            curr = fact.create(gt);
+            li.add(curr);
+            return true;
+        }
+        return false;
     }
     
     protected boolean addAttribute(Attribute a) {
