@@ -19,8 +19,11 @@ package org.ciju.client;
 
 import java.net.Proxy;
 import java.net.URI;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import static org.ciju.client.PrintServer.resourceStrings;
+import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObjectFactory;
 
 /**
@@ -57,8 +60,14 @@ public class CupsPrinter extends IppPrinter {
     @Override
     public Collection<CupsJob> getJobs() {
         return getJobs(new ArrayList<CupsJob>(), new IppObjectFactory<CupsJob>() {
-            public CupsJob create() {
+            public CupsJob create(IppEncoding.GroupTag gt) {
+                if (!canCreate(gt))
+                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("CANNOT CREATE THIS TYPE OF OBJECT: {0}"), new Object[] {gt}));
                 return new CupsJob(CupsPrinter.this);
+            }
+
+            public boolean canCreate(IppEncoding.GroupTag gt) {
+                return gt == IppEncoding.GroupTag.JOB;
             }
         });
     }

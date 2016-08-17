@@ -53,7 +53,7 @@ public abstract class IppObject {
      * Adds a new attribute group to this object's attributes list.
      * 
      * @param gt the {@link GroupTag GroupTag} for the new attribute group to add.
-     * @return true.
+     * @return true if successful, false otherwise (i.e. if not supported).
      */
     protected abstract boolean newAttributeGroup(GroupTag gt);
 
