@@ -62,7 +62,7 @@ public class CupsPrinter extends IppPrinter {
         return getJobs(new ArrayList<CupsJob>(), new IppObjectFactory<CupsJob>() {
             public CupsJob create(IppEncoding.GroupTag gt) {
                 if (!canCreate(gt))
-                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("CANNOT CREATE THIS TYPE OF OBJECT: {0}"), new Object[] {gt}));
+                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("CANNOT CREATE THIS TYPE OF OBJECT: {0}"), gt));
                 return new CupsJob(CupsPrinter.this);
             }
 

@@ -80,7 +80,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         return getJobs(new ArrayList<IppJob>(), new IppObjectFactory<IppJob>() {
             public IppJob create(IppEncoding.GroupTag gt) {
                 if (!canCreate(gt))
-                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("CANNOT CREATE THIS TYPE OF OBJECT: {0}"), new Object[] {gt}));
+                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("CANNOT CREATE THIS TYPE OF OBJECT: {0}"), gt));
                 return new IppJob(IppPrinter.this);
             }
 
