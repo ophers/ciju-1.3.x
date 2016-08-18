@@ -198,8 +198,15 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    private boolean seenAG;
     protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (gt == IppEncoding.GroupTag.JOB)
+            if (seenAG)
+                throw new IllegalStateException("Already seen this GroupTag. Perhaps you need to use an IppMultiObject?");
+            else
+                return seenAG = true;
+        else
+            return false;
     }
 
     private static class PrintJobAttributeListenerEntry {
