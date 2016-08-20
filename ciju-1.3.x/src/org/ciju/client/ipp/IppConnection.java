@@ -18,9 +18,12 @@
 package org.ciju.client.ipp;
 
 import java.io.IOException;
+import java.util.List;
+import org.ciju.ipp.IppMultiObject;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppObject;
+import org.ciju.ipp.IppResponse;
 
 
 /**
@@ -37,7 +40,7 @@ public interface IppConnection {
      * Set the {@link IppRequest} request object to send to the server. This method
      * doesn't cause the request to be sent or this object to be connected.
      * <br>Once set the <i>ipp request</i> cannot be cleared.
-     * @param request The <code>IppObject</code> request object.
+     * @param request The <code>IppRequest</code> request object.
      * @return this object (allows for builder pattern)
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
@@ -52,20 +55,29 @@ public interface IppConnection {
 
     /**
      * Retrieves the content for the {@link IppRequest} sent on this connection.
-     * @return the {@linkplain IppObject} fetched. The instanceof operator should be used to determine the specific kind of object returned.
+     * The given <code>obj</code>, if not null, will be populated with from response data.
+     * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
+     * @param obj The object (a subclass of <code>IppObject</code>) to use as the response.
+     *      Can be <code>null</code>.
+     * @return the {@linkplain IppResponse} fetched, holding the given object.
      * @throws java.io.IOException if an I/O error occurs while getting the content.
      * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
+     * @throws IllegalStateException if the response contains an array of objects and <tt>obj</tt> 
+     *      is not of type {@linkplain IppMultiObject}.
      */
-    IppObject getContent() throws IOException;
+    <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException;
 
     /**
      * Retrieves the content for the {@link IppRequest} sent on this connection.
+     * The given <code>fact</code> will be used to create instances to populated from response data.
      * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
-     * @param fact The class to use as the response.
-     * @return the {@linkplain IppObject}, or a descendant thereof, fetched.
+     * @param fact A factory class capable of {@link IppObjectFactory#create(org.ciju.ipp.IppEncoding.GroupTag) 
+     *      creating} instances to populate from the response.
+     * @return a {@linkplain List} of <code>IppObject</code>S, or a descendant thereof, fetched.
      * @throws java.io.IOException if an I/O error occurs while getting the content.
      * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
+     * @throws NullPointerException if <tt>fact</tt> is null.
      */
-    <T extends IppObject> T getContent(IppObjectFactory<T> fact) throws IOException;
+    <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException;
     
 }

@@ -22,13 +22,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.*;
 import java.security.Permission;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static org.ciju.client.impl.ipp.Handler.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.IppMultiObject;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
+import org.ciju.ipp.IppResponse;
 import org.ciju.ipp.IppTransport;
 import org.ciju.ipp.attribute.GenericValue;
 
@@ -206,16 +209,18 @@ import org.ciju.ipp.attribute.GenericValue;
         return huc.getInputStream();
     }
 
-    // Method getContent() left for URLConnection so that .
-    @Override
-    public IppObject getContent() throws IOException {
-        return (IppObject) super.getContent();
+    // Methods getContent() and getContent(Class[] classes) left for URLConnection.
+
+    public <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException {
+        return IppTransport.processResponse(getInputStream(), getContentLength(), obj);
     }
 
-    // Method getContent(Class[] classes) left for URLConnection.
-
-    public <T extends IppObject> T getContent(IppObjectFactory<T> fact) throws IOException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    public <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException {
+        final List<T> list = new ArrayList<T>();
+        final IppMultiObject<T> imo = new IppMultiObject<T>(list, fact);
+        /* ignore the returned IppResponse */
+        IppTransport.processResponse(getInputStream(), getContentLength(), imo);
+        return list;
     }
 
 // <editor-fold defaultstate="collapsed" desc="delegated methods">

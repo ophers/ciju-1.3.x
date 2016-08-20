@@ -20,10 +20,12 @@ package org.ciju.client.impl.apache;
 import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
+import java.util.List;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppRequest;
+import org.ciju.ipp.IppResponse;
 
 
 public class ApacheConnection implements IppConnection {
@@ -40,11 +42,11 @@ public class ApacheConnection implements IppConnection {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public IppObject getContent() throws IOException {
+    public <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
-    public <T extends IppObject> T getContent(IppObjectFactory<T> fact) throws IOException {
+    public <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
