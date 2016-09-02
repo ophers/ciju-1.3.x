@@ -17,6 +17,7 @@
 
 package org.ciju.client;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,6 +38,7 @@ import javax.print.event.PrintJobAttributeListener;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
 import static org.ciju.client.PrintServer.logger;
+import static org.ciju.client.PrintServer.resourceStrings;
 import org.ciju.ipp.IppEncoding;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppRequest;
@@ -108,7 +110,9 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
                 logger.logp(Level.SEVERE, this.getClass().getName(), "raisePrintJobEvent",
                         "PLEASE REPORT TO THE DEVELOPER: THIS PRINTEVENTTYPE {0} IS UNKNOWN!",
                         pje.getPrintEventType());
-                assert false : "This PrintEventType " + pje.getPrintEventType() + " is unknown!";
+                assert false : MessageFormat.format(
+                        resourceStrings.getString("PLEASE REPORT TO THE DEVELOPER: THIS PRINTEVENTTYPE {0} IS UNKNOWN!"),
+                        pje.getPrintEventType());
         }
     }
     
