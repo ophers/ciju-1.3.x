@@ -28,11 +28,14 @@ import javax.print.DocFlavor;
 import javax.print.SimpleDoc;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
+import org.ciju.ipp.IppEncoding.GroupTag;
+import org.ciju.ipp.IppEncoding.StatusCode;
 
 /**
  *
+ * @param <T> a subclass of {@linkplain IppObject} that is the expected ipp response 
+ *  entity. Could be {@link IppMultiObject} if we expect a list of objects.
  * @author Opher Shachar
- * @param <T>
  */
 public class IppResponse<T extends IppObject> extends BaseIppObject {
     private static Conformity defaultConformity = Conformity.LENIENT;
@@ -62,9 +65,13 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
         super(version, status, requestId);
         this.obj = obj;
     }
-
+    
     public short getResponseCode() {
         return getCode();
+    }
+    
+    public StatusCode getStatusCode() {
+        return StatusCode.valueOf(getCode());
     }
 
     @Override
@@ -84,7 +91,7 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
     }
 
     @Override
-    protected boolean newAttributeGroup(IppEncoding.GroupTag gt) {
+    protected boolean newAttributeGroup(GroupTag gt) {
         if (obj != null &&
             obj.newAttributeGroup(gt)) {
             addToObj = true;
@@ -100,8 +107,6 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
         return obj;
     }
     
-    // TODO: Delegate relevant methods to 'obj'
-
     public Locale getLocale() {
         return locale;
     }
