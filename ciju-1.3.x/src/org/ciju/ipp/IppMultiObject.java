@@ -24,7 +24,8 @@ import javax.print.attribute.AttributeSet;
 
 /**
  *
- * @param <T>
+ * @param <T> a subclass of {@linkplain IppObject} that is the expected ipp response 
+ *  entity.
  * @author Opher Shachar
  */
 public final class IppMultiObject<T extends IppObject> extends IppObject {
