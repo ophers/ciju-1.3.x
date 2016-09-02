@@ -265,7 +265,7 @@ public class IppEncoding {
         IDENTIFY_PRINTER(0x003C),
         VALIDATE_DOCUMENT(0x003D),
         
-        // Repreaents all opcodes we do not currently process
+        // Represents all opcodes we do not currently process
         RESERVED(-1)
         ;
         
@@ -303,6 +303,118 @@ public class IppEncoding {
             throw new IllegalArgumentException(String.format(BADENUM, i));
         }
     }
+    
+    
+    public enum StatusCode {
+        SUCCESSFUL_OK(0x0000),
+        SUCCESSFUL_OK_IGNORED_OR_SUBSTITUTED_ATTRIBUTES(0x0001),
+        SUCCESSFUL_OK_CONFLICTING_ATTRIBUTES(0x0002),
+        INFORMATIONAL(0x0100),
+        REDIRECTION(0x0200),
+        // The range 0x0300 to 0x03FF is reserved
+        CLIENT_ERROR_BAD_REQUEST(0x0400),
+        CLIENT_ERROR_FORBIDDEN(0x0401),
+        CLIENT_ERROR_NOT_AUTHENTICATED(0x0402),
+        CLIENT_ERROR_NOT_AUTHORIZED(0x0403),
+        CLIENT_ERROR_NOT_POSSIBLE(0x0404),
+        CLIENT_ERROR_TIMEOUT(0x0405),
+        CLIENT_ERROR_NOT_FOUND(0x0406),
+        CLIENT_ERROR_GONE(0x0407),
+        CLIENT_ERROR_REQUEST_ENTITY_TOO_LARGE(0x0408),
+        CLIENT_ERROR_REQUEST_VALUE_TOO_LONG(0x0409),
+        CLIENT_ERROR_DOCUMENT_FORMAT_NOT_SUPPORTED(0x040A),
+        CLIENT_ERROR_ATTRIBUTES_OR_VALUES_NOT_SUPPORTED(0x040B),
+        CLIENT_ERROR_URI_SCHEME_NOT_SUPPORTED(0x040C),
+        CLIENT_ERROR_CHARSET_NOT_SUPPORTED(0x040D),
+        CLIENT_ERROR_CONFLICTING_ATTRIBUTES(0x040E),
+        CLIENT_ERROR_COMPRESSION_NOT_SUPPORTED(0x040F),
+        CLIENT_ERROR_COMPRESSION_ERROR(0x0410),
+        CLIENT_ERROR_DOCUMENT_FORMAT_ERROR(0x0411),
+        CLIENT_ERROR_DOCUMENT_ACCESS_ERROR(0x0412),
+        SERVER_ERROR_INTERNAL_ERROR(0x0500),
+        SERVER_ERROR_OPERATION_NOT_SUPPORTED(0x0501),
+        SERVER_ERROR_SERVICE_UNAVAILABLE(0x0502),
+        SERVER_ERROR_VERSION_NOT_SUPPORTED(0x0503),
+        SERVER_ERROR_DEVICE_ERROR(0x0504),
+        SERVER_ERROR_TEMPORARY_ERROR(0x0505),
+        SERVER_ERROR_NOT_ACCEPTING_JOBS(0x0506),
+        SERVER_ERROR_BUSY(0x0507),
+        SERVER_ERROR_JOB_CANCELED(0x0508),
+        SERVER_ERROR_MULTIPLE_DOCUMENT_JOBS_NOT_SUPPORTED(0x0509),
+        // From RFC3380: IPP/1.1 - Job and Printer Set Operations
+        CLIENT_ERROR_ATTRIBUTES_NOT_SETTABLE(0x0413),
+        // From RFC3995: IPP/1.1 - Event Notifications and Subscriptions
+        SUCCESSFUL_OK_IGNORED_SUBSCRIPTIONS(0x0003),
+        SUCCESSFUL_OK_TOO_MANY_EVENTS(0x0005),
+        CLIENT_ERROR_IGNORED_ALL_SUBSCRIPTIONS(0x0414),
+        CLIENT_ERROR_TOO_MANY_SUBSCRIPTIONS(0x0415),
+        // From RFC3996: IPP/1.1 - The 'ippget' Delivery Method for Event Notifications
+        SUCCESSFUL_OK_EVENTS_COMPLETE(0x0007),
+        // From RFC3998: IPP/1.1 - Job and Printer Administrative Operations
+        SERVER_ERROR_PRINTER_IS_DEACTIVATED(0x050A),
+        // From PWG5100.7: IPP/2.1 - Job Extensions
+        SERVER_ERROR_TOO_MANY_JOBS(0x050B),
+        SERVER_ERROR_TOO_MANY_DOCUMENTS(0x050C),
+        // From PWG5100.13: IPP/2.1 - Job and Printer Extensions – Set 3
+        CLIENT_ERROR_DOCUMENT_PASSWORD_ERROR(0x0418),
+        CLIENT_ERROR_DOCUMENT_PERMISSION_ERROR(0x0419),
+        CLIENT_ERROR_DOCUMENT_SECURITY_ERROR(0x041A),
+        CLIENT_ERROR_DOCUMENT_UNPRINTABLE_ERROR(0x041B),
+        
+        // Represents all status codes we do not currently process
+        RESERVED(-1)
+        ;
+        
+        private final int value;
+
+        private StatusCode(int value) {
+            this.value = value;
+        }
+        
+        public int getValue() {
+            return value;
+        }
+        
+        
+        private static final Map<Integer, StatusCode> vmap;
+        static {
+            final StatusCode[] scs = StatusCode.values();
+            vmap = new HashMap<Integer, StatusCode>(scs.length * 4/3 + 1);
+            for (StatusCode e : scs)
+                if (e.value >= 0)
+                    vmap.put(e.value, e);
+        }
+        
+        /**
+         * Returns the enum constant of this type with the specified value. 
+         * The integer should match an identifier used to declare an enum constant in this type.
+         * If the value has no match then the lowest valued enum constant of the "status prefix"
+         * is returned or {@link #RESERVED} if the "status code" is reserved.
+         * @param i the value 
+         * @return the enum constant with the specified value or the lowest valued enum constant
+         *  of the "status prefix" or {@link #RESERVED}
+         */
+        public static StatusCode valueOf(int i) {
+            StatusCode e = vmap.get(i & 0xffff);
+            if (e != null)
+                return e;
+            else if (i <= 0x00ff)
+                return SUCCESSFUL_OK;
+            else if (i <= 0x01ff)
+                return INFORMATIONAL;
+            else if (i <= 0x02ff)
+                return REDIRECTION;
+            else if (i <= 0x03ff)
+                return RESERVED;
+            else if (i <= 0x04ff)
+                return CLIENT_ERROR_BAD_REQUEST;
+            else if (i <= 0x05ff)
+                return SERVER_ERROR_INTERNAL_ERROR;
+            else
+                return RESERVED;
+        }
+    }
+    
     
     public static final Map<Class<? extends Attribute>, Integer> LengthLimits;
     static {
