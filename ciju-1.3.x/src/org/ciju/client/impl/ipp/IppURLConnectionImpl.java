@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import static org.ciju.client.impl.ipp.Handler.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.IppException;
 import org.ciju.ipp.IppMultiObject;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
@@ -56,6 +57,7 @@ import org.ciju.ipp.attribute.GenericValue;
     private final Handler handler;
     private final HttpURLConnection huc;
     private IppRequest ipp;
+    private boolean sent;
 
     /**
      * Constructor for the IppURLConnectionImpl class. To make a direct connection
@@ -179,8 +181,11 @@ import org.ciju.ipp.attribute.GenericValue;
     private void sendIppRequest() throws IOException {
         if (ipp == null)
             throw new IllegalStateException(resourceStrings.getString("IPP REQUEST WAS NOT SET."));
-        OutputStream os = huc.getOutputStream();
-        IppTransport.writeRequest(os, ipp);
+        if (!sent) { // IPP Resquest not sent
+            OutputStream os = huc.getOutputStream();
+            IppTransport.writeRequest(os, ipp);
+            sent = true;
+        }
     }
 
     public IppConnection setIppRequest(IppRequest request) {
@@ -211,16 +216,34 @@ import org.ciju.ipp.attribute.GenericValue;
 
     // Methods getContent() and getContent(Class[] classes) left for URLConnection.
 
-    public <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException {
-        return IppTransport.processResponse(getInputStream(), getContentLength(), obj);
+    /**
+     * @see IppConnection#getContent(IppObject)
+     */
+    public <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException, IppException {
+        IppResponse<T> resp = IppTransport.processResponse(getInputStream(), getContentLength(), obj);
+        return checkResponse(resp);
     }
 
-    public <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException {
+    /**
+     * @see IppConnection#getContent(IppObjectFactory)
+     */
+    public <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException, IppException {
         final List<T> list = new ArrayList<T>();
         final IppMultiObject<T> imo = new IppMultiObject<T>(list, fact);
         /* ignore the returned IppResponse */
-        IppTransport.processResponse(getInputStream(), getContentLength(), imo);
+        IppResponse<IppMultiObject<T>> resp = IppTransport.processResponse(getInputStream(), getContentLength(), imo);
+        checkResponse(resp);
         return list;
+    }
+
+    /**
+     * Check the response for it's status code and if it's an error throw {@link IppException}
+     * @param <T>
+     * @param resp
+     * @return 
+     */
+    private <T extends IppObject> IppResponse<T> checkResponse(IppResponse<T> resp) throws IppException {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
 // <editor-fold defaultstate="collapsed" desc="delegated methods">

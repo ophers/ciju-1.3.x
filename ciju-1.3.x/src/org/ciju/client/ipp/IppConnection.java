@@ -19,7 +19,7 @@ package org.ciju.client.ipp;
 
 import java.io.IOException;
 import java.util.List;
-import org.ciju.ipp.IppMultiObject;
+import org.ciju.ipp.IppException;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppObject;
@@ -60,12 +60,15 @@ public interface IppConnection {
      * @param obj The object (a subclass of <code>IppObject</code>) to use as the response.
      *      Can be <code>null</code>.
      * @return the {@linkplain IppResponse} fetched, holding the given object.
-     * @throws java.io.IOException if an I/O error occurs while getting the content.
+     * @throws IOException if an I/O error occurs while getting the content.
+     * @throws IppException if the response constitutes an IPP error response.
      * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
      * @throws IllegalStateException if the response contains an array of objects and <tt>obj</tt> 
-     *      is not of type {@linkplain IppMultiObject}.
+     *      is not of type {@linkplain org.ciju.ipp.IppMultiObject}.
+     * @throws org.ciju.ipp.IppFailedException if a complete IPP response was not
+     *      successfully decoded due to something other than <tt>IOException</tt>.
      */
-    <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException;
+    <T extends IppObject> IppResponse<T> getContent(T obj) throws IOException, IppException;
 
     /**
      * Retrieves the content for the {@link IppRequest} sent on this connection.
@@ -74,10 +77,13 @@ public interface IppConnection {
      * @param fact A factory class capable of {@link IppObjectFactory#create(org.ciju.ipp.IppEncoding.GroupTag) 
      *      creating} instances to populate from the response.
      * @return a {@linkplain List} of <code>IppObject</code>S, or a descendant thereof, fetched.
-     * @throws java.io.IOException if an I/O error occurs while getting the content.
+     * @throws IOException if an I/O error occurs while getting the content.
+     * @throws IppException if the response constitutes an IPP error response.
      * @throws java.net.UnknownServiceException if the content type is not <tt>application/ipp</tt>.
      * @throws NullPointerException if <tt>fact</tt> is null.
+     * @throws org.ciju.ipp.IppFailedException if a complete IPP response was not
+     *      successfully decoded due to something other than <tt>IOException</tt>.
      */
-    <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException;
+    <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException, IppException;
     
 }

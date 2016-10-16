@@ -109,7 +109,7 @@ public abstract class IppTransport {
                         ioex = ex;
                     else
                         // otherwise supress exception
-                        logger.logp(Level.FINE, io.getClass().getName(), "close()", "SUPRESSING EXCEPTION", ex);
+                        logger.logp(Level.FINE, io.getClass().getName(), "close()", "SUPPRESSING EXCEPTION", ex);
                 }
             }
             if (ioex != null)
@@ -135,16 +135,17 @@ public abstract class IppTransport {
      * @param contentLength
      * @param obj
      * @param <T>
-     * @return an {@link IppResponse} object encompassing the given obj.
+     * @return an {@link IppResponse} object encompassing the given <tt>obj</tt>.
      * @throws IOException
      */
     public static <T extends IppObject> IppResponse<T> processResponse(InputStream is, long contentLength, T obj)
             throws IOException {
         IppTransportDecoder<T> t = new IppTransportDecoder<T>(is, contentLength);
+        IppResponse<T> ir = null;
         // this would be substituted by Java7 try-with-resources
         IOException ioex = null;
         try {
-            return t.processResponse(obj);
+            ir = t.processResponse(obj);
         } catch (IOException ex) {
             ioex = ex;
         } finally {
@@ -157,13 +158,14 @@ public abstract class IppTransport {
                         ioex = ex;
                     else
                         // otherwise supress exception
-                        logger.logp(Level.FINE, io.getClass().getName(), "close()", "SUPRESSING EXCEPTION", ex);
+                        logger.logp(Level.FINE, io.getClass().getName(), "close()", "SUPPRESSING EXCEPTION", ex);
                 }
             }
             if (ioex != null)
                 throw ioex;
         }
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        assert ir != null;  
+        return ir;
     }
 
     // Instance common members
@@ -324,14 +326,14 @@ public abstract class IppTransport {
                 writeIppValue(vt, a, ll);
         }
 
-        private void validateConformity(Attribute a) throws ProtocolException {
+        private void validateConformity(Attribute a) {
             // Validate attribute name
             if (a.getName().length() > Short.MAX_VALUE) {
-                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE NAME IS LONGER THAN {0}."), Short.MAX_VALUE, a.getName()));
+                throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE NAME IS LONGER THAN {0}."), Short.MAX_VALUE, a.getName()));
             }
             else if (a.getName().length() > ValueTag.KEYWORD.MAX) {
                 if (request.conformity != IppObject.Conformity.NONE)
-                    throw new ProtocolException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE NAME IS LONGER THAN {0}."), ValueTag.KEYWORD.MAX, a.getName()));
+                    throw new IllegalArgumentException(MessageFormat.format(resourceStrings.getString("ATTRIBUTE NAME IS LONGER THAN {0}."), ValueTag.KEYWORD.MAX, a.getName()));
             }
         }
 
@@ -511,12 +513,13 @@ public abstract class IppTransport {
                 default:
                     logger.logp(Level.SEVERE, this.getClass().getName(), "writeIppValue",
                             "PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!", vt);
-                    assert false : "This ValueTag " + vt + " has been overlooked!";
+                    assert false : MessageFormat.format(
+                            resourceStrings.getString("PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!"),
+                            vt);
             }
         }
 
-        private Object validateAndTransform(ValueTag vt, Object o, Integer ll)
-                throws ProtocolException {
+        private Object validateAndTransform(ValueTag vt, Object o, Integer ll) {
             // decide limit for string length
             int limit;
             if (request.conformity == IppObject.Conformity.NONE)
@@ -675,9 +678,9 @@ public abstract class IppTransport {
                         curr = new GenericAttribute(str);
                     }
                     else if (len < 0)
-                        throw new ProtocolException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) NAME!"), len));
+                        throw new IppFailedException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) NAME!"), len));
                     else /* len == 0 */ if (curr == null)
-                        throw new ProtocolException(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
+                        throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
                     
                     // read attribute's value length
                     len = in.readShort();
@@ -700,21 +703,21 @@ public abstract class IppTransport {
             return response;
         }
 
-        private void readOperationHead() throws IOException, ProtocolException {
+        private void readOperationHead() throws IOException {
             int b, len;
             String str;
             
             // Read operational attributes group tag
             b = in.read();
             if (GroupTag.valueOf(b) != GroupTag.OPERATION)
-                throw new ProtocolException(resourceStrings.getString("PRINT SERVER BROKEN: RESPONSE DOES NOT BEGIN WITH OPERATION GROUP TAG!"));
+                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: RESPONSE DOES NOT BEGIN WITH OPERATION GROUP TAG!"));
             
             // Read charset attribute
             b = in.read();  //CHARSET
             len = in.readShort();   //18
             if (ValueTag.valueOf(b) != ValueTag.CHARSET || len != 18 ||
                     !readString(len, usa).equals("attributes-charset"))
-                throw new ProtocolException(resourceStrings.getString("PRINT SERVER BROKEN: FIRST ATTRIBUTE IS NOT CHARSET!"));
+                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: FIRST ATTRIBUTE IS NOT CHARSET!"));
             len = in.readShort();
             str = readString(len, usa);
             response.addOperationAttribute(new GenericAttribute("attributes-charset", str, ValueTag.CHARSET));
@@ -729,7 +732,7 @@ public abstract class IppTransport {
             len = in.readShort();   //27
             if (ValueTag.valueOf(b) != ValueTag.NATURAL_LANGUAGE || len != 27 ||
                     !readString(len, usa).equals("attributes-natural-language"))
-                throw new ProtocolException(resourceStrings.getString("PRINT SERVER BROKEN: SECOND ATTRIBUTE IS NOT LANGUAGE!"));
+                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: SECOND ATTRIBUTE IS NOT LANGUAGE!"));
             len = in.readShort();
             str = readString(len, usa);
             response.addOperationAttribute(new GenericAttribute("attributes-natural-language", str, ValueTag.NATURAL_LANGUAGE));
@@ -793,7 +796,7 @@ public abstract class IppTransport {
             }
         }
 
-        private Locale parseNaturalLanguage(String nl) throws ProtocolException {
+        private Locale parseNaturalLanguage(String nl) {
             assert nl != null;
             String[] loc = nl.split("-", 3);
             if (loc[0].length() > 0)
@@ -806,16 +809,17 @@ public abstract class IppTransport {
                     default:    // loc[] will always have at leat one element
                         return new Locale(loc[0]);
                 }
+            // invalid natural-language value. Try using response's value as default
             Locale locale = response.getLocale();
             if (locale == null /* this is attributes-natural-language operational attribute */ ||
                     response.conformity == Conformity.STRICT)
-                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. IT MUST SPECIFY A LANGUAGE."), nl));
+                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. IT MUST SPECIFY A LANGUAGE."), nl));
             else if (response.conformity == Conformity.LENIENT)
                 logger.log(Level.INFO, "MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. USING RESPONSE DEFAULT.", nl);
             return locale;
         }
 
-        private GroupTag validateGroupTag(int b) throws ProtocolException {
+        private GroupTag validateGroupTag(int b) {
             try {
                 return GroupTag.valueOf(b);
             }
@@ -823,15 +827,15 @@ public abstract class IppTransport {
                 if (response.conformity == Conformity.NONE)
                     return GroupTag.RESERVED;
             }
-            throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: GROUP TAG IS RESERVED."));
+            throw new IppFailedException(resourceStrings.getString("MALFORMED RESPONSE: GROUP TAG IS RESERVED."));
         }
 
         /** check the attribute name length against the Conformity level */
-        private void validateConformity(int len) throws ProtocolException {
+        private void validateConformity(int len) {
             assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             if (response.conformity == Conformity.STRICT &&
                     len > ValueTag.KEYWORD.MAX)
-                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE NAME LENGTH IS {0}!"), len));
+                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE NAME LENGTH IS {0}!"), len));
         }
 
         /** check the value-tag and value-length against the Conformity level */
@@ -839,15 +843,18 @@ public abstract class IppTransport {
             assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             final ValueTag vt;
             if (len < 0)
-                throw new ProtocolException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) VALUE!"), len));
+                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) VALUE!"), len));
             try {
                 vt = ValueTag.valueOf(b);
                 validateConformity(vt, len);
             }
             catch (IllegalArgumentException ignore) {
-                if (response.conformity == Conformity.NONE)
+                if (response.conformity != Conformity.STRICT) {
+                    if (response.conformity == Conformity.LENIENT)
+                        logger.log(Level.INFO, "MALFORMED RESPONSE: VALUE TAG IS RESERVED.");
                     return ValueTag.RESERVED;
-                throw new ProtocolException(resourceStrings.getString("MALFORMED RESPONSE: VALUE TAG IS RESERVED."));
+                }
+                throw new IppFailedException(resourceStrings.getString("MALFORMED RESPONSE: VALUE TAG IS RESERVED."));
             }
             return vt;
         }
@@ -928,7 +935,9 @@ public abstract class IppTransport {
                 default:
                     logger.logp(Level.SEVERE, this.getClass().getName(), "validateConformity(int,int)",
                         "PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!", vt);
-                    assert false : "This ValueTag " + vt + " has been overlooked!";
+                    assert false : MessageFormat.format(
+                            resourceStrings.getString("PLEASE REPORT TO THE DEVELOPER: THIS VALUETAG {0} HAS BEEN OVERLOOKED!"),
+                            vt);
             }
         }
 
