@@ -193,7 +193,7 @@ public class PrintServer extends PrintServiceLookup {
             default:
                 // We should never get here
                 throw new AssertionError(
-                        resourceStrings.getString("UNEXPETED CONNECTION LIBRARY CONFIGURED!"));
+                        resourceStrings.getString("UNEXPECTED CONNECTION LIBRARY CONFIGURED!"));
         }
     }
 

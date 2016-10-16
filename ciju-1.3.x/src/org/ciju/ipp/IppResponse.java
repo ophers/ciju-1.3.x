@@ -94,8 +94,7 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
     protected boolean newAttributeGroup(GroupTag gt) {
         if (obj != null &&
             obj.newAttributeGroup(gt)) {
-            addToObj = true;
-            return true;
+            return addToObj = true;
         }
         else {
             addToObj = false;

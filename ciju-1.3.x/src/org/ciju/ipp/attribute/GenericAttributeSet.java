@@ -33,7 +33,8 @@ public class GenericAttributeSet extends AbstractSet<Attribute> implements Attri
     
     /**
      * A HashMap used by the implementation.
-     * The serialised form doesn't include this instance variable.
+     * The serialized form doesn't include this instance variable. We'll instead
+     * serialize this object more efficiently than HashMap.
      */
     private transient HashMap<String, Attribute> map;
 
