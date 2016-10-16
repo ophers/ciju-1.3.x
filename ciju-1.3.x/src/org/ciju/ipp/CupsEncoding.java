@@ -28,9 +28,6 @@ public class CupsEncoding extends org.ciju.ipp.IppEncoding {
     
     private static final String BADENUM = IppTransport.resourceStrings.getString("NO ENUM CONST HAS VALUE 0X%02X");
 
-    /**
-     * gggg
-     */
     public enum OpCode {
         // CUPS 1.0 and up
         PRINT_JOB(0x0002),
@@ -98,7 +95,19 @@ public class CupsEncoding extends org.ciju.ipp.IppEncoding {
 
         // CUPS 1.4 and up
         /** Get a document file from a job. */
-        CUPS_GET_DOCUMENT(0x4027)
+        CUPS_GET_DOCUMENT(0x4027),
+        
+        // CUPS 1.5 and up
+        /** Cancel all jobs (administrator). */
+        CANCEL_JOBS(0x0038),
+        /** Cancel all jobs (user). */
+        CANCEL_MY_JOBS(0x0039),
+        /** Close a created job. */
+        CLOSE_JOB(0x003B),
+
+        // CUPS 2.2 and up
+        /** Creates a local (temporary) print queue pointing to a remote IPP Everywhere printer. */
+        CUPS_CREATE_LOCAL_PRINTER(0x4028)
         ;
         
         private final int value;
