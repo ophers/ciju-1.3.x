@@ -678,9 +678,11 @@ public abstract class IppTransport {
                         curr = new GenericAttribute(str);
                     }
                     else if (len < 0)
-                        throw new IppFailedException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) NAME!"), len));
+                        throw new IppFailedException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) NAME!"), len),
+                                response);
                     else /* len == 0 */ if (curr == null)
-                        throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"));
+                        throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: NEW ATTRIBUTE HAS ZERO-LENGTH NAME!"),
+                                response);
                     
                     // read attribute's value length
                     len = in.readShort();
@@ -710,14 +712,16 @@ public abstract class IppTransport {
             // Read operational attributes group tag
             b = in.read();
             if (GroupTag.valueOf(b) != GroupTag.OPERATION)
-                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: RESPONSE DOES NOT BEGIN WITH OPERATION GROUP TAG!"));
+                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: RESPONSE DOES NOT BEGIN WITH OPERATION GROUP TAG!"),
+                        response);
             
             // Read charset attribute
             b = in.read();  //CHARSET
             len = in.readShort();   //18
             if (ValueTag.valueOf(b) != ValueTag.CHARSET || len != 18 ||
                     !readString(len, usa).equals("attributes-charset"))
-                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: FIRST ATTRIBUTE IS NOT CHARSET!"));
+                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: FIRST ATTRIBUTE IS NOT CHARSET!"),
+                        response);
             len = in.readShort();
             str = readString(len, usa);
             response.addOperationAttribute(new GenericAttribute("attributes-charset", str, ValueTag.CHARSET));
@@ -732,7 +736,8 @@ public abstract class IppTransport {
             len = in.readShort();   //27
             if (ValueTag.valueOf(b) != ValueTag.NATURAL_LANGUAGE || len != 27 ||
                     !readString(len, usa).equals("attributes-natural-language"))
-                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: SECOND ATTRIBUTE IS NOT LANGUAGE!"));
+                throw new IppFailedException(resourceStrings.getString("PRINT SERVER BROKEN: SECOND ATTRIBUTE IS NOT LANGUAGE!"),
+                        response);
             len = in.readShort();
             str = readString(len, usa);
             response.addOperationAttribute(new GenericAttribute("attributes-natural-language", str, ValueTag.NATURAL_LANGUAGE));
@@ -813,7 +818,8 @@ public abstract class IppTransport {
             Locale locale = response.getLocale();
             if (locale == null /* this is attributes-natural-language operational attribute */ ||
                     response.conformity == Conformity.STRICT)
-                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. IT MUST SPECIFY A LANGUAGE."), nl));
+                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. IT MUST SPECIFY A LANGUAGE."), nl),
+                        response);
             else if (response.conformity == Conformity.LENIENT)
                 logger.log(Level.INFO, "MALFORMED RESPONSE: NATURAL-LANGUAGE ATTRIBUTE ({0}) IS INVALID. USING RESPONSE DEFAULT.", nl);
             return locale;
@@ -827,7 +833,8 @@ public abstract class IppTransport {
                 if (response.conformity == Conformity.NONE)
                     return GroupTag.RESERVED;
             }
-            throw new IppFailedException(resourceStrings.getString("MALFORMED RESPONSE: GROUP TAG IS RESERVED."));
+            throw new IppFailedException(resourceStrings.getString("MALFORMED RESPONSE: GROUP TAG IS RESERVED."),
+                    response);
         }
 
         /** check the attribute name length against the Conformity level */
@@ -835,7 +842,8 @@ public abstract class IppTransport {
             assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             if (response.conformity == Conformity.STRICT &&
                     len > ValueTag.KEYWORD.MAX)
-                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE NAME LENGTH IS {0}!"), len));
+                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("MALFORMED RESPONSE: NEW ATTRIBUTE NAME LENGTH IS {0}!"), len),
+                        response);
         }
 
         /** check the value-tag and value-length against the Conformity level */
@@ -843,7 +851,8 @@ public abstract class IppTransport {
             assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             final ValueTag vt;
             if (len < 0)
-                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) VALUE!"), len));
+                throw new IppFailedException(MessageFormat.format(resourceStrings.getString("PRINT SERVER BROKEN: ATTRIBUTE HAS NEGATIVE-LENGTH ({0}) VALUE!"), len),
+                        response);
             try {
                 vt = ValueTag.valueOf(b);
                 validateConformity(vt, len);
@@ -854,7 +863,8 @@ public abstract class IppTransport {
                         logger.log(Level.INFO, "MALFORMED RESPONSE: VALUE TAG IS RESERVED.");
                     return ValueTag.RESERVED;
                 }
-                throw new IppFailedException(resourceStrings.getString("MALFORMED RESPONSE: VALUE TAG IS RESERVED."));
+                throw new IppFailedException(resourceStrings.getString("MALFORMED RESPONSE: VALUE TAG IS RESERVED."),
+                        response);
             }
             return vt;
         }

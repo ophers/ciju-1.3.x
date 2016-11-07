@@ -46,6 +46,32 @@ public class IppFailedException extends RuntimeException {
         super(msg);
     }
     
+    /**
+     * Creates a new instance of <tt>IppFailedException</tt> with no detail
+     * message.
+     * 
+     * @param resp the, possibly partial, IPP response.
+     */
+    public IppFailedException(IppResponse resp) {
+        this.resp = resp;
+    }
+
+    /**
+     * Constructs an instance of <tt>IppFailedException</tt> with the specified
+     * detail message.
+     *
+     * @param msg the detail message.
+     * @param resp the, possibly partial, IPP response.
+     */
+    public IppFailedException(String msg, IppResponse resp) {
+        super(msg);
+        this.resp = resp;
+    }
+    
+    /**
+     * The IPP response.
+     * @return the, possibly partial, IPP response or null if not available.
+     */
     public IppResponse getIppResponse() {
         return resp;
     }
