@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import static org.ciju.client.impl.ipp.Handler.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.IppEncoding.StatusCode;
 import org.ciju.ipp.IppException;
 import org.ciju.ipp.IppMultiObject;
 import org.ciju.ipp.IppObject;
@@ -237,13 +238,14 @@ import org.ciju.ipp.attribute.GenericValue;
     }
 
     /**
-     * Check the response for it's status code and if it's an error throw {@link IppException}
-     * @param <T>
-     * @param resp
-     * @return 
+     * Check the response for it's status code and if it's an error throw {@link IppException}.
+     * @param resp the {@linkplain IppResponse} argument.
+     * @return the <tt>resp</tt> parameter (if an exception was not thrown).
      */
     private <T extends IppObject> IppResponse<T> checkResponse(IppResponse<T> resp) throws IppException {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        if (resp.getResponseCode() >= StatusCode.CLIENT_ERROR_BAD_REQUEST.getValue())
+            throw new IppException(resp, ipp);
+        return resp;
     }
 
 // <editor-fold defaultstate="collapsed" desc="delegated methods">
