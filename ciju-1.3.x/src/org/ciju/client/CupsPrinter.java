@@ -17,14 +17,22 @@
 
 package org.ciju.client;
 
+import java.io.IOException;
 import java.net.Proxy;
 import java.net.URI;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import javax.print.Doc;
 import static org.ciju.client.PrintServer.resourceStrings;
+import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.CupsEncoding;
+import org.ciju.ipp.CupsRequest;
 import org.ciju.ipp.IppEncoding;
+import org.ciju.ipp.IppException;
+import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
+import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
  *
@@ -37,8 +45,27 @@ public class CupsPrinter extends IppPrinter {
     }
 
     // Stub for some unique CUPS Printer methods...
-    public String getPPD() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+
+    /**
+     * The CUPS-Get-PPD operation gets a PPD file from the server. If the PPD file is found
+     * the PPD file is returned.<br/>
+     * If the PPD file cannot be served by the local server because it is an external printer,
+     * an {@link IppException} with status <tt>cups-see-other</tt> is thrown with the correct
+     * URI to use in the {@linkplain IppException#getIppResponse() included response}.<br/>
+     * If the PPD file does not exist, an {@link IppException} with status <tt>client-error-not-found</tt>
+     * is thrown.
+     * 
+     * @return The PPD file for this printer.
+     * @throws IOException if an I/O error occurs.
+     * @throws IppException if the returned status-code doesn't indicate <i>success</i>.
+     * @deprecated
+     */
+    @Deprecated
+    public Doc getPPD() throws IOException, IppException {
+        CupsRequest req = new CupsRequest(CupsEncoding.OpCode.CUPS_GET_PPD, IppEncoding.GroupTag.END);
+        req.addOperationAttribute(new GenericAttribute("printer-uri", this.getUri(), IppEncoding.ValueTag.URI));
+        IppConnection conn = getConnection().setIppRequest(req);
+        return conn.getContent((IppObject) null).getDoc();
     }
 
     public void setAsDefault() {

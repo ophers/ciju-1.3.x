@@ -23,6 +23,8 @@ import javax.print.Doc;
 import javax.print.DocFlavor;
 import javax.print.FlavorException;
 import javax.print.PrintException;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.OpCode;
 import org.ciju.ipp.IppEncoding.ValueTag;
@@ -71,6 +73,12 @@ public class IppRequest extends BaseIppObject {
         newAttributeGroup(firstGroupTag);
     }
 
+    protected IppRequest(short code, int requestId, Locale locale, GroupTag firstGroupTag) {
+        super(code, requestId);
+        this.locale = locale;
+        newAttributeGroup(firstGroupTag);
+    }
+
     private Locale validate(Locale locale) throws NullPointerException, IllegalArgumentException {
         if (locale == null)
             throw new NullPointerException("locale");
@@ -110,7 +118,24 @@ public class IppRequest extends BaseIppObject {
     public DocDataFlavor getDocDataFlavor() {
         return ddf;
     }
- }
+
+//<editor-fold defaultstate="collapsed" desc="add attribute methods made public">
+    @Override
+    public boolean addAllAttributes(AttributeSet as) {
+        return super.addAllAttributes(as);
+    }
+    
+    @Override
+    public boolean addAttribute(Attribute a) {
+        return super.addAttribute(a);
+    }
+    
+    @Override
+    public boolean addOperationAttribute(Attribute a) {
+        return super.addOperationAttribute(a);
+    }
+//</editor-fold>
+}
 
 class DocFlavorException extends PrintException implements FlavorException {
     private static final long serialVersionUID = -4729680667157678227L;

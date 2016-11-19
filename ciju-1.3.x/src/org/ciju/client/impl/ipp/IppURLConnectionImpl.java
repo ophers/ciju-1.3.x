@@ -243,7 +243,7 @@ import org.ciju.ipp.attribute.GenericValue;
      * @return the <tt>resp</tt> parameter (if an exception was not thrown).
      */
     private <T extends IppObject> IppResponse<T> checkResponse(IppResponse<T> resp) throws IppException {
-        if (resp.getResponseCode() >= StatusCode.CLIENT_ERROR_BAD_REQUEST.getValue())
+        if (resp.getResponseCode() >= StatusCode.INFORMATIONAL.getValue())
             throw new IppException(resp, ipp);
         return resp;
     }
