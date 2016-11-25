@@ -94,6 +94,12 @@ public class CupsEncoding extends org.ciju.ipp.IppEncoding {
         CUPS_GET_PPD(0x400F),
 
         // CUPS 1.4 and up
+        /** Set attributes for a printer. */
+        SET_PRINTER_ATTRIBUTES(0x0013),
+        /** Hold new jobs by default. */
+        HOLD_NEW_JOBS(0x0025),
+        /** Releases all jobs that were previously held. */
+        RELEASE_HELD_NEW_JOBS(0x0026),
         /** Get a document file from a job. */
         CUPS_GET_DOCUMENT(0x4027),
         
