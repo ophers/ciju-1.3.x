@@ -18,6 +18,7 @@
 package org.ciju.client.ipp;
 
 import java.io.IOException;
+import java.net.PasswordAuthentication;
 import java.util.List;
 import org.ciju.ipp.IppException;
 import org.ciju.ipp.IppObjectFactory;
@@ -41,7 +42,7 @@ public interface IppConnection {
      * doesn't cause the request to be sent or this object to be connected.
      * <br>Once set the <i>ipp request</i> cannot be cleared.
      * @param request The <code>IppRequest</code> request object.
-     * @return this object (allows for builder pattern)
+     * @return this object (allows for builder pattern).
      * @throws IllegalStateException if already connected
      * @throws NullPointerException if request is <code>null</code>
      */
@@ -54,8 +55,20 @@ public interface IppConnection {
     IppRequest getIppRequest();
 
     /**
-     * Retrieves the content for the {@link IppRequest} sent on this connection.
-     * The given <code>obj</code>, if not null, will be populated with from response data.
+     * Sets the authenticator to use if the server requests it.<p>
+     * Authentication schemes supported and the order of evaluation are implementation dependant.
+     * The default implementation, sub-classing <code>HttpURLConnection</code>, will automatically 
+     * @param authn the username/password to use for authentication.
+     * @throws NullPointerException if <tt>authn</tt> is <code>null</code>.
+     * @return this object (allows for builder pattern).
+     * @see org.ciju.client.impl.ipp.IppURLConnectionImpl. for the default implementations
+     * handling of authentication.
+     */
+    IppConnection setPasswordAuthentication(PasswordAuthentication authn);
+    
+    /**
+     * Retrieves the response for the {@link IppRequest} sent on this connection.
+     * The given <code>obj</code>, if not null, will be populated from response data.
      * @param <T> The class of an {@linkplain IppObject} or a descendant thereof.
      * @param obj The object (a subclass of <code>IppObject</code>) to use as the response.
      *      Can be <code>null</code>.

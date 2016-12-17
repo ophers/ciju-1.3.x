@@ -960,7 +960,7 @@ public abstract class IppTransport {
          * ---------------------
          */
         private Object readIppValue(ValueTag vt, int len) throws ProtocolException, IOException {
-            assert true : "validateConformity(int,imt) must be called prior to this.";
+            assert true : "validateConformity(int,int) must be called prior to this.";
             Locale loc = response.getLocale();  // to be used for NAME/TEXT_WITH_LANGUAGE
             switch (vt) {
                 case UNSUPPORTED:

@@ -25,6 +25,7 @@ import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.ciju.client.impl.Base64Coder;
 import static org.ciju.client.impl.ipp.Handler.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppEncoding.StatusCode;
@@ -204,6 +205,19 @@ import org.ciju.ipp.attribute.GenericValue;
         return ipp;
     }
 
+    /**
+     * {@inheritDoc}
+     * @throws NullPointerException if <tt>authn</tt> is <code>null</code>.
+     */
+    public IppConnection setPasswordAuthentication(PasswordAuthentication authn) {
+        if (connected)
+            throw new IllegalStateException(resourceStrings.getString("ALREADY CONNECTED"));
+        StringBuilder auths = new StringBuilder(authn.getUserName())
+                .append(':').append(authn.getPassword());
+        setRequestProperty("Authorization", "Basic " + Base64Coder.encodeString(auths.toString()));
+        return this;
+    }
+
     @Override
     public OutputStream getOutputStream() throws IOException {
         throw new UnsupportedOperationException(resourceStrings.getString("USE SETIPPREQUEST(...) TO SEND IPP REQUEST."));
@@ -231,9 +245,9 @@ import org.ciju.ipp.attribute.GenericValue;
     public <T extends IppObject> List<T> getContent(IppObjectFactory<T> fact) throws IOException, IppException {
         final List<T> list = new ArrayList<T>();
         final IppMultiObject<T> imo = new IppMultiObject<T>(list, fact);
-        /* ignore the returned IppResponse */
         IppResponse<IppMultiObject<T>> resp = IppTransport.processResponse(getInputStream(), getContentLength(), imo);
         checkResponse(resp);
+        /* ignore the returned IppResponse */
         return list;
     }
 

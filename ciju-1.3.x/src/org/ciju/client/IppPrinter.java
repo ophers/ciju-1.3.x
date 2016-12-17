@@ -18,13 +18,14 @@
 package org.ciju.client;
 
 import java.io.IOException;
-import java.net.Proxy;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 import javax.print.DocFlavor;
 import javax.print.DocPrintJob;
 import javax.print.MultiDocPrintJob;
@@ -39,41 +40,62 @@ import javax.print.attribute.HashPrintServiceAttributeSet;
 import javax.print.attribute.PrintServiceAttribute;
 import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
+import javax.print.attribute.standard.PrinterURI;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
+import static org.ciju.client.PrintServer.logger;
 import static org.ciju.client.PrintServer.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.IppEncoding;
+import org.ciju.ipp.IppException;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
+import org.ciju.ipp.IppRequest;
+import org.ciju.ipp.IppResponse;
+import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
  *
  * @author Opher Shachar
  */
 public class IppPrinter extends IppObject implements PrintService, MultiDocPrintService {
-    private HashPrintServiceAttributeSet psas;
+    private final HashPrintServiceAttributeSet psas;
     /* See javadoc for overview. Presumably there'll be few (if more than one)
        listners registering but many more events fireing */
     private final CopyOnWriteArrayList<PrintServiceAttributeListener> psall;
-    private final URI uri;
-    private final Proxy proxy;
+    private final PrintServer prtsrv;
 
-    protected IppPrinter(URI uri, Proxy proxy) {
+    protected IppPrinter(PrintServer prtsrv, URI uri) {
         if (uri == null)
             throw new NullPointerException("Uri cannot be null!");
-        this.uri = uri;
-        this.proxy = proxy;
+        this.prtsrv = prtsrv;
         psall = new CopyOnWriteArrayList<PrintServiceAttributeListener>();
+        psas = new HashPrintServiceAttributeSet();
+    }
+
+    protected IppPrinter(PrintServer prtsrv) {
+        this.prtsrv = prtsrv;
+        psall = new CopyOnWriteArrayList<PrintServiceAttributeListener>();
+        psas = new HashPrintServiceAttributeSet();
     }
 
     /**
-     * Get the value of uri
-     *
-     * @return the value of uri
+     * Get the value of printer-uri
+     * @return the value of printer-uri
      */
-    public URI getUri() {
-        return uri;
+    public PrinterURI getPrinterUri() {
+        return getAttribute(PrinterURI.class);
+    }
+
+    private IppResponse<IppObject> getContent(IppConnection conn) throws IppException, IOException {
+        return conn.getContent((IppObject) null);
+    }
+
+    private IppRequest createRequest(IppEncoding.OpCode opCode, IppEncoding.GroupTag gTag) {
+        IppRequest req = new IppRequest(opCode, gTag);
+        req.addOperationAttribute(getPrinterUri());
+        req.addOperationAttribute(new GenericAttribute("requesting-user-name", prtsrv.getUserName(), IppEncoding.ValueTag.NAME));
+        return req;
     }
 
     public Collection<? extends IppJob> getJobs() {
@@ -99,7 +121,16 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
     }
     
     protected IppConnection getConnection() throws IOException {
-        return PrintServer.getConnection(uri, proxy);
+        URI uri = getPrinterUri().getURI();
+        try {
+            if (uri.isAbsolute() && uri.getAuthority().equals("localhost"))
+                // create a relative uri
+                uri = new URI(null, null, uri.getPath(), uri.getQuery(), uri.getFragment());
+        } catch (URISyntaxException ex) {
+            // cannot happen
+            logger.log(Level.SEVERE, null, ex);
+        }
+        return prtsrv.getConnection(uri);
     }
 
     public String getName() {
@@ -135,13 +166,11 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
     }
 
     public PrintServiceAttributeSet getAttributes() {
-        // FIXME: Get the 'printer-description' attribute from a Get-Printer-Attributes
-        // psas = ...
         return AttributeSetUtilities.unmodifiableView(psas);
     }
 
     public <T extends PrintServiceAttribute> T getAttribute(Class<T> category) {
-        return category.cast(getAttributes().get(category));
+        return category.cast(psas.get(category));
     }
 
     public DocFlavor[] getSupportedDocFlavors() {
@@ -196,7 +225,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
     }
 
     protected boolean addAttribute(Attribute a) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return psas.add(a);
     }
 
     protected boolean addAllAttributes(AttributeSet as) {
@@ -213,4 +242,14 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
         else
             return false;
     }
+    
+// <editor-fold desc="IPP operations">
+    
+    public void disable() throws IOException, IppException {
+        IppRequest req = createRequest(IppEncoding.OpCode.DISABLE_PRINTER, IppEncoding.GroupTag.END);
+        IppConnection conn = getConnection().setIppRequest(req);
+        getContent(conn);
+    }
+    
+// </editor-fold>
 }

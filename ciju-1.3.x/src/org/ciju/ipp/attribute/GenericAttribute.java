@@ -37,6 +37,15 @@ import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
+import javax.print.attribute.standard.PrinterInfo;
+import javax.print.attribute.standard.PrinterIsAcceptingJobs;
+import javax.print.attribute.standard.PrinterLocation;
+import javax.print.attribute.standard.PrinterMakeAndModel;
+import javax.print.attribute.standard.PrinterMoreInfo;
+import javax.print.attribute.standard.PrinterMoreInfoManufacturer;
+import javax.print.attribute.standard.PrinterName;
+import javax.print.attribute.standard.PrinterState;
+import javax.print.attribute.standard.PrinterURI;
 import org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
@@ -316,7 +325,7 @@ public class GenericAttribute implements Attribute, List<Object> {
         validateSyntax(o);
         return list.add(o);
     }
-        
+    
     /**
      * {@inheritDoc}
      * <p><b><u>Note</u>:</b> This will take time linear to <tt>c.size()</tt> as
@@ -376,6 +385,63 @@ public class GenericAttribute implements Attribute, List<Object> {
         return list.set(index, element);
     }
     
+    /**
+     *
+     * @return
+     */
+    public Attribute subst() {
+        // extract actual object of attribute's value
+        Object o = get(0);
+        if (o instanceof GenericValue)
+            o = ((GenericValue)o).getValue();
+        
+        if ((name.equals("printer-uri") || name.equals("printer-uri-supported"))
+                && o instanceof URI) {
+            return new PrinterURI((URI) o);
+        }
+        else if (name.equals("printer-name") && o instanceof TextSyntax) {
+            TextSyntax ts = (TextSyntax) o;
+            return new PrinterName(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("printer-location") && o instanceof TextSyntax) {
+            TextSyntax ts = (TextSyntax) o;
+            return new PrinterLocation(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("printer-info") && o instanceof TextSyntax) {
+            TextSyntax ts = (TextSyntax) o;
+            return new PrinterInfo(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("printer-more-info") && o instanceof URI) {
+            return new PrinterMoreInfo((URI) o);
+        }
+        else if (name.equals("printer-make-and-model") && o instanceof TextSyntax) {
+            TextSyntax ts = (TextSyntax) o;
+            return new PrinterMakeAndModel(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("printer-more-info-manufacturer") && o instanceof URI) {
+            return new PrinterMoreInfoManufacturer((URI) o);
+        }
+        else if (name.equals("printer-state") && o instanceof Integer) {
+            switch ((Integer) o) {
+                case 3:
+                    return PrinterState.IDLE;
+                case 4:
+                    return PrinterState.PROCESSING;
+                case 5:
+                    return PrinterState.STOPPED;
+                default:
+                    return PrinterState.UNKNOWN;
+            }
+        }
+        else if (name.equals("printer-is-accepting-jobs") && o instanceof Boolean) {
+            return (Boolean) o ? PrinterIsAcceptingJobs.ACCEPTING_JOBS
+                    : PrinterIsAcceptingJobs.NOT_ACCEPTING_JOBS;
+        }
+
+        // if nothing matched return self
+        return this;
+    }
+    
     @Override
     public String toString() {
         if (list.isEmpty())
@@ -388,7 +454,7 @@ public class GenericAttribute implements Attribute, List<Object> {
         }
         return sb.toString();
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (o == null || !(o instanceof GenericAttribute))
@@ -397,7 +463,7 @@ public class GenericAttribute implements Attribute, List<Object> {
         return name.equals(other.name) &&
                 list.equals(other.list);
     }
-
+    
     @Override
     public int hashCode() {
         int hash = 7;
@@ -405,7 +471,7 @@ public class GenericAttribute implements Attribute, List<Object> {
         hash = 19 * hash + list.hashCode();
         return hash;
     }
-    
+
 //<editor-fold defaultstate="collapsed" desc="unmodList delegated methods">
     /**
      * {@inheritDoc}

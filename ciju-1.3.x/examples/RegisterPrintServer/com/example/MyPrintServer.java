@@ -17,6 +17,7 @@
 
 package com.example;
 
+import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.AccessController;
@@ -40,10 +41,11 @@ public class MyPrintServer extends javax.print.PrintServiceLookup {
         return AccessController.doPrivileged(new PrivilegedAction<PrintServiceLookup>() {
             public PrintServiceLookup run() {
                 try {
-                    // Normally get URI dynamically from configuration somewhere
+                    // Normally get URI and authentication dynamically from configuration somewhere
                     final URI uri = new URI("ipps", "ps1.sales.local", "/", null);
+                    final PasswordAuthentication authn = new PasswordAuthentication("user", "password".toCharArray());
                     // Create a org.​ciju.​client.PrintServer
-                    return PrintServer.create(uri, null);
+                    return PrintServer.create(uri, null, authn);
                 } catch (URISyntaxException ex) {
                     throw new RuntimeException(ex);
                     // Alternatively, log the error and return null

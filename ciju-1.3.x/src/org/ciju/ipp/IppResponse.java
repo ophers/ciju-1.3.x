@@ -30,6 +30,7 @@ import javax.print.attribute.Attribute;
 import javax.print.attribute.AttributeSet;
 import org.ciju.ipp.IppEncoding.GroupTag;
 import org.ciju.ipp.IppEncoding.StatusCode;
+import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
  *
@@ -76,8 +77,11 @@ public class IppResponse<T extends IppObject> extends BaseIppObject {
 
     @Override
     protected boolean addAttribute(Attribute a) {
-        if (addToObj)
+        if (addToObj) {
+            if (a instanceof GenericAttribute)
+                a = ((GenericAttribute)a).subst();
             return obj.addAttribute(a);
+        }
         else
             return super.addAttribute(a);
     }

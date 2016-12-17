@@ -52,7 +52,7 @@ public class IppJob extends IppObject implements DocPrintJob, MultiDocPrintJob, 
 
     private final IppPrinter printer;
     /* See javadoc for overview. Presumably there'll be few (if more than one)
-       listners registering but many more events fireing */
+       listners registering but many more events firing */
     private final CopyOnWriteArrayList<PrintJobListener> pjll;
     private final CopyOnWriteArrayList<PrintJobAttributeListenerEntry> pjall;
 

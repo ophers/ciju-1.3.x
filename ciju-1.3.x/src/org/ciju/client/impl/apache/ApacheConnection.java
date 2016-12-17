@@ -18,6 +18,7 @@
 package org.ciju.client.impl.apache;
 
 import java.io.IOException;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URI;
 import java.util.List;
@@ -50,4 +51,7 @@ public class ApacheConnection implements IppConnection {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    public IppConnection setPasswordAuthentication(PasswordAuthentication authn) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

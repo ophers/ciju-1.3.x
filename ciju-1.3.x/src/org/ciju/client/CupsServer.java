@@ -17,14 +17,23 @@
 
 package org.ciju.client;
 
+import java.io.IOException;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URI;
-//import java.util.logging.Level;
+import java.util.logging.Level;
 //import java.util.logging.Logger;
 import javax.print.DocFlavor;
 import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
 import javax.print.attribute.AttributeSet;
+import org.ciju.client.ipp.IppConnection;
+import org.ciju.ipp.CupsEncoding;
+import org.ciju.ipp.CupsRequest;
+import org.ciju.ipp.IppEncoding;
+import org.ciju.ipp.IppException;
+import org.ciju.ipp.IppResponse;
+import org.ciju.ipp.attribute.GenericAttribute;
 
 
 public class CupsServer extends PrintServer {
@@ -36,8 +45,15 @@ public class CupsServer extends PrintServer {
 //        logger = Logger.getLogger(name.substring(0, name.lastIndexOf('.')));
 //    }
 
-    public CupsServer(URI uri, Proxy proxy) {
-        super(uri, proxy);
+    public CupsServer(URI uri, Proxy proxy, PasswordAuthentication authn) {
+        super(uri, proxy, authn);
+    }
+
+    private CupsRequest createRequest(CupsEncoding.OpCode opCode, IppEncoding.GroupTag gTag) {
+        CupsRequest req = new CupsRequest(opCode, gTag);
+        req.addOperationAttribute(new GenericAttribute("printer-uri", getUri(), IppEncoding.ValueTag.URI));
+        req.addOperationAttribute(new GenericAttribute("requesting-user-name", getUserName(), IppEncoding.ValueTag.NAME));
+        return req;
     }
 
     @Override
@@ -57,7 +73,18 @@ public class CupsServer extends PrintServer {
 
     @Override
     public PrintService getDefaultPrintService() {
-        return super.getDefaultPrintService(); //To change body of generated methods, choose Tools | Templates.
+        try {
+            CupsRequest req = createRequest(CupsEncoding.OpCode.CUPS_GET_DEFAULT, IppEncoding.GroupTag.END);
+            IppConnection conn = getConnection().setIppRequest(req);
+            CupsPrinter prt = new CupsPrinter(this);
+            IppResponse<CupsPrinter> resp = conn.getContent(prt);
+            return resp.getObject();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (IppException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
 
 }

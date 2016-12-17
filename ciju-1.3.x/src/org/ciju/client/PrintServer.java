@@ -18,6 +18,7 @@
 package org.ciju.client;
 
 import java.io.IOException;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URI;
 import java.security.AccessController;
@@ -46,6 +47,7 @@ public class PrintServer extends PrintServiceLookup {
     private final SecurityManager sm;
     private final URI uri;
     private final Proxy proxy;
+    private final PasswordAuthentication authn;
 
     // Logging facilities
     private static final String packageName;
@@ -117,13 +119,14 @@ public class PrintServer extends PrintServiceLookup {
         eventDispatcher.enqueuePrintEvent(event, listeners);
     }
 
-    protected PrintServer(URI uri, Proxy proxy) {
+    protected PrintServer(URI uri, Proxy proxy, PasswordAuthentication authn) {
         if (!uri.getScheme().equalsIgnoreCase("ipp") && 
             !uri.getScheme().equalsIgnoreCase("ipps"))
             throw new IllegalArgumentException(resourceStrings.getString("ONLY 'IPP' AND 'IPPS' URIS ARE SUPPORTED."));
         sm = System.getSecurityManager();
         this.uri = uri;
         this.proxy = proxy;
+        this.authn = authn;
     }
 
     private enum Type { CUPS, DEFAULT }
@@ -138,14 +141,27 @@ public class PrintServer extends PrintServiceLookup {
      * 
      * @param uri the URI of the Print Server
      * @param proxy the proxy to use. May be null.
-     * @return
+     * @return a <tt>PrintServer</tt> instance.
      */
     public static PrintServer create(URI uri, Proxy proxy) {
+        return create(uri, proxy, null);
+    }
+
+    /**
+     * Create an instance of a {@link PrintServer} given its {@link URI uri},
+     * a {@link Proxy} and an authenticator.
+     * 
+     * @param uri the URI of the Print Server
+     * @param proxy the proxy to use. May be null.
+     * @param authn the username/password to use for authentication.
+     * @return a <tt>PrintServer</tt> instance.
+     */
+    public static PrintServer create(URI uri, Proxy proxy, PasswordAuthentication authn) {
         switch (checkServerType(uri, proxy)) {
             case CUPS:
-                return new CupsServer(uri, proxy);
+                return new CupsServer(uri, proxy, authn);
             case DEFAULT:
-                return new PrintServer(uri, proxy);
+                return new PrintServer(uri, proxy, authn);
             default:
                 logger.logp(Level.SEVERE, PrintServer.class.getName(), "create",
                         "THE SERVER REPRESENTED BY {0} IS UNSUPPORTED!", uri);
@@ -162,22 +178,42 @@ public class PrintServer extends PrintServiceLookup {
         return uri;
     }
 
+    protected String getUserName() {
+        if (authn != null)
+            return authn.getUserName();
+        else
+            return AccessController.doPrivileged(new PrivilegedAction<String>() {
+                public String run() {
+                    return System.getProperty("user.name");
+                }
+            });
+    }
+
     protected IppConnection getConnection() throws IOException {
-        return getConnection(uri, proxy);
+        return getConnection(uri, proxy, authn);
+    }
+
+    protected IppConnection getConnection(URI prtUri) throws IOException {
+        if (!prtUri.isAbsolute() && prtUri.getAuthority() == null)
+            // Only use given uri for connection if it points to this server
+            return getConnection(uri.resolve(prtUri), proxy, authn);
+        // Otherwise, connect to this server ignoring printer-uri 
+        return getConnection(uri, proxy, authn);
     }
 
     private enum ConnLib { URLC, APACHE }
     private static ConnLib connLib;
-    /* package */ static IppConnection getConnection(URI uri, Proxy proxy) throws IOException {
+    private static IppConnection getConnection(URI uri, Proxy proxy, PasswordAuthentication authn) throws IOException {
+        IppConnection conn;
+        
         if (connLib == null) {
             // This is the first connection to be requested. Decide on a connection library.
             synchronized (PrintServer.class) {
                 /* FWIW: The Double-checked locking pattern here is safe as connLib is an enum. */
                 if (connLib == null) {
                     try {
-                        IppConnection conn = new ApacheConnection(uri, proxy);
+                        conn = new ApacheConnection(uri, proxy);
                         connLib = ConnLib.APACHE;
-                        return conn;
                     } catch (NoClassDefFoundError e) {
                         // Apache http client is not available.
                         connLib = ConnLib.URLC;
@@ -187,14 +223,19 @@ public class PrintServer extends PrintServiceLookup {
         }
         switch (connLib) {
             case APACHE:
-                return new ApacheConnection(uri, proxy);
+                conn = new ApacheConnection(uri, proxy);
+                break;
             case URLC:
-                return Handler.openConnection(uri, proxy);
+                conn = Handler.openConnection(uri, proxy);
+                break;
             default:
                 // We should never get here
                 throw new AssertionError(
                         resourceStrings.getString("UNEXPECTED CONNECTION LIBRARY CONFIGURED!"));
         }
+        if (authn != null)
+            conn.setPasswordAuthentication(authn);
+        return conn;
     }
 
     @Override
@@ -209,7 +250,7 @@ public class PrintServer extends PrintServiceLookup {
         if (sm != null)
             sm.checkPrintJobAccess();
         // It is assumed that the IPP URI is of a print device
-        return new PrintService[] { new IppPrinter(uri, proxy) };
+        return new PrintService[] { new IppPrinter(this, uri) };
     }
 
     @Override
@@ -224,7 +265,7 @@ public class PrintServer extends PrintServiceLookup {
         if (sm != null)
             sm.checkPrintJobAccess();
         // It is assumed that the IPP URI is of a print device
-        return new IppPrinter(uri, proxy);
+        return new IppPrinter(this, uri);
     }
 
 }
