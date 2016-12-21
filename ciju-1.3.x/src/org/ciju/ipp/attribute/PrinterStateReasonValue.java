@@ -14,28 +14,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package org.ciju.ipp.attribute;
 
-package javax.print.attribute;
-
-import javax.print.attribute.standard.PDLOverrideSupported;
-import org.ciju.ipp.IppEncoding.ValueTag;
+import javax.print.attribute.EnumSyntax;
+import javax.print.attribute.standard.PrinterStateReason;
 
 /**
  *
  * @author Opher Shachar
  */
-public class CijuAttributeUtils {
-    
-    public static ValueTag deduceEnumIPPSyntax(EnumSyntax o) {
-        int i = o.getOffset();
-        int n = o.getEnumValueTable().length;
-        if (i > 0)
-            return ValueTag.ENUM;
-        else if (n == 2 &&
-                !(o instanceof PDLOverrideSupported))
-            return ValueTag.BOOLEAN;
-        else
-            return ValueTag.KEYWORD;
+public class PrinterStateReasonValue extends PrinterStateReason {
+
+    private static final long serialVersionUID = -6282716335171997741L;
+
+    private final String s;
+
+    public PrinterStateReasonValue(String s) {
+        super(0);
+        this.s = s;
     }
 
+    @Override
+    protected EnumSyntax[] getEnumValueTable() {
+        return new EnumSyntax[] { this };
+    }
+
+    @Override
+    protected String[] getStringTable() {
+        return new String[] { s };
+    }
+    
 }

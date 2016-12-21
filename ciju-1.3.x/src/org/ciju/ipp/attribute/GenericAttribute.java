@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.DateTimeSyntax;
@@ -37,15 +38,27 @@ import javax.print.attribute.SetOfIntegerSyntax;
 import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
+import javax.print.attribute.standard.ColorSupported;
+import javax.print.attribute.standard.JobImpressionsSupported;
+import javax.print.attribute.standard.JobKOctetsSupported;
+import javax.print.attribute.standard.JobMediaSheetsSupported;
+import javax.print.attribute.standard.PDLOverrideSupported;
+import javax.print.attribute.standard.PagesPerMinute;
+import javax.print.attribute.standard.PagesPerMinuteColor;
 import javax.print.attribute.standard.PrinterInfo;
 import javax.print.attribute.standard.PrinterIsAcceptingJobs;
 import javax.print.attribute.standard.PrinterLocation;
 import javax.print.attribute.standard.PrinterMakeAndModel;
+import javax.print.attribute.standard.PrinterMessageFromOperator;
 import javax.print.attribute.standard.PrinterMoreInfo;
 import javax.print.attribute.standard.PrinterMoreInfoManufacturer;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.attribute.standard.PrinterState;
+import javax.print.attribute.standard.PrinterStateReason;
+import javax.print.attribute.standard.PrinterStateReasons;
 import javax.print.attribute.standard.PrinterURI;
+import javax.print.attribute.standard.QueuedJobCount;
+import javax.print.attribute.standard.Severity;
 import org.ciju.ipp.IppEncoding.ValueTag;
 
 /**
@@ -390,38 +403,39 @@ public class GenericAttribute implements Attribute, List<Object> {
      * @return
      */
     public Attribute subst() {
-        // extract actual object of attribute's value
-        Object o = get(0);
-        if (o instanceof GenericValue)
-            o = ((GenericValue)o).getValue();
+        assert get(0) instanceof GenericValue :
+                "This method should only be called on self constructed instances.";
         
-        if ((name.equals("printer-uri") || name.equals("printer-uri-supported"))
-                && o instanceof URI) {
+        // extract actual object of attribute's value
+        Object o = ((GenericValue) get(0)).getValue();
+        
+        /* Printer Description Attributes, https://tools.ietf.org/html/rfc2911#section-4.4 */
+        if (name.equals("printer-uri") || name.equals("printer-uri-supported")) {
             return new PrinterURI((URI) o);
         }
-        else if (name.equals("printer-name") && o instanceof TextSyntax) {
+        else if (name.equals("printer-name")) {
             TextSyntax ts = (TextSyntax) o;
             return new PrinterName(ts.getValue(), ts.getLocale());
         }
-        else if (name.equals("printer-location") && o instanceof TextSyntax) {
+        else if (name.equals("printer-location")) {
             TextSyntax ts = (TextSyntax) o;
             return new PrinterLocation(ts.getValue(), ts.getLocale());
         }
-        else if (name.equals("printer-info") && o instanceof TextSyntax) {
+        else if (name.equals("printer-info")) {
             TextSyntax ts = (TextSyntax) o;
             return new PrinterInfo(ts.getValue(), ts.getLocale());
         }
-        else if (name.equals("printer-more-info") && o instanceof URI) {
+        else if (name.equals("printer-more-info")) {
             return new PrinterMoreInfo((URI) o);
         }
-        else if (name.equals("printer-make-and-model") && o instanceof TextSyntax) {
+        else if (name.equals("printer-make-and-model")) {
             TextSyntax ts = (TextSyntax) o;
             return new PrinterMakeAndModel(ts.getValue(), ts.getLocale());
         }
-        else if (name.equals("printer-more-info-manufacturer") && o instanceof URI) {
+        else if (name.equals("printer-more-info-manufacturer")) {
             return new PrinterMoreInfoManufacturer((URI) o);
         }
-        else if (name.equals("printer-state") && o instanceof Integer) {
+        else if (name.equals("printer-state")) {
             switch ((Integer) o) {
                 case 3:
                     return PrinterState.IDLE;
@@ -433,13 +447,85 @@ public class GenericAttribute implements Attribute, List<Object> {
                     return PrinterState.UNKNOWN;
             }
         }
-        else if (name.equals("printer-is-accepting-jobs") && o instanceof Boolean) {
+        else if (name.equals("printer-state-reasons")) {
+            // This is a multivalued type of attribute
+            return substPrinterStateReasons();
+        }
+        else if (name.equals("printer-is-accepting-jobs")) {
             return (Boolean) o ? PrinterIsAcceptingJobs.ACCEPTING_JOBS
                     : PrinterIsAcceptingJobs.NOT_ACCEPTING_JOBS;
+        }
+        else if (name.equals("queued-job-count")) {
+            return new QueuedJobCount((Integer) o);
+        }
+        else if (name.equals("printer-message-from-operator")) {
+            TextSyntax ts = (TextSyntax) o;
+            return new PrinterMessageFromOperator(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("color-supported")) {
+            return (Boolean) o ? ColorSupported.SUPPORTED
+                    : ColorSupported.NOT_SUPPORTED;
+        }
+        else if (name.equals("reference-uri-schemes-supported")) {
+            // FIXME: not quite sure how to handle this ...
+        }
+        else if (name.equals("pdl-override-supported")) {
+            if ("attempted".equals(o))
+                return PDLOverrideSupported.ATTEMPTED;
+            else if ("not-attempted".equals(o))
+                return PDLOverrideSupported.NOT_ATTEMPTED;
+        }
+        else if (name.equals("job-k-octets-supported")) {
+            return new JobKOctetsSupported(((int[]) o)[0], ((int[]) o)[1]);
+        }
+        else if (name.equals("job-impressions-supported")) {
+            return new JobImpressionsSupported(((int[]) o)[0], ((int[]) o)[1]);
+        }
+        else if (name.equals("job-media-sheets-supported")) {
+            return new JobMediaSheetsSupported(((int[]) o)[0], ((int[]) o)[1]);
+        }
+        else if (name.equals("pages-per-minute")) {
+            return new PagesPerMinute((Integer) o);
+        }
+        else if (name.equals("pages-per-minute-color")) {
+            return new PagesPerMinuteColor((Integer) o);
         }
 
         // if nothing matched return self
         return this;
+    }
+
+    private Attribute substPrinterStateReasons() {
+        // This is a multivalued type of attribute
+        PrinterStateReasons psrs = new PrinterStateReasons(size() * 4/3 + 1);
+        for (Object gv : this) {
+            String s = (String) ((GenericValue) gv).getValue();
+            // get severity
+            int i = s.lastIndexOf('-');
+            Severity sev = Severity.ERROR;
+            if (i > 0 /* ss is a postfix */) {
+                String ss = s.substring(i);
+                if (ss.equals("-report"))
+                    sev = Severity.REPORT;
+                else if (ss.equals("-warning"))
+                    sev = Severity.WARNING;
+                s = s.substring(0, i);
+            }
+            PrinterStateReason psr = null;
+            try {
+                psr = (PrinterStateReason) PrinterStateReason.class
+                        .getField(s.replace('-', '_').toUpperCase()).get(null);
+            } catch (IllegalArgumentException ex) { /* irrelevant */
+            } catch (IllegalAccessException ex) { /* irrelevant */
+            } catch (NoSuchFieldException ex) {
+            } catch (SecurityException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+            if (psr == null)
+                psr = new PrinterStateReasonValue(s);
+            psrs.put(psr, sev);
+        }
+        return psrs;
     }
     
     @Override

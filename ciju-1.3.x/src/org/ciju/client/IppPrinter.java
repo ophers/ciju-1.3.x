@@ -41,6 +41,7 @@ import javax.print.attribute.PrintServiceAttribute;
 import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
 import javax.print.attribute.standard.PrinterURI;
+import javax.print.attribute.standard.RequestingUserName;
 import javax.print.event.PrintServiceAttributeEvent;
 import javax.print.event.PrintServiceAttributeListener;
 import static org.ciju.client.PrintServer.logger;
@@ -52,7 +53,6 @@ import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppRequest;
 import org.ciju.ipp.IppResponse;
-import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
  *
@@ -94,7 +94,7 @@ public class IppPrinter extends IppObject implements PrintService, MultiDocPrint
     private IppRequest createRequest(IppEncoding.OpCode opCode, IppEncoding.GroupTag gTag) {
         IppRequest req = new IppRequest(opCode, gTag);
         req.addOperationAttribute(getPrinterUri());
-        req.addOperationAttribute(new GenericAttribute("requesting-user-name", prtsrv.getUserName(), IppEncoding.ValueTag.NAME));
+        req.addOperationAttribute(new RequestingUserName(prtsrv.getUserName(), req.getLocale()));
         return req;
     }
 

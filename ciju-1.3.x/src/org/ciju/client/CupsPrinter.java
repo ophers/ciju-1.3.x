@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.logging.Level;
 import javax.print.Doc;
+import javax.print.attribute.standard.RequestingUserName;
 import static org.ciju.client.PrintServer.logger;
 import static org.ciju.client.PrintServer.resourceStrings;
 import org.ciju.client.ipp.IppConnection;
@@ -35,7 +36,6 @@ import org.ciju.ipp.IppException;
 import org.ciju.ipp.IppObject;
 import org.ciju.ipp.IppObjectFactory;
 import org.ciju.ipp.IppResponse;
-import org.ciju.ipp.attribute.GenericAttribute;
 
 /**
  *
@@ -62,7 +62,7 @@ public class CupsPrinter extends IppPrinter {
     private CupsRequest createRequest(CupsEncoding.OpCode opCode, IppEncoding.GroupTag gTag) {
         CupsRequest req = new CupsRequest(opCode, gTag);
         req.addOperationAttribute(getPrinterUri());
-        req.addOperationAttribute(new GenericAttribute("requesting-user-name", prtsrv.getUserName(), IppEncoding.ValueTag.NAME));
+        req.addOperationAttribute(new RequestingUserName(prtsrv.getUserName(), req.getLocale()));
         return req;
     }
 

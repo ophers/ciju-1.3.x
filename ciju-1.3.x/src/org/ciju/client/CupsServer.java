@@ -22,11 +22,11 @@ import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URI;
 import java.util.logging.Level;
-//import java.util.logging.Logger;
 import javax.print.DocFlavor;
 import javax.print.MultiDocPrintService;
 import javax.print.PrintService;
 import javax.print.attribute.AttributeSet;
+import javax.print.attribute.standard.RequestingUserName;
 import org.ciju.client.ipp.IppConnection;
 import org.ciju.ipp.CupsEncoding;
 import org.ciju.ipp.CupsRequest;
@@ -52,7 +52,7 @@ public class CupsServer extends PrintServer {
     private CupsRequest createRequest(CupsEncoding.OpCode opCode, IppEncoding.GroupTag gTag) {
         CupsRequest req = new CupsRequest(opCode, gTag);
         req.addOperationAttribute(new GenericAttribute("printer-uri", getUri(), IppEncoding.ValueTag.URI));
-        req.addOperationAttribute(new GenericAttribute("requesting-user-name", getUserName(), IppEncoding.ValueTag.NAME));
+        req.addOperationAttribute(new RequestingUserName(getUserName(), req.getLocale()));
         return req;
     }
 

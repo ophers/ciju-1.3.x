@@ -75,7 +75,7 @@ public class IppRequest extends BaseIppObject {
 
     protected IppRequest(short code, int requestId, Locale locale, GroupTag firstGroupTag) {
         super(code, requestId);
-        this.locale = locale;
+        this.locale = validate(locale);
         newAttributeGroup(firstGroupTag);
     }
 
