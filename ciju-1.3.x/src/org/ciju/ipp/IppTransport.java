@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
-import java.net.ProtocolException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.BufferOverflowException;
@@ -847,7 +846,7 @@ public abstract class IppTransport {
         }
 
         /** check the value-tag and value-length against the Conformity level */
-        private ValueTag validateConformity(int b, int len) throws ProtocolException {
+        private ValueTag validateConformity(int b, int len) {
             assert len >= Short.MIN_VALUE && len <= Short.MAX_VALUE : "len is short";
             final ValueTag vt;
             if (len < 0)
@@ -869,7 +868,7 @@ public abstract class IppTransport {
             return vt;
         }
 
-        private void validateConformity(ValueTag vt, int len) throws ProtocolException {
+        private void validateConformity(ValueTag vt, int len) {
             switch (vt) {
                 case UNSUPPORTED:
                 case UNKNOWN:
@@ -878,47 +877,48 @@ public abstract class IppTransport {
                 case DELETE_ATTRIBUTE:
                 case ADMIN_DEFINE:                      // the above out-of-band values
                     if (len != 0)                       // have zero-length
-                        throw new ProtocolException(MessageFormat.format(
-                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"), vt));
+                        throw new IppFailedException(MessageFormat.format(
+                                resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST HAVE NO VALUE!"),
+                                vt), response);
                     break;
                 case INTEGER:
                 case ENUM:
                     if (len != 4)
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 4, len));
+                                vt, 4, len), response);
                     break;
                 case BOOLEAN:
                     if (len != 1)
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 1, len));
+                                vt, 1, len), response);
                     break;
                 case DATE_TIME:
                     if (len != 11)
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 11, len));
+                                vt, 11, len), response);
                     break;
                 case RESOLUTION:
                     if (len != 9)
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 9, len));
+                                vt, 9, len), response);
                     break;
                 case RANGE_OF_INTEGER:
                     if (len != 8)
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, MUST BE {1} BYTES LONG NOT {2}!"),
-                                vt, 8, len));
+                                vt, 8, len), response);
                     break;
                 case TEXT_WITH_LANGUAGE:
                 case NAME_WITH_LANGUAGE:
                     if (response.conformity == Conformity.STRICT &&
                             len > vt.MAX + ValueTag.NATURAL_LANGUAGE.MAX + 4) // 4 = 2x length fields
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
-                                vt, vt.MAX + ValueTag.NATURAL_LANGUAGE.MAX + 4, len));
+                                vt, vt.MAX + ValueTag.NATURAL_LANGUAGE.MAX + 4, len), response);
                     break;
                 case OCTET_STRING:
                 case TEXT_WITHOUT_LANGUAGE:
@@ -932,9 +932,9 @@ public abstract class IppTransport {
                 case MEMBER_ATTR_NAME:
                     if (response.conformity == Conformity.STRICT &&
                             len > vt.MAX)
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("MALFORMED RESPONSE: VALUE-TYPE, {0}, MUST BE AT MOST {1} BYTES LONG (GOT {2})."),
-                                vt, vt.MAX, len));
+                                vt, vt.MAX, len), response);
                     break;
                 case BEGIN_COLLECTION:
                 case END_COLLECTION:
@@ -959,7 +959,7 @@ public abstract class IppTransport {
          * |          value    |   v bytes
          * ---------------------
          */
-        private Object readIppValue(ValueTag vt, int len) throws ProtocolException, IOException {
+        private Object readIppValue(ValueTag vt, int len) throws IOException {
             assert true : "validateConformity(int,int) must be called prior to this.";
             Locale loc = response.getLocale();  // to be used for NAME/TEXT_WITH_LANGUAGE
             switch (vt) {
@@ -1005,9 +1005,9 @@ public abstract class IppTransport {
                     loc = parseNaturalLanguage(readString(len1, usa));
                     int len2 = in.readShort();
                     if (len != len1 + len2 + 4) // 4 == 2x length fields
-                        throw new ProtocolException(MessageFormat.format(
+                        throw new IppFailedException(MessageFormat.format(
                                 resourceStrings.getString("PRINT SERVER BROKEN: VALUE-TYPE, {0}, HAS LENGTH, {1}, THAT DOESN'T CORRESPOND TO THE SUM OF IT'S PARTS, {2}!"),
-                                vt, len, len1 + len2 + 4));
+                                vt, len, len1 + len2 + 4), response);
                     validateConformity(vt == ValueTag.NAME_WITH_LANGUAGE?
                             ValueTag.NAME_WITHOUT_LANGUAGE : ValueTag.TEXT_WITHOUT_LANGUAGE,
                             len2);
@@ -1031,9 +1031,9 @@ public abstract class IppTransport {
                         return new URI(readString(len, usa));
                     }
                     catch (URISyntaxException ex) {
-                        ProtocolException pe = new ProtocolException();
-                        pe.initCause(ex);
-                        throw pe;
+                        IppFailedException ife = new IppFailedException(response);
+                        ife.initCause(ex);
+                        throw ife;
                     }
                 case TEXT:
                 case NAME:  // TEXT, NAME could never be (here for completeness)
