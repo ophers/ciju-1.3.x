@@ -156,7 +156,7 @@ import org.ciju.ipp.attribute.GenericValue;
      * {@inheritDoc}
      * <p>NOTE: The request method is set by default to <code>POST</code>
      * and may not be set a different value.
-     * @throws ProtocolException if trying to set <code>method</code>
+     * @throws IllegalArgumentException if trying to set <code>method</code>
      * to anything other than <code>POST</code>.
      */
     @Override
