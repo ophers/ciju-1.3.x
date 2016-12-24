@@ -17,19 +17,19 @@
 package org.ciju.ipp.attribute;
 
 import javax.print.attribute.EnumSyntax;
-import javax.print.attribute.standard.PrinterStateReason;
+import javax.print.attribute.standard.JobStateReason;
 
 /**
  *
  * @author Opher Shachar
  */
-public class PrinterStateReasonValue extends PrinterStateReason {
+class JobStateReasonValue extends JobStateReason {
 
-    private static final long serialVersionUID = -6282716335171997741L;
+    private static final long serialVersionUID = -8301378134759216819L;
 
     private final String s;
 
-    public PrinterStateReasonValue(String s) {
+    public JobStateReasonValue(String s) {
         super(0);
         this.s = s;
     }

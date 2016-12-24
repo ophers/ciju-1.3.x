@@ -17,7 +17,6 @@
 
 package org.ciju.ipp.attribute;
 
-import java.net.ProtocolException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,9 +38,27 @@ import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.TextSyntax;
 import javax.print.attribute.URISyntax;
 import javax.print.attribute.standard.ColorSupported;
+import javax.print.attribute.standard.DateTimeAtCompleted;
+import javax.print.attribute.standard.DateTimeAtCreation;
+import javax.print.attribute.standard.DateTimeAtProcessing;
+import javax.print.attribute.standard.JobImpressions;
+import javax.print.attribute.standard.JobImpressionsCompleted;
 import javax.print.attribute.standard.JobImpressionsSupported;
+import javax.print.attribute.standard.JobKOctets;
+import javax.print.attribute.standard.JobKOctetsProcessed;
 import javax.print.attribute.standard.JobKOctetsSupported;
+import javax.print.attribute.standard.JobMediaSheets;
+import javax.print.attribute.standard.JobMediaSheetsCompleted;
 import javax.print.attribute.standard.JobMediaSheetsSupported;
+import javax.print.attribute.standard.JobMessageFromOperator;
+import javax.print.attribute.standard.JobName;
+import javax.print.attribute.standard.JobOriginatingUserName;
+import javax.print.attribute.standard.JobState;
+import javax.print.attribute.standard.JobStateReason;
+import javax.print.attribute.standard.JobStateReasons;
+import javax.print.attribute.standard.NumberOfDocuments;
+import javax.print.attribute.standard.NumberOfInterveningJobs;
+import javax.print.attribute.standard.OutputDeviceAssigned;
 import javax.print.attribute.standard.PDLOverrideSupported;
 import javax.print.attribute.standard.PagesPerMinute;
 import javax.print.attribute.standard.PagesPerMinuteColor;
@@ -127,11 +144,11 @@ public class GenericAttribute implements Attribute, List<Object> {
         this(name, GenericAttribute.class, 1, value, vt);
     }
 
-    public GenericAttribute(String name, int initCapacity, Object value, ValueTag vt) throws ProtocolException {
+    public GenericAttribute(String name, int initCapacity, Object value, ValueTag vt) {
         this(name, GenericAttribute.class, initCapacity, value, vt);
     }
 
-    public GenericAttribute(String name, Class<? extends Attribute> category, Object value, ValueTag vt) throws ProtocolException {
+    public GenericAttribute(String name, Class<? extends Attribute> category, Object value, ValueTag vt) {
         this(name, category, 1, value, vt);
     }
 
@@ -491,6 +508,89 @@ public class GenericAttribute implements Attribute, List<Object> {
             return new PagesPerMinuteColor((Integer) o);
         }
 
+        /* Job Description Attributes, https://tools.ietf.org/html/rfc2911#section-4.3 */
+        else if (name.equals("job-name")) {
+            TextSyntax ts = (TextSyntax) o;
+            return new JobName(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("job-originating-user-name")) {
+            TextSyntax ts = (TextSyntax) o;
+            return new JobOriginatingUserName(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("job-state")) {
+            switch ((Integer) o) {
+                case 3:
+                    return JobState.PENDING;
+                case 4:
+                    return JobState.PENDING_HELD;
+                case 5:
+                    return JobState.PROCESSING;
+                case 6:
+                    return JobState.PROCESSING_STOPPED;
+                case 7:
+                    return JobState.CANCELED;
+                case 8:
+                    return JobState.ABORTED;
+                case 9:
+                    return JobState.COMPLETED;
+                default:
+                    return JobState.UNKNOWN;
+            }
+        }
+        else if (name.equals("job-state-reasons")) {
+            return substJobStateReasons();
+        }
+        else if (name.equals("number-of-documents")) {
+            return new NumberOfDocuments((Integer) o);
+        }
+        else if (name.equals("output-device-assigned")) {
+            TextSyntax ts = (TextSyntax) o;
+            return new OutputDeviceAssigned(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("time-at-creation")) {
+            return new DateTimeAtCreation(new Date(((Integer) o) * 1000));
+        }
+        else if (name.equals("time-at-processing")) {
+            return new DateTimeAtProcessing(new Date(((Integer) o) * 1000));
+        }
+        else if (name.equals("time-at-completed")) {
+            return new DateTimeAtCompleted(new Date(((Integer) o) * 1000));
+        }
+        else if (name.equals("date-time-at-creation")) {
+            return new DateTimeAtCreation((Date) o);
+        }
+        else if (name.equals("date-time-at-processing")) {
+            return new DateTimeAtProcessing((Date) o);
+        }
+        else if (name.equals("date-time-at-completed")) {
+            return new DateTimeAtCompleted((Date) o);
+        }
+        else if (name.equals("number-of-intervening-jobs")) {
+            return new NumberOfInterveningJobs((Integer) o);
+        }
+        else if (name.equals("job-message-from-operator")) {
+            TextSyntax ts = (TextSyntax) o;
+            return new JobMessageFromOperator(ts.getValue(), ts.getLocale());
+        }
+        else if (name.equals("job-k-octets")) {
+            return new JobKOctets((Integer) o);
+        }
+        else if (name.equals("job-impressions")) {
+            return new JobImpressions((Integer) o);
+        }
+        else if (name.equals("job-media-sheets")) {
+            return new JobMediaSheets((Integer) o);
+        }
+        else if (name.equals("job-k-octets-processed")) {
+            return new JobKOctetsProcessed((Integer) o);
+        }
+        else if (name.equals("job-impressions-completed")) {
+            return new JobImpressionsCompleted((Integer) o);
+        }
+        else if (name.equals("job-media-sheets-completed")) {
+            return new JobMediaSheetsCompleted((Integer) o);
+        }
+
         // if nothing matched return self
         return this;
     }
@@ -527,7 +627,29 @@ public class GenericAttribute implements Attribute, List<Object> {
         }
         return psrs;
     }
-    
+
+    private Attribute substJobStateReasons() {
+        // This is a multivalued type of attribute
+        JobStateReasons jsrs = new JobStateReasons(size() * 4/3 + 1);
+        for (Object gv : this) {
+            String s = (String) ((GenericValue) gv).getValue();
+            JobStateReason jsr = null;
+            try {
+                jsr = (JobStateReason) JobStateReason.class
+                        .getField(s.replace('-', '_').toUpperCase()).get(null);
+            } catch (IllegalArgumentException ex) { /* irrelevant */
+            } catch (IllegalAccessException ex) { /* irrelevant */
+            } catch (NoSuchFieldException ex) {
+            } catch (SecurityException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            }
+            if (jsr == null)
+                jsr = new JobStateReasonValue(s);
+            jsrs.add(jsr);
+        }
+        return jsrs;
+    }
+
     @Override
     public String toString() {
         if (list.isEmpty())
